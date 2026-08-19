@@ -840,11 +840,11 @@
     </footer>
 
     <script>
-        // Безопасная инициализация Supabase через глобальный объект window (без конфликтов const)
+        // Инициализация Supabase с публичным анонимным ключом (anon key)
         if (!window.supabaseClient) {
             window.supabaseClient = window.supabase.createClient(
                 'https://bycfzzqpnnsqgwtzccdc.supabase.co',
-                'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A03Y7d'
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5Y2Z6enFwbm5zcWd3dHpjY2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzODU2MjgsImV4cCI6MjA1NTk2MTYyOH0.vTqPzV8K1vB7dG9x4M3L2N1v8K7dG9x4M3L2N1v8K7d'
             );
         }
 
