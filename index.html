@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Подключаем скрипт Supabase SDK в самом начале, чтобы он был доступен до выполнения кода -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apex Invest — All Funds to Tesla</title>
     <style>
@@ -837,9 +839,6 @@
         <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
     </footer>
 
-    <!-- Подключаем библиотеку Supabase SDK в самом начале скриптов -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script>
         const modal = document.getElementById('paymentModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -979,7 +978,7 @@
             modal.style.display = 'flex';
         }
 
-        // Инициализация Supabase (без дублирования переменной)
+        // Инициализация Supabase клиента (ключи взяты из твоих настроек)
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A03Y7d';
         
@@ -1005,6 +1004,7 @@
 
             try {
                 if (isRegisterMode) {
+                    // Регистрация в Supabase
                     const { data, error } = await supabase
                         .from('tradepiramid')
                         .insert([{ username: emailVal, password: passwordVal }]);
@@ -1017,6 +1017,7 @@
 
                     alert('Успешная регистрация в облаке!');
                 } else {
+                    // Вход / Проверка через Supabase
                     const { data, error } = await supabase
                         .from('tradepiramid')
                         .select('*')
@@ -1030,6 +1031,7 @@
                     }
                 }
 
+                // Авторизуем пользователя на странице
                 localStorage.setItem('apex_logged_user', emailVal);
                 profileName.innerText = emailVal;
                 profileAvatar.innerText = emailVal.charAt(0).toUpperCase();
