@@ -837,6 +837,9 @@
         <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
     </footer>
 
+    <!-- Подключаем библиотеку Supabase SDK в самом начале скриптов -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
         const modal = document.getElementById('paymentModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -976,6 +979,12 @@
             modal.style.display = 'flex';
         }
 
+        // Инициализация Supabase (без дублирования переменной)
+        const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A03Y7d';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         async function submitAuth() {
             let emailVal = authEmailInput.value.trim();
             let passwordVal = authPasswordInput.value.trim();
@@ -994,42 +1003,43 @@
                 return;
             }
 
-            let backendHost = window.location.protocol + '//' + window.location.hostname + ':5000';
-            let endpoint = isRegisterMode ? backendHost + '/api/register' : backendHost + '/api/login';
-
             try {
-                let response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: emailVal, password: passwordVal })
-                });
+                if (isRegisterMode) {
+                    const { data, error } = await supabase
+                        .from('tradepiramid')
+                        .insert([{ username: emailVal, password: passwordVal }]);
 
-                let result = await response.json();
-
-                if (response.ok && result.success) {
-                    if (isRegisterMode) {
-                        // Вывод почты, ID и пароля в консоль разработчика (F12 -> Console)
-                        console.log('=== НОВЫЙ АККАУНТ СОЗДАН ===');
-                        console.log('ID:', result.userId || 'Не передан сервером');
-                        console.log('Почта:', emailVal);
-                        console.log('Пароль:', passwordVal);
-                        console.log('===========================');
+                    if (error) {
+                        authErrorMsg.innerText = 'Ошибка регистрации: ' + error.message;
+                        authErrorMsg.style.display = 'block';
+                        return;
                     }
 
-                    // Сразу входим в систему (авторизуем пользователя)
-                    localStorage.setItem('apex_logged_user', emailVal);
-                    profileName.innerText = emailVal;
-                    profileAvatar.innerText = emailVal.charAt(0).toUpperCase();
-
-                    authButtonsBlock.style.display = 'none';
-                    userProfileBlock.style.display = 'flex';
-                    closeModal();
+                    alert('Успешная регистрация в облаке!');
                 } else {
-                    authErrorMsg.innerText = result.message || 'Неправильный email или пароль';
-                    authErrorMsg.style.display = 'block';
+                    const { data, error } = await supabase
+                        .from('tradepiramid')
+                        .select('*')
+                        .eq('username', emailVal)
+                        .eq('password', passwordVal);
+
+                    if (error || !data || data.length === 0) {
+                        authErrorMsg.innerText = 'Неверное имя пользователя или пароль!';
+                        authErrorMsg.style.display = 'block';
+                        return;
+                    }
                 }
+
+                localStorage.setItem('apex_logged_user', emailVal);
+                profileName.innerText = emailVal;
+                profileAvatar.innerText = emailVal.charAt(0).toUpperCase();
+
+                authButtonsBlock.style.display = 'none';
+                userProfileBlock.style.display = 'flex';
+                closeModal();
+
             } catch (err) {
-                authErrorMsg.innerText = 'Не удалось подключиться к серверу бэкенда!';
+                authErrorMsg.innerText = 'Ошибка соединения с базой данных!';
                 authErrorMsg.style.display = 'block';
             }
         }
@@ -1120,43 +1130,5 @@
             }
         }
     </script>
-<!-- Подключаем библиотеку Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-  // Ваши ключи подключения к Supabase
-  const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A03Y7d';
-  
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // Функция регистрации
-  async function registerUser(usernameInput, passwordInput) {
-    const { data, error } = await supabase
-      .from('tradepiramid')
-      .insert([{ username: usernameInput, password: passwordInput }]);
-
-    if (error) {
-      alert('Ошибка регистрации: ' + error.message);
-    } else {
-      alert('Успешная регистрация в облаке!');
-    }
-  }
-
-  // Функция входа
-  async function loginUser(usernameInput, passwordInput) {
-    const { data, error } = await supabase
-      .from('tradepiramid')
-      .select('*')
-      .eq('username', usernameInput)
-      .eq('password', passwordInput);
-
-    if (error || data.length === 0) {
-      alert('Неверное имя пользователя или пароль!');
-    } else {
-      alert('Вход выполнен успешно!');
-    }
-  }
-</script>
 </body>
 </html>
