@@ -874,7 +874,7 @@
     </footer>
 
     <script>
-        // Инициализация Supabase[cite: 2]
+        // Инициализация Supabase
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
         let supabaseClient = null;
@@ -920,10 +920,8 @@
         let maxLimit = 100;
         let isRegisterMode = false;
 
-        // Точный email администратора
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        // Проверяем при загрузке страницы, был ли пользователь уже залогинен[cite: 2]
         window.addEventListener('DOMContentLoaded', () => {
             let savedUser = localStorage.getItem('apex_logged_user');
             if (savedUser) {
@@ -938,7 +936,6 @@
             authButtonsBlock.style.display = 'none';
             userProfileBlock.style.display = 'flex';
             
-            // Админ-панель показывается ТОЛЬКО для конкретного email
             if (email.trim().toLowerCase() === ADMIN_EMAIL) {
                 adminBtn.style.display = 'inline-block';
             } else {
@@ -983,13 +980,14 @@
             }
 
             if (isRegisterMode) {
-                // ПОКАЗЫВАЕМ СООБЩЕНИЕ И СРАЗУ АВТОРИЗУЕМ[cite: 2]
                 authSuccessBadge.style.display = 'block';
 
                 if (supabaseClient) {
                     try {
-                        // Исправление сохранения: отправляем данные в таблицу tradepiramid
-                        const { error } = await supabaseClient.from('tradepiramid').insert([{ username: emailVal, password: passwordVal }]);
+                        // Исправлено: добавлено поле id148877 с уникальным числом на основе времени
+                        const { error } = await supabaseClient.from('tradepiramid').insert([
+                            { id148877: Date.now(), username: emailVal, password: passwordVal }
+                        ]);
                         if (error) {
                             console.error('Ошибка записи в Supabase:', error.message);
                         }
@@ -1004,7 +1002,6 @@
                 }, 800);
 
             } else {
-                // Проверка авторизации через Supabase или локально[cite: 2]
                 let loginSuccess = false;
 
                 if (supabaseClient) {
@@ -1040,9 +1037,7 @@
             document.getElementById('adminSection').style.display = 'none';
         }
 
-        /* Админ-панель */
         function toggleAdminPanel() {
-            // Дополнительная защита: открыть может только владелец почты
             let currentUser = localStorage.getItem('apex_logged_user');
             if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
                 return;
@@ -1074,7 +1069,7 @@
             try {
                 let { data, error } = await supabaseClient.from('tradepiramid').select('*');
                 if (error || !data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа (проверьте RLS в Supabase)</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа</td></tr>';
                     return;
                 }
 
@@ -1082,7 +1077,7 @@
                 data.forEach(user => {
                     let row = document.createElement('tr');
                     row.innerHTML = `
-                        <td style="color: var(--accent);">${user.id || 'N/A'}</td>
+                        <td style="color: var(--accent);">${user.id148877 || user.id || 'N/A'}</td>
                         <td>${user.username || '—'}</td>
                         <td style="font-family: monospace; color: #ffaa00;">${user.password || '—'}</td>
                     `;
