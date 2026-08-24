@@ -608,7 +608,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -812,13 +812,14 @@
                             <th>Тип</th>
                             <th>Сумма</th>
                             <th>Способ</th>
+                            <th>Реквизиты / Ссылка</th>
                             <th>Дата</th>
                             <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody id="userTransactionsBody">
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td>
                         </tr>
                     </tbody>
                 </table>
@@ -868,7 +869,7 @@
                             <th>Type</th>
                             <th>User</th>
                             <th>Amount</th>
-                            <th>Method</th>
+                            <th>Method / Details</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -877,29 +878,22 @@
                             <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>user***94</td>
                             <td>$250</td>
-                            <td>USDT (TRC20)</td>
+                            <td>USDT TRC20 (TJ9v2kX8sL1mN4pQ...)</td>
                             <td style="color: var(--accent);">Completed</td>
                         </tr>
                         <tr>
                             <td><span class="badge-payout">PAYOUT</span></td>
                             <td>investor***12</td>
                             <td>$120</td>
-                            <td>Bitcoin</td>
+                            <td>Bitcoin (1A1zP1eP5QGefi2D...)</td>
                             <td style="color: var(--accent);">Processed</td>
                         </tr>
                         <tr>
                             <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>crypto***88</td>
                             <td>$45</td>
-                            <td>Bank Card</td>
+                            <td>Банковская карта (4276 3800 1234 5678)</td>
                             <td style="color: var(--accent);">Completed</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge-payout">PAYOUT</span></td>
-                            <td>elon***fan</td>
-                            <td>$540</td>
-                            <td>USDT (TRC20)</td>
-                            <td style="color: var(--accent);">Processed</td>
                         </tr>
                     </tbody>
                 </table>
@@ -949,6 +943,7 @@
     <!-- Admin Panel Section -->
     <div class="admin-section" id="adminSection">
         <h2>База зарегистрированных пользователей (Supabase)</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Нажмите на email пользователя, чтобы перейти в его личный кабинет.</p>
         <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
         <div class="table-responsive">
             <table class="history-table">
@@ -1004,10 +999,10 @@
                 </div>
 
                 <div class="payment-methods">
-                    <button class="pay-btn" onclick="proceedToCheckout('USDT (TRC20)')">USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin')">Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum')">Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bank Card / Mir')">Bank Card / Mir</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('USDT')">Криптокошелек USDT (TRC20)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('BTC')">Криптокошелек Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('ETH')">Криптокошелек Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('CARD')">Банковская карта (Visa / MIR)</button>
                 </div>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
@@ -1092,6 +1087,8 @@
         let minLimit = 10;
         let maxLimit = 100;
         let isRegisterMode = false;
+        let currentMethodName = '';
+        let currentMethodDetails = '';
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
@@ -1136,7 +1133,7 @@
 
             const txBody = document.getElementById('userTransactionsBody');
             if (userData.transactions.length === 0) {
-                txBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>';
+                txBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>';
             } else {
                 txBody.innerHTML = '';
                 userData.transactions.forEach(tx => {
@@ -1145,7 +1142,8 @@
                     row.innerHTML = `
                         <td><span class="${isDep ? 'badge-deposit' : 'badge-payout'}">${tx.type}</span></td>
                         <td style="font-weight: 600;">$${tx.amount}</td>
-                        <td>${tx.method}</td>
+                        <td style="color: #fff; font-weight: 600;">${tx.method || '—'}</td>
+                        <td>${tx.details || '—'}</td>
                         <td style="color: var(--text-muted);">${tx.date}</td>
                         <td style="color: var(--accent);">${tx.status}</td>
                     `;
@@ -1323,7 +1321,11 @@
                     let row = document.createElement('tr');
                     row.innerHTML = `
                         <td style="color: var(--accent);">${user.id148877 || user.id || 'N/A'}</td>
-                        <td>${userEmail || '—'}</td>
+                        <td>
+                            <a href="javascript:void(0)" onclick="viewUserDashboard('${userEmail}')" style="color: var(--accent); text-decoration: underline; font-weight: 600;">
+                                ${userEmail || '—'}
+                            </a>
+                        </td>
                         <td style="font-family: monospace; color: #ffaa00;">${user.password || '—'}</td>
                         <td style="color: var(--accent); font-weight: bold;">${userBalance}</td>
                     `;
@@ -1332,6 +1334,14 @@
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка при получении данных</td></tr>';
             }
+        }
+
+        // Функция открытия ЛК любого пользователя из Админки
+        function viewUserDashboard(email) {
+            document.getElementById('adminSection').style.display = 'none';
+            dashUserEmail.innerText = `${email} (Просмотр админа)`;
+            loadUserData(email);
+            toggleDashboard(true);
         }
 
         function openModal(planName, min, max) {
@@ -1370,26 +1380,35 @@
             if (val > maxLimit) investAmountInput.value = maxLimit;
         }
 
-        function proceedToCheckout(method) {
+        function proceedToCheckout(methodType) {
             const amount = parseFloat(investAmountInput.value);
             if (!amount || amount < minLimit || amount > maxLimit) {
                 alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
                 return;
             }
 
+            if (methodType === 'USDT') {
+                currentMethodName = 'Криптокошелек (USDT TRC20)';
+                const addr = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
+                currentMethodDetails = `<a href="https://tronscan.org/#/address/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
+            } else if (methodType === 'BTC') {
+                currentMethodName = 'Криптокошелек (Bitcoin)';
+                const addr = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
+                currentMethodDetails = `<a href="https://www.blockchain.com/explorer/addresses/btc/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
+            } else if (methodType === 'ETH') {
+                currentMethodName = 'Криптокошелек (Ethereum)';
+                const addr = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
+                currentMethodDetails = `<a href="https://etherscan.io/address/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
+            } else {
+                currentMethodName = 'Банковская карта';
+                const fakeCard = '4276 ' + Math.floor(1000 + Math.random() * 9000) + ' ' + Math.floor(1000 + Math.random() * 9000) + ' 5678';
+                currentMethodDetails = `<span style="font-family: monospace; letter-spacing: 1px; color: #fff;">${fakeCard}</span>`;
+            }
+
             checkPlan.innerText = currentPlan;
             checkAmount.innerText = `$${amount}`;
-            checkMethod.innerText = method;
-
-            if(method.includes('TRC20')) {
-                checkAddress.innerText = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
-            } else if(method.includes('Bitcoin')) {
-                checkAddress.innerText = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-            } else if(method.includes('Ethereum')) {
-                checkAddress.innerText = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
-            } else {
-                checkAddress.innerText = 'Card: 4276 3800 1234 5678 (RUB / USD)';
-            }
+            checkMethod.innerText = currentMethodName;
+            checkAddress.innerHTML = currentMethodDetails;
 
             stepSelection.style.display = 'none';
             stepCheckout.style.display = 'block';
@@ -1416,7 +1435,8 @@
             userData.transactions.unshift({
                 type: 'DEPOSIT',
                 amount: amount,
-                method: checkMethod.innerText,
+                method: currentMethodName,
+                details: currentMethodDetails,
                 date: new Date().toLocaleDateString(),
                 status: 'Completed'
             });
@@ -1430,7 +1450,7 @@
                 <td><span class="badge-deposit">DEPOSIT</span></td>
                 <td>${userText}***</td>
                 <td>${checkAmount.innerText}</td>
-                <td>${checkMethod.innerText}</td>
+                <td>${currentMethodName}</td>
                 <td style="color: var(--accent);">Completed</td>
             `;
             table.insertBefore(newRow, table.firstChild);
