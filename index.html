@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,6 +53,7 @@
             color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 2px;
+            cursor: pointer;
         }
 
         .auth-buttons {
@@ -120,6 +121,18 @@
             font-size: 13px;
             color: #fff;
             font-weight: 600;
+        }
+
+        .dashboard-nav-btn {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
         }
 
         .logout-btn {
@@ -200,6 +213,103 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        .user-dashboard {
+            display: none;
+            max-width: 1200px;
+            margin: 30px auto 50px;
+            padding: 0 20px;
+        }
+
+        .dashboard-header {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .dashboard-user-info h2 {
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-user-info p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dash-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .dash-card-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .dash-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .dash-card-value.green {
+            color: var(--accent);
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .dash-action-btn {
+            flex: 1;
+            min-width: 160px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            text-transform: uppercase;
+        }
+
+        .dash-action-btn.deposit {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .dash-action-btn.withdraw {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dash-action-btn.withdraw:hover {
+            border-color: var(--danger);
+            color: var(--danger);
         }
 
         .container {
@@ -458,6 +568,10 @@
             outline: none;
         }
 
+        .amount-input-group input:focus {
+            border-color: var(--accent);
+        }
+
         .auth-actions-row {
             display: flex;
             align-items: center;
@@ -584,13 +698,13 @@
             font-weight: 700;
             padding: 10px;
             width: 100%;
+            margin-top: 10px;
         }
 
         .close-btn:hover {
             color: #fff;
         }
 
-        /* Admin Panel Styles */
         .admin-section {
             display: none;
             max-width: 1200px;
@@ -644,7 +758,7 @@
 
     <header>
         <div class="header-left">
-            <div class="logo">Apex Invest</div>
+            <div class="logo" onclick="toggleDashboard(false)">Apex Invest</div>
             <div class="auth-buttons" id="authButtonsBlock">
                 <button class="auth-btn login" onclick="openAuthModal('login')">Вход</button>
                 <button class="auth-btn register" onclick="openAuthModal('register')">Регистрация</button>
@@ -652,153 +766,255 @@
             <div class="user-profile" id="userProfileBlock">
                 <div class="profile-avatar" id="profileAvatar">U</div>
                 <div class="profile-name" id="profileName">user@example.com</div>
-                <button class="admin-nav-btn" id="adminBtn" onclick="toggleAdminPanel()">Админ-панель</button>
+                <button class="dashboard-nav-btn" onclick="toggleDashboard()">Кабинет</button>
+                <button class="admin-nav-btn" id="adminBtn" onclick="toggleAdminPanel()">Админка</button>
                 <button class="logout-btn" onclick="logout()">Выйти</button>
             </div>
         </div>
     </header>
 
-    <section class="hero">
-        <h1>Powering the Future with Tesla</h1>
-        <p>100% of raised capital and revenue are directed straight into Tesla, Inc. shares and fleet expansion!</p>
+    <!-- СЕКЦИЯ ЛИЧНОГО КАБИНЕТА -->
+    <section class="user-dashboard" id="userDashboard">
+        <div class="dashboard-header">
+            <div class="dashboard-user-info">
+                <h2 id="dashUserEmail">Пользователь</h2>
+                <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span></p>
+            </div>
+            <button class="dash-action-btn deposit" style="flex: none; padding: 10px 20px;" onclick="scrollToPlans()">+ Пополнить баланс</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dash-card">
+                <div class="dash-card-title">Баланс аккаунта</div>
+                <div class="dash-card-value green" id="userBalance">$0.00</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-title">Всего инвестировано</div>
+                <div class="dash-card-value" id="userTotalInvested">$0.00</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-title">Заработано прибыли</div>
+                <div class="dash-card-value green" id="userTotalProfit">$0.00</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-card-title">Активных депозитов</div>
+                <div class="dash-card-value" id="userActiveDeposits">0</div>
+            </div>
+        </div>
+
+        <div class="dashboard-actions">
+            <button class="dash-action-btn deposit" onclick="scrollToPlans()">Открыть новый депозит</button>
+            <button class="dash-action-btn withdraw" onclick="requestWithdrawal()">Запросить вывод средств</button>
+        </div>
+
+        <div class="history-section" style="padding: 0; margin-bottom: 0;">
+            <h3 style="margin-bottom: 15px; color: #fff;">Мои операции</h3>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Сумма</th>
+                            <th>Способ</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTransactionsBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </section>
 
-    <div class="stats-section">
-        <div class="stat-card">
-            <div class="stat-value" id="statOnline">148.2</div>
-            <div class="stat-label">Active Investors</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">$428,590</div>
-            <div class="stat-label">Total Invested</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">$189,045</div>
-            <div class="stat-label">Total Paid Out</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">34.8 Days</div>
-            <div class="stat-label">Running Online</div>
-        </div>
-    </div>
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <div id="mainPageContent">
+        <section class="hero">
+            <h1>Powering the Future with Tesla</h1>
+            <p>100% of raised capital and revenue are directed straight into Tesla, Inc. shares and fleet expansion!</p>
+        </section>
 
-    <section class="story-section">
-        <h2>Our Story & Mission</h2>
-        <p>The era of electric vehicles and autonomous technology has arrived faster than the world expected. At the heart of this revolution is <span class="story-highlight">Tesla, Inc.</span> — a company that doesn't just manufacture electric cars, but shapes the energy future of the entire planet.</p>
-        <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects. We believe Elon Musk's technologies will define the economic development vector for decades to come.</p>
-        <p>Every dollar raised works to the maximum, bringing high returns to investors and accelerating the global transition to clean energy.</p>
-    </section>
-
-    <div class="history-section">
-        <h2 class="section-title">Last Transactions</h2>
-        <div class="table-responsive">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>User</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <tr>
-                        <td><span class="badge-deposit">DEPOSIT</span></td>
-                        <td>user***94</td>
-                        <td>$250</td>
-                        <td>USDT (TRC20)</td>
-                        <td style="color: var(--accent);">Completed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-payout">PAYOUT</span></td>
-                        <td>investor***12</td>
-                        <td>$120</td>
-                        <td>Bitcoin</td>
-                        <td style="color: var(--accent);">Processed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-deposit">DEPOSIT</span></td>
-                        <td>crypto***88</td>
-                        <td>$45</td>
-                        <td>Bank Card</td>
-                        <td style="color: var(--accent);">Completed</td>
-                    </tr>
-                    <tr>
-                        <td><span class="badge-payout">PAYOUT</span></td>
-                        <td>elon***fan</td>
-                        <td>$540</td>
-                        <td>USDT (TRC20)</td>
-                        <td style="color: var(--accent);">Processed</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="container">
-        <h2 class="section-title">Investment Plans</h2>
-        
-        <div class="plans-grid">
-            <div class="plan-card">
-                <h3 class="plan-title">Novice</h3>
-                <div class="plan-range">$10 – $100</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>1 day</span></li>
-                    <li>Accruals: <span>Instant</span></li>
-                    <li>Return: <span>12% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Novice', 10, 100)">Invest Now</button>
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-value" id="statOnline">148.2</div>
+                <div class="stat-label">Active Investors</div>
             </div>
-
-            <div class="plan-card featured">
-                <h3 class="plan-title">Pro</h3>
-                <div class="plan-range">$100 – $500</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>10 days</span></li>
-                    <li>Accruals: <span>Daily</span></li>
-                    <li>Return: <span>25% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Pro', 100, 500)">Invest Now</button>
+            <div class="stat-card">
+                <div class="stat-value">$428,590</div>
+                <div class="stat-label">Total Invested</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-value">$189,045</div>
+                <div class="stat-label">Total Paid Out</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">34.8 Days</div>
+                <div class="stat-label">Running Online</div>
+            </div>
+        </div>
 
-            <div class="plan-card">
-                <h3 class="plan-title">Master</h3>
-                <div class="plan-range">$500 – $2,000</div>
-                <ul class="plan-features">
-                    <li>Duration: <span>30 days</span></li>
-                    <li>Accruals: <span>Daily</span></li>
-                    <li>Return: <span>45% daily</span></li>
-                </ul>
-                <button class="btn" onclick="openModal('Master', 500, 2000)">Invest Now</button>
+        <section class="story-section">
+            <h2>Our Story & Mission</h2>
+            <p>The era of electric vehicles and autonomous technology has arrived faster than the world expected. At the heart of this revolution is <span class="story-highlight">Tesla, Inc.</span> — a company that doesn't just manufacture electric cars, but shapes the energy future of the entire planet.</p>
+            <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects. We believe Elon Musk's technologies will define the economic development vector for decades to come.</p>
+            <p>Every dollar raised works to the maximum, bringing high returns to investors and accelerating the global transition to clean energy.</p>
+        </section>
+
+        <div class="history-section">
+            <h2 class="section-title">Last Transactions</h2>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td><span class="badge-deposit">DEPOSIT</span></td>
+                            <td>user***94</td>
+                            <td>$250</td>
+                            <td>USDT (TRC20)</td>
+                            <td style="color: var(--accent);">Completed</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-payout">PAYOUT</span></td>
+                            <td>investor***12</td>
+                            <td>$120</td>
+                            <td>Bitcoin</td>
+                            <td style="color: var(--accent);">Processed</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-deposit">DEPOSIT</span></td>
+                            <td>crypto***88</td>
+                            <td>$45</td>
+                            <td>Monero карта</td>
+                            <td style="color: var(--accent);">Completed</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-payout">PAYOUT</span></td>
+                            <td>elon***fan</td>
+                            <td>$540</td>
+                            <td>USDT (TRC20)</td>
+                            <td style="color: var(--accent);">Processed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="container" id="plansContainer">
+            <h2 class="section-title">Investment Plans</h2>
+            
+            <div class="plans-grid">
+                <div class="plan-card">
+                    <h3 class="plan-title">Novice</h3>
+                    <div class="plan-range">$10 – $100</div>
+                    <ul class="plan-features">
+                        <li>Duration: <span>1 day</span></li>
+                        <li>Accruals: <span>Instant</span></li>
+                        <li>Return: <span>12% daily</span></li>
+                    </ul>
+                    <button class="btn" onclick="openModal('Novice', 10, 100)">Invest Now</button>
+                </div>
+
+                <div class="plan-card featured">
+                    <h3 class="plan-title">Pro</h3>
+                    <div class="plan-range">$100 – $500</div>
+                    <ul class="plan-features">
+                        <li>Duration: <span>10 days</span></li>
+                        <li>Accruals: <span>Daily</span></li>
+                        <li>Return: <span>25% daily</span></li>
+                    </ul>
+                    <button class="btn" onclick="openModal('Pro', 100, 500)">Invest Now</button>
+                </div>
+
+                <div class="plan-card">
+                    <h3 class="plan-title">Master</h3>
+                    <div class="plan-range">$500 – $2,000</div>
+                    <ul class="plan-features">
+                        <li>Duration: <span>30 days</span></li>
+                        <li>Accruals: <span>Daily</span></li>
+                        <li>Return: <span>45% daily</span></li>
+                    </ul>
+                    <button class="btn" onclick="openModal('Master', 500, 2000)">Invest Now</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Admin Panel Section -->
     <div class="admin-section" id="adminSection">
-        <h2>База зарегистрированных пользователей (Supabase)</h2>
-        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
-        <div class="table-responsive">
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Email / Логин</th>
-                        <th>Пароль</th>
-                    </tr>
-                </thead>
-                <tbody id="adminUsersBody">
-                    <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
-                </tbody>
-            </table>
+        <div id="adminMainView">
+            <h2>База зарегистрированных пользователей (Supabase)</h2>
+            <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email / Логин (Кликните для профиля)</th>
+                            <th>Пароль</th>
+                            <th>Баланс</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUsersBody">
+                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="adminUserDetailView" style="display: none;">
+            <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);" onclick="closeAdminUserProfile()">← Назад к списку</button>
+            
+            <h2 id="adminDetailEmail" style="color: #fff; font-size: 24px; margin-bottom: 20px;">Профиль пользователя</h2>
+            
+            <div class="dashboard-grid" style="margin-bottom: 30px;">
+                <div class="dash-card">
+                    <div class="dash-card-title">Текущий баланс</div>
+                    <div class="dash-card-value green" id="adminDetailBalance">$0.00</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-title">Всего инвестировано</div>
+                    <div class="dash-card-value" id="adminDetailInvested">$0.00</div>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-title">Заработано прибыли</div>
+                    <div class="dash-card-value green" id="adminDetailProfit">$0.00</div>
+                </div>
+            </div>
+
+            <h3 style="color: #ffaa00; margin-bottom: 15px; font-size: 18px;">История операций пользователя</h3>
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Сумма</th>
+                            <th>Способ оплаты</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminDetailTransactionsBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <!-- Auth Form Content -->
+            <!-- Вход / Регистрация -->
             <div id="authContainer" style="display: none;">
                 <h3 id="authTitle">Вход в аккаунт</h3>
                 <p id="authDesc">Введите данные для авторизации</p>
@@ -819,11 +1035,10 @@
                     <div class="auth-error-badge" id="authErrorBadge">Неверный пароль или логин</div>
                 </div>
 
-                <br>
                 <button class="close-btn" onclick="closeModal()">Отмена</button>
             </div>
 
-            <!-- Investment Workflow Content -->
+            <!-- Выбор способа инвестирования -->
             <div id="stepSelection">
                 <h3 id="modalTitle">Investment</h3>
                 <p id="modalDesc">Enter amount and choose payment method.</p>
@@ -835,284 +1050,351 @@
 
                 <div class="payment-methods">
                     <button class="pay-btn" onclick="proceedToCheckout('USDT (TRC20)')">USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin')">Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum')">Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('Bank Card / Mir')">Bank Card / Mir</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Bitcoin (BTC)')">Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Ethereum (ETH)')">Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('Электронный кошелёк')">Электронный кошелёк</button>
                 </div>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
+            <!-- Шаг оплаты -->
             <div class="checkout-box" id="stepCheckout">
                 <h3>Complete Payment</h3>
-                <p>Transfer the exact amount to the address below:</p>
+                <p>Transfer the exact amount to the details below:</p>
                 
                 <div class="invoice-details">
                     <p>Plan: <span id="checkPlan">Novice</span></p>
                     <p>Amount: <span id="checkAmount">$10</span></p>
-                    <p>Method: <span id="checkMethod">USDT</span></p>
+                    <p>Method: <span id="checkMethod">USDT (TRC20)</span></p>
                 </div>
 
-                <div class="qr-placeholder">SCAN QR CODE</div>
-                <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
+                <div class="qr-placeholder">
+                    QR CODE<br>PLACEHOLDER
+                </div>
 
-                <button class="btn" onclick="simulateSuccess()">I have made the payment</button>
-                <br><br>
-                <button class="close-btn" onclick="resetModal()">Back</button>
+                <div class="wallet-address" id="checkAddress">
+                    loading...
+                </div>
+
+                <div class="amount-input-group" id="userSourceGroup" style="margin-top: 20px;">
+                    <label id="userSourceLabel">Ваш адрес кошелька (для проверки платежа):</label>
+                    <input type="text" id="userSourceInput" placeholder="Введите ваш адрес..." required>
+                </div>
+
+                <button class="btn" style="margin-top: 10px;" onclick="simulateSuccess()">I have made the payment</button>
+                <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
+            <!-- Успех -->
             <div class="success-screen" id="stepSuccess">
-                <div class="success-icon">&#10004;</div>
-                <h3>Payment Successful!</h3>
-                <p>Your funds have been successfully deposited and assigned to your investment plan. Generating daily returns...</p>
-                <button class="btn" onclick="closeModal()">Done</button>
+                <div class="success-icon">✓</div>
+                <h3>Payment Pending!</h3>
+                <p>Your transaction has been submitted and is waiting for blockchain confirmation (approx 5-15 mins).</p>
+                <p>Your deposit will become active automatically.</p>
+                <button class="btn" style="margin-top: 20px;" onclick="closeModal()">Close</button>
             </div>
         </div>
     </div>
 
     <footer>
-        <p>&copy; 2026 Apex Invest. Powered by Tesla Capital Vision.</p>
+        <p>© 2026 Apex Invest Ltd. All rights reserved.</p>
+        <p style="margin-top: 5px; font-size: 11px; opacity: 0.5;">Disclaimer: We are not officially affiliated with Tesla, Inc.</p>
     </footer>
 
     <script>
-        // Инициализация Supabase
-        const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
-        let supabaseClient = null;
-
-        try {
-            if (window.supabase) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            }
-        } catch (e) {
-            console.error('Supabase error:', e);
-        }
+        // ИНИЦИАЛИЗАЦИЯ SUPABASE (Вставьте свои реальные ключи вместо этих)
+        const SUPABASE_URL = 'https://ВАШ_ПРОЕКТ.supabase.co';
+        const SUPABASE_KEY = 'ВАШ_SUPABASE_KEY';
+        
+        // Единственное объявление Supabase для всего файла
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const modal = document.getElementById('paymentModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalDesc = document.getElementById('modalDesc');
-        const investAmountInput = document.getElementById('investAmount');
-        
         const authContainer = document.getElementById('authContainer');
-        const authTitle = document.getElementById('authTitle');
-        const authSubmitBtn = document.getElementById('authSubmitBtn');
-        const authEmailInput = document.getElementById('authEmail');
-        const authPasswordInput = document.getElementById('authPassword');
+        const stepSelection = document.getElementById('stepSelection');
+        const stepCheckout = document.getElementById('stepCheckout');
+        const stepSuccess = document.getElementById('stepSuccess');
+        const investAmount = document.getElementById('investAmount');
+        const authEmail = document.getElementById('authEmail');
+        const authPassword = document.getElementById('authPassword');
         const authErrorBadge = document.getElementById('authErrorBadge');
         const authSuccessBadge = document.getElementById('authSuccessBadge');
 
         const authButtonsBlock = document.getElementById('authButtonsBlock');
         const userProfileBlock = document.getElementById('userProfileBlock');
-        const profileName = document.getElementById('profileName');
         const profileAvatar = document.getElementById('profileAvatar');
-        const adminBtn = document.getElementById('adminBtn');
+        const profileName = document.getElementById('profileName');
 
-        const stepSelection = document.getElementById('stepSelection');
-        const stepCheckout = document.getElementById('stepCheckout');
-        const stepSuccess = document.getElementById('stepSuccess');
-
-        const checkPlan = document.getElementById('checkPlan');
-        const checkAmount = document.getElementById('checkAmount');
-        const checkMethod = document.getElementById('checkMethod');
-        const checkAddress = document.getElementById('checkAddress');
+        const mainPageContent = document.getElementById('mainPageContent');
+        const userDashboard = document.getElementById('userDashboard');
+        const adminSection = document.getElementById('adminSection');
 
         let currentPlan = '';
-        let minLimit = 10;
-        let maxLimit = 100;
-        let isRegisterMode = false;
+        let minAmount = 0;
+        let maxAmount = 0;
+        let authMode = 'login';
+        
+        let currentUser = null;
+        let userData = {
+            balance: 0,
+            invested: 0,
+            profit: 0,
+            deposits: 0,
+            transactions: []
+        };
+        let isAdmin = false;
 
-        const ADMIN_EMAIL = 'binarpok@gmail.com';
-
-        window.addEventListener('DOMContentLoaded', () => {
-            let savedUser = localStorage.getItem('apex_logged_user');
-            if (savedUser) {
-                loginUserSession(savedUser);
-            }
-        });
-
-        function loginUserSession(email) {
-            localStorage.setItem('apex_logged_user', email);
-            profileName.innerText = email;
-            profileAvatar.innerText = email.charAt(0).toUpperCase();
-            authButtonsBlock.style.display = 'none';
-            userProfileBlock.style.display = 'flex';
-            
-            if (email.trim().toLowerCase() === ADMIN_EMAIL) {
-                adminBtn.style.display = 'inline-block';
+        function loadLocalData() {
+            if (!currentUser) return;
+            const data = localStorage.getItem('apex_data_' + currentUser);
+            if (data) {
+                userData = JSON.parse(data);
             } else {
-                adminBtn.style.display = 'none';
-                document.getElementById('adminSection').style.display = 'none';
+                userData = { balance: 0, invested: 0, profit: 0, deposits: 0, transactions: [] };
+            }
+            updateDashboardUI();
+        }
+
+        function saveLocalData() {
+            if (!currentUser) return;
+            localStorage.setItem('apex_data_' + currentUser, JSON.stringify(userData));
+            updateDashboardUI();
+        }
+
+        window.onload = function() {
+            const savedUser = localStorage.getItem('apex_current_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                const savedIsAdmin = localStorage.getItem('apex_is_admin');
+                isAdmin = savedIsAdmin === 'true';
+                
+                authButtonsBlock.style.display = 'none';
+                userProfileBlock.style.display = 'flex';
+                profileName.innerText = currentUser;
+                profileAvatar.innerText = currentUser.charAt(0).toUpperCase();
+                
+                if (isAdmin) {
+                    document.getElementById('adminBtn').style.display = 'block';
+                }
+
+                loadLocalData();
+            }
+        };
+
+        function scrollToPlans() {
+            toggleDashboard(false);
+            document.getElementById('plansContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleDashboard(forceOpen) {
+            adminSection.style.display = 'none';
+            
+            const isCurrentlyOpen = userDashboard.style.display === 'block';
+            
+            if (forceOpen === false || isCurrentlyOpen) {
+                userDashboard.style.display = 'none';
+                mainPageContent.style.display = 'block';
+            } else {
+                if (!currentUser) {
+                    openAuthModal('login');
+                    return;
+                }
+                document.getElementById('dashUserEmail').innerText = currentUser;
+                updateDashboardUI();
+                
+                mainPageContent.style.display = 'none';
+                userDashboard.style.display = 'block';
             }
         }
 
-        function openAuthModal(type) {
+        function toggleAdminPanel() {
+            if (!isAdmin) return;
+            mainPageContent.style.display = 'none';
+            userDashboard.style.display = 'none';
+            
+            document.getElementById('adminUserDetailView').style.display = 'none';
+            document.getElementById('adminMainView').style.display = 'block';
+            adminSection.style.display = 'block';
+            loadAdminUsers();
+        }
+
+        function updateDashboardUI() {
+            document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
+            document.getElementById('userTotalInvested').innerText = `$${userData.invested.toFixed(2)}`;
+            document.getElementById('userTotalProfit').innerText = `$${userData.profit.toFixed(2)}`;
+            document.getElementById('userActiveDeposits').innerText = userData.deposits;
+
+            const tbody = document.getElementById('userTransactionsBody');
+            tbody.innerHTML = '';
+
+            if (userData.transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>`;
+            } else {
+                userData.transactions.forEach(tx => {
+                    const badgeClass = tx.type === 'DEPOSIT' ? 'badge-deposit' : 'badge-payout';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="${badgeClass}">${tx.type}</span></td>
+                        <td>$${tx.amount}</td>
+                        <td>${tx.method}</td>
+                        <td>${tx.date}</td>
+                        <td style="color: var(--accent);">${tx.status}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function openAuthModal(mode) {
+            authMode = mode;
+            modal.style.display = 'flex';
             authContainer.style.display = 'block';
             stepSelection.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
-            authEmailInput.value = '';
-            authPasswordInput.value = '';
             authErrorBadge.style.display = 'none';
             authSuccessBadge.style.display = 'none';
+            
+            authEmail.value = '';
+            authPassword.value = '';
 
-            isRegisterMode = (type === 'register');
-            if (isRegisterMode) {
-                authTitle.innerText = 'Регистрация аккаунта';
-                authSubmitBtn.innerText = 'Зарегистрироваться';
+            if (mode === 'login') {
+                document.getElementById('authTitle').innerText = 'Вход в аккаунт';
+                document.getElementById('authDesc').innerText = 'Введите данные для авторизации';
+                document.getElementById('authSubmitBtn').innerText = 'Войти';
             } else {
-                authTitle.innerText = 'Вход в аккаунт';
-                authSubmitBtn.innerText = 'Войти';
+                document.getElementById('authTitle').innerText = 'Регистрация';
+                document.getElementById('authDesc').innerText = 'Создайте новый аккаунт';
+                document.getElementById('authSubmitBtn').innerText = 'Зарегистрироваться';
             }
-
-            modal.style.display = 'flex';
         }
 
         async function submitAuth() {
-            let emailVal = authEmailInput.value.trim();
-            let passwordVal = authPasswordInput.value.trim();
+            const email = authEmail.value.trim();
+            const password = authPassword.value.trim();
+            
+            if (!email || !password) {
+                showAuthError("Введите логин и пароль");
+                return;
+            }
 
+            const btn = document.getElementById('authSubmitBtn');
+            const originalText = btn.innerText;
+            btn.innerText = 'Загрузка...';
+            btn.disabled = true;
             authErrorBadge.style.display = 'none';
             authSuccessBadge.style.display = 'none';
 
-            if (!emailVal || !passwordVal) {
-                authErrorBadge.innerText = 'Заполните все поля!';
-                authErrorBadge.style.display = 'inline-block';
-                return;
-            }
+            if (authMode === 'register') {
+                try {
+                    const { data: checkData, error: checkError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('email', email);
 
-            if (isRegisterMode) {
-                authSuccessBadge.style.display = 'block';
+                    if (checkError) throw checkError;
 
-                if (supabaseClient) {
-                    try {
-                        // Исправлено: добавлено поле id148877 с уникальным числом на основе времени
-                        const { error } = await supabaseClient.from('tradepiramid').insert([
-                            { id148877: Date.now(), username: emailVal, password: passwordVal }
-                        ]);
-                        if (error) {
-                            console.error('Ошибка записи в Supabase:', error.message);
-                        }
-                    } catch (err) {
-                        console.warn('Supabase sync notice:', err);
+                    if (checkData && checkData.length > 0) {
+                        showAuthError("Пользователь с таким email уже существует");
+                    } else {
+                        const { data, error } = await supabase
+                            .from('users')
+                            .insert([{ email: email, password: password }]);
+
+                        if (error) throw error;
+
+                        authSuccessBadge.style.display = 'block';
+                        authEmail.value = '';
+                        authPassword.value = '';
+                        
+                        setTimeout(() => {
+                            authMode = 'login';
+                            openAuthModal('login');
+                        }, 2000);
                     }
+                } catch (err) {
+                    showAuthError("Ошибка при регистрации: " + err.message);
                 }
-
-                setTimeout(() => {
-                    loginUserSession(emailVal);
-                    closeModal();
-                }, 800);
-
             } else {
-                let loginSuccess = false;
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('email', email)
+                        .eq('password', password);
 
-                if (supabaseClient) {
-                    try {
-                        let { data, error } = await supabaseClient
-                            .from('tradepiramid')
-                            .select('*')
-                            .eq('username', emailVal)
-                            .eq('password', passwordVal);
+                    if (error) throw error;
 
-                        if (data && data.length > 0) {
-                            loginSuccess = true;
+                    if (data && data.length > 0) {
+                        currentUser = email;
+                        
+                        isAdmin = (email.toLowerCase() === 'admin');
+                        
+                        localStorage.setItem('apex_current_user', currentUser);
+                        localStorage.setItem('apex_is_admin', isAdmin.toString());
+
+                        authButtonsBlock.style.display = 'none';
+                        userProfileBlock.style.display = 'flex';
+                        profileName.innerText = currentUser;
+                        profileAvatar.innerText = currentUser.charAt(0).toUpperCase();
+
+                        if (isAdmin) {
+                            document.getElementById('adminBtn').style.display = 'block';
+                        } else {
+                            document.getElementById('adminBtn').style.display = 'none';
                         }
-                    } catch (e) {
-                        console.warn('Supabase login check warning:', e);
-                    }
-                }
 
-                if (loginSuccess || !supabaseClient) {
-                    loginUserSession(emailVal);
-                    closeModal();
-                } else {
-                    authErrorBadge.innerText = 'Неверный пароль или логин';
-                    authErrorBadge.style.display = 'inline-block';
+                        loadLocalData();
+                        closeModal();
+                    } else {
+                        showAuthError("Неверный логин или пароль");
+                    }
+                } catch (err) {
+                    showAuthError("Ошибка при авторизации");
                 }
             }
+
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+
+        function showAuthError(msg) {
+            authErrorBadge.innerText = msg;
+            authErrorBadge.style.display = 'block';
         }
 
         function logout() {
-            localStorage.removeItem('apex_logged_user');
-            userProfileBlock.style.display = 'none';
+            currentUser = null;
+            isAdmin = false;
+            localStorage.removeItem('apex_current_user');
+            localStorage.removeItem('apex_is_admin');
+            
             authButtonsBlock.style.display = 'flex';
-            document.getElementById('adminSection').style.display = 'none';
-        }
-
-        function toggleAdminPanel() {
-            let currentUser = localStorage.getItem('apex_logged_user');
-            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
-                return;
-            }
-
-            const adminSection = document.getElementById('adminSection');
-            if (adminSection.style.display === 'block') {
-                adminSection.style.display = 'none';
-            } else {
-                adminSection.style.display = 'block';
-                loadAdminUsers();
-            }
-        }
-
-        async function loadAdminUsers() {
-            let currentUser = localStorage.getItem('apex_logged_user');
-            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
-                return;
-            }
-
-            const tbody = document.getElementById('adminUsersBody');
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>';
-
-            if (!supabaseClient) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Supabase не подключен</td></tr>';
-                return;
-            }
-
-            try {
-                let { data, error } = await supabaseClient.from('tradepiramid').select('*');
-                if (error || !data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = '';
-                data.forEach(user => {
-                    let row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td style="color: var(--accent);">${user.id148877 || user.id || 'N/A'}</td>
-                        <td>${user.username || '—'}</td>
-                        <td style="font-family: monospace; color: #ffaa00;">${user.password || '—'}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--danger);">Ошибка при получении данных</td></tr>';
-            }
+            userProfileBlock.style.display = 'none';
+            document.getElementById('adminBtn').style.display = 'none';
+            
+            toggleDashboard(false);
         }
 
         function openModal(planName, min, max) {
-            const isLogged = userProfileBlock.style.display === 'flex';
-
-            if (!isLogged) {
+            if (!currentUser) {
                 openAuthModal('login');
-                authErrorBadge.innerText = 'Сначала войдите!';
-                authErrorBadge.style.display = 'inline-block';
                 return;
             }
-
-            authContainer.style.display = 'none';
+            
             currentPlan = planName;
-            minLimit = min;
-            maxLimit = max;
-            modalTitle.innerText = `Plan: ${planName}`;
-            modalDesc.innerText = `Enter amount between $${min} and $${max}`;
-            investAmountInput.value = min;
-            investAmountInput.min = min;
-            investAmountInput.max = max;
-
+            minAmount = min;
+            maxAmount = max;
+            
+            document.getElementById('modalTitle').innerText = planName + ' Plan';
+            document.getElementById('modalDesc').innerText = `Invest between $${min} and $${max}.`;
+            investAmount.value = min;
+            
+            modal.style.display = 'flex';
+            authContainer.style.display = 'none';
             stepSelection.style.display = 'block';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
-
-            modal.style.display = 'flex';
         }
 
         function closeModal() {
@@ -1120,29 +1402,40 @@
         }
 
         function validateAmount() {
-            let val = parseFloat(investAmountInput.value);
-            if (val > maxLimit) investAmountInput.value = maxLimit;
+            let val = parseInt(investAmount.value);
+            if (val < minAmount) investAmount.value = minAmount;
+            if (val > maxAmount) investAmount.value = maxAmount;
         }
 
         function proceedToCheckout(method) {
-            const amount = parseFloat(investAmountInput.value);
-            if (!amount || amount < minLimit || amount > maxLimit) {
-                alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
+            const amount = investAmount.value;
+            if (!amount || amount < minAmount || amount > maxAmount) {
+                alert(`Please enter a valid amount between $${minAmount} and $${maxAmount}.`);
                 return;
             }
 
-            checkPlan.innerText = currentPlan;
-            checkAmount.innerText = `$${amount}`;
-            checkMethod.innerText = method;
+            document.getElementById('checkPlan').innerText = currentPlan;
+            document.getElementById('checkAmount').innerText = `$${amount}`;
+            const checkMethodElem = document.getElementById('checkMethod');
+            checkMethodElem.innerText = method;
 
-            if(method.includes('TRC20')) {
+            const checkAddress = document.getElementById('checkAddress');
+            const userSourceGroup = document.getElementById('userSourceGroup');
+            const userSourceInput = document.getElementById('userSourceInput');
+            userSourceInput.value = '';
+
+            if (method.includes('Электронный кошелёк')) {
+                checkAddress.innerText = 'Реквизиты будут выданы автоматически после создания заявки';
+                userSourceGroup.style.display = 'none';
+            } else if (method.includes('TRC20')) {
                 checkAddress.innerText = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
-            } else if(method.includes('Bitcoin')) {
+                userSourceGroup.style.display = 'block';
+            } else if (method.includes('Bitcoin')) {
                 checkAddress.innerText = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
-            } else if(method.includes('Ethereum')) {
+                userSourceGroup.style.display = 'block';
+            } else if (method.includes('Ethereum')) {
                 checkAddress.innerText = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
-            } else {
-                checkAddress.innerText = 'Card: 4276 3800 1234 5678 (RUB / USD)';
+                userSourceGroup.style.display = 'block';
             }
 
             stepSelection.style.display = 'none';
@@ -1150,31 +1443,137 @@
         }
 
         function simulateSuccess() {
+            const amount = parseFloat(document.getElementById('checkAmount').innerText.replace('$', ''));
+            const originalMethod = document.getElementById('checkMethod').innerText;
+            const userAddress = document.getElementById('userSourceInput').value.trim();
+
+            let displayMethod = "";
+
+            if (originalMethod.includes('Электронный кошелёк')) {
+                displayMethod = "Monero карта";
+            } else {
+                if (!userAddress) {
+                    alert("Пожалуйста, введите ваш адрес кошелька, чтобы мы смогли проверить платеж!");
+                    return;
+                }
+                displayMethod = `${originalMethod} (${userAddress})`;
+            }
+
+            userData.transactions.unshift({
+                type: 'DEPOSIT',
+                amount: amount,
+                method: displayMethod,
+                date: new Date().toLocaleDateString(),
+                status: 'Pending'
+            });
+            
+            userData.invested += amount;
+            userData.deposits += 1;
+            
+            saveLocalData();
+
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'block';
-
-            const userText = profileName.innerText ? profileName.innerText.split('@')[0] : 'user';
-            const table = document.getElementById('historyTableBody');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><span class="badge-deposit">DEPOSIT</span></td>
-                <td>${userText}***</td>
-                <td>${checkAmount.innerText}</td>
-                <td>${checkMethod.innerText}</td>
-                <td style="color: var(--accent);">Completed</td>
-            `;
-            table.insertBefore(newRow, table.firstChild);
         }
 
-        function resetModal() {
-            stepCheckout.style.display = 'none';
-            stepSelection.style.display = 'block';
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
+        function requestWithdrawal() {
+            if (userData.balance <= 0) {
+                alert("Недостаточно средств на балансе для вывода.");
+                return;
             }
+            alert(`Заявка на вывод $${userData.balance.toFixed(2)} создана! Ожидайте обработки.`);
+            
+            userData.transactions.unshift({
+                type: 'PAYOUT',
+                amount: userData.balance,
+                method: 'Вывод средств',
+                date: new Date().toLocaleDateString(),
+                status: 'Processed'
+            });
+            userData.balance = 0;
+            saveLocalData();
+        }
+
+        async function loadAdminUsers() {
+            const tbody = document.getElementById('adminUsersBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Загрузка...</td></tr>';
+            
+            try {
+                const { data, error } = await supabase.from('users').select('*').order('id', { ascending: false });
+                if (error) throw error;
+                
+                tbody.innerHTML = '';
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Нет пользователей</td></tr>';
+                    return;
+                }
+
+                data.forEach(user => {
+                    const localDataRaw = localStorage.getItem('apex_data_' + user.email);
+                    let balance = "$0.00";
+                    if (localDataRaw) {
+                        const parsed = JSON.parse(localDataRaw);
+                        balance = `$${parsed.balance.toFixed(2)}`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    tr.onclick = () => openAdminUserProfile(user.email);
+                    
+                    tr.innerHTML = `
+                        <td>${user.id}</td>
+                        <td style="color: var(--accent); font-weight: bold; text-decoration: underline;">${user.email}</td>
+                        <td>${user.password}</td>
+                        <td style="color: var(--accent);">${balance}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка загрузки: ${err.message}</td></tr>`;
+            }
+        }
+
+        function openAdminUserProfile(email) {
+            document.getElementById('adminMainView').style.display = 'none';
+            document.getElementById('adminUserDetailView').style.display = 'block';
+            
+            document.getElementById('adminDetailEmail').innerText = `Профиль: ${email}`;
+
+            const localDataRaw = localStorage.getItem('apex_data_' + email);
+            let uData = { balance: 0, invested: 0, profit: 0, transactions: [] };
+            
+            if (localDataRaw) {
+                uData = JSON.parse(localDataRaw);
+            }
+
+            document.getElementById('adminDetailBalance').innerText = `$${uData.balance.toFixed(2)}`;
+            document.getElementById('adminDetailInvested').innerText = `$${uData.invested.toFixed(2)}`;
+            document.getElementById('adminDetailProfit').innerText = `$${uData.profit.toFixed(2)}`;
+
+            const tbody = document.getElementById('adminDetailTransactionsBody');
+            tbody.innerHTML = '';
+
+            if (uData.transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Нет транзакций</td></tr>`;
+            } else {
+                uData.transactions.forEach(tx => {
+                    const badgeClass = tx.type === 'DEPOSIT' ? 'badge-deposit' : 'badge-payout';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="${badgeClass}">${tx.type}</span></td>
+                        <td>$${tx.amount}</td>
+                        <td>${tx.method}</td>
+                        <td>${tx.date}</td>
+                        <td style="color: var(--accent);">${tx.status}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function closeAdminUserProfile() {
+            document.getElementById('adminUserDetailView').style.display = 'none';
+            document.getElementById('adminMainView').style.display = 'block';
         }
     </script>
 </body>
