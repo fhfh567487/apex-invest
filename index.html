@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[cite: 2]<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -774,7 +774,8 @@
         <div class="dashboard-header">
             <div class="dashboard-user-info">
                 <h2 id="dashUserEmail">Пользователь</h2>
-                <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span></p>
+                <!-- ДОБАВЛЕН ТАЙМЕР ВЫПЛАТЫ В ПРОФИЛЬ -->
+                <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span> | Выплата через: <span id="payoutTimer" style="color: #38bdf8; font-weight: 700;">24:00:00</span></p>
             </div>
             <button class="dash-action-btn deposit" style="flex: none; padding: 10px 20px;" onclick="scrollToPlans()">+ Пополнить баланс</button>
         </div>
@@ -1336,7 +1337,6 @@
             }
         }
 
-        // Функция открытия ЛК любого пользователя из Админки
         function viewUserDashboard(email) {
             document.getElementById('adminSection').style.display = 'none';
             dashUserEmail.innerText = `${email} (Просмотр админа)`;
@@ -1466,6 +1466,78 @@
                 closeModal();
             }
         }
+
+        // --- СКРИПТ ТАЙМЕРА ВЫПЛАТ И НАЧИСЛЕНИЯ БАЛАНСА ---
+        function initPayoutTimer() {
+            const timerEl = document.getElementById('payoutTimer');
+            if (!timerEl) return;
+
+            let email = localStorage.getItem('apex_logged_user');
+            if (!email) return;
+
+            let timerKey = 'apex_payout_target_' + email;
+            let targetTime = localStorage.getItem(timerKey);
+
+            // Если таймер еще не запущен для этого юзера, ставим 24 часа вперед
+            if (!targetTime || new Date().getTime() > parseInt(targetTime)) {
+                targetTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 часа
+                localStorage.setItem(timerKey, targetTime);
+            }
+
+            function update() {
+                let now = new Date().getTime();
+                let distance = targetTime - now;
+
+                if (distance <= 0) {
+                    timerEl.innerText = "Выплата поступила!";
+                    
+                    // Начисляем автоматическую прибыль (например, +$5 или процент от депозита)
+                    let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
+                        balance: 0, totalProfit: 0, transactions: []
+                    };
+                    
+                    let payoutSum = 5.00; // Сумма автоматической выплаты
+                    userData.balance += payoutSum;
+                    userData.totalProfit += payoutSum;
+                    
+                    userData.transactions.unshift({
+                        type: 'PAYOUT',
+                        amount: payoutSum,
+                        method: 'Автовыплата баланса',
+                        details: 'Ежедневное начисление прибыли',
+                        date: new Date().toLocaleDateString(),
+                        status: 'Processed'
+                    });
+
+                    localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+                    loadUserData(email);
+
+                    // Сбрасываем таймер снова на 24 часа
+                    targetTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+                    localStorage.setItem(timerKey, targetTime);
+                    return;
+                }
+
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                timerEl.innerText = 
+                    String(hours).padStart(2, '0') + ":" + 
+                    String(minutes).padStart(2, '0') + ":" + 
+                    String(seconds).padStart(2, '0');
+            }
+
+            setInterval(update, 1000);
+            update();
+        }
+
+        // Запускаем таймер после загрузки сессии
+        const originalLogin = window.loginUserSession;
+        window.loginUserSession = function(email) {
+            originalLogin(email);
+            initPayoutTimer();
+        };
     </script>
 </body>
 </html>
