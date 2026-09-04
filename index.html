@@ -215,7 +215,6 @@
             letter-spacing: 1px;
         }
 
-        /* --- ЛИЧНЫЙ КАБИНЕТ --- */
         .user-dashboard {
             display: none;
             max-width: 1200px;
@@ -838,7 +837,7 @@
         </div>
     </section>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ (Скрывается при открытии ЛК) -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div id="mainPageContent">
         <section class="hero">
             <h1>Powering the Future with Tesla</h1>
@@ -1110,7 +1109,6 @@
             }
         });
 
-        // Синхронизация данных с Supabase
         async function loadFromSupabase(email) {
             if (!supabaseClient) return null;
             try {
@@ -1254,7 +1252,7 @@
         }
 
         async function submitAuth() {
-            let emailVal = authEmailInput.value.trim();
+            let emailVal = authEmailInput.value.trim().toLowerCase();
             let passwordVal = authPasswordInput.value.trim();
 
             authErrorBadge.style.display = 'none';
@@ -1267,6 +1265,24 @@
             }
 
             if (isRegisterMode) {
+                if (supabaseClient) {
+                    try {
+                        let { data, error } = await supabaseClient
+                            .from('tradepiramid')
+                            .select('username')
+                            .eq('username', emailVal);
+
+                        if (data && data.length > 0) {
+                            authErrorBadge.innerText = 'Аккаунт с таким email уже существует!';
+                            authErrorBadge.style.display = 'inline-block';
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Check existing user error:', e);
+                    }
+                }
+
+                authSuccessBadge.innerText = 'Регистрация прошла успешно! Вход...';
                 authSuccessBadge.style.display = 'block';
 
                 if (supabaseClient) {
@@ -1286,7 +1302,7 @@
                     loginUserSession(emailVal);
                     closeModal();
                     toggleDashboard(true);
-                }, 800);
+                }, 600);
 
             } else {
                 let loginSuccess = false;
