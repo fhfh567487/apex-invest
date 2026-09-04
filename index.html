@@ -1,4 +1,4 @@
-[cite: 2]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -410,6 +410,17 @@
             font-size: 11px;
             font-weight: 600;
         }
+        
+        .tx-timer {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-left: 8px;
+        }
 
         .plans-grid {
             display: grid;
@@ -774,8 +785,7 @@
         <div class="dashboard-header">
             <div class="dashboard-user-info">
                 <h2 id="dashUserEmail">Пользователь</h2>
-                <!-- ДОБАВЛЕН ТАЙМЕР ВЫПЛАТЫ В ПРОФИЛЬ -->
-                <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span> | Выплата через: <span id="payoutTimer" style="color: #38bdf8; font-weight: 700;">24:00:00</span></p>
+                <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span></p>
             </div>
             <button class="dash-action-btn deposit" style="flex: none; padding: 10px 20px;" onclick="scrollToPlans()">+ Пополнить баланс</button>
         </div>
@@ -815,7 +825,7 @@
                             <th>Способ</th>
                             <th>Реквизиты / Ссылка</th>
                             <th>Дата</th>
-                            <th>Статус</th>
+                            <th>Статус / До выплаты</th>
                         </tr>
                     </thead>
                     <tbody id="userTransactionsBody">
@@ -1100,7 +1110,36 @@
             }
         });
 
-        function loginUserSession(email) {
+        // Синхронизация данных с Supabase
+        async function loadFromSupabase(email) {
+            if (!supabaseClient) return null;
+            try {
+                let { data, error } = await supabaseClient
+                    .from('tradepiramid')
+                    .select('user_data')
+                    .eq('username', email)
+                    .single();
+                if (data && data.user_data) {
+                    return typeof data.user_data === 'string' ? JSON.parse(data.user_data) : data.user_data;
+                }
+            } catch (e) {
+                console.warn('Load from supabase error:', e);
+            }
+            return null;
+        }
+
+        async function saveToSupabase(email, userData) {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.from('tradepiramid')
+                    .update({ user_data: JSON.stringify(userData) })
+                    .eq('username', email);
+            } catch (e) {
+                console.warn('Save to supabase error:', e);
+            }
+        }
+
+        async function loginUserSession(email) {
             localStorage.setItem('apex_logged_user', email);
             profileName.innerText = email;
             dashUserEmail.innerText = email;
@@ -1115,6 +1154,11 @@
                 document.getElementById('adminSection').style.display = 'none';
             }
 
+            let serverData = await loadFromSupabase(email);
+            if (serverData) {
+                localStorage.setItem('user_data_' + email, JSON.stringify(serverData));
+            }
+            
             loadUserData(email);
         }
 
@@ -1137,16 +1181,22 @@
                 txBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">У вас пока нет активных транзакций</td></tr>';
             } else {
                 txBody.innerHTML = '';
-                userData.transactions.forEach(tx => {
+                userData.transactions.forEach((tx, index) => {
                     let row = document.createElement('tr');
                     let isDep = tx.type === 'DEPOSIT';
+                    
+                    let timerHtml = '';
+                    if (isDep && tx.targetTime && !tx.payoutProcessed) {
+                        timerHtml = `<span class="tx-timer" data-target="${tx.targetTime}" data-index="${index}">--:--:--</span>`;
+                    }
+
                     row.innerHTML = `
                         <td><span class="${isDep ? 'badge-deposit' : 'badge-payout'}">${tx.type}</span></td>
                         <td style="font-weight: 600;">$${tx.amount}</td>
                         <td style="color: #fff; font-weight: 600;">${tx.method || '—'}</td>
                         <td>${tx.details || '—'}</td>
                         <td style="color: var(--text-muted);">${tx.date}</td>
-                        <td style="color: var(--accent);">${tx.status}</td>
+                        <td style="color: var(--accent);">${tx.status} ${timerHtml}</td>
                     `;
                     txBody.appendChild(row);
                 });
@@ -1222,7 +1272,7 @@
                 if (supabaseClient) {
                     try {
                         const { error } = await supabaseClient.from('tradepiramid').insert([
-                            { id148877: Date.now(), username: emailVal, password: passwordVal }
+                            { id148877: Date.now(), username: emailVal, password: passwordVal, user_data: "{}" }
                         ]);
                         if (error) {
                             console.error('Ошибка записи в Supabase:', error.message);
@@ -1316,7 +1366,14 @@
                 tbody.innerHTML = '';
                 data.forEach(user => {
                     let userEmail = user.username || '';
-                    let userData = JSON.parse(localStorage.getItem('user_data_' + userEmail)) || { balance: 0 };
+                    
+                    let userData = { balance: 0 };
+                    if (user.user_data) {
+                        userData = typeof user.user_data === 'string' ? JSON.parse(user.user_data) : user.user_data;
+                    } else {
+                        userData = JSON.parse(localStorage.getItem('user_data_' + userEmail)) || { balance: 0 };
+                    }
+                    
                     let userBalance = userData.balance ? `$${userData.balance.toFixed(2)}` : '$0.00';
 
                     let row = document.createElement('tr');
@@ -1432,16 +1489,22 @@
 
             userData.totalInvested += amount;
             userData.activeDeposits += 1;
+            
+            let futureTime = Date.now() + (24 * 60 * 60 * 1000);
+
             userData.transactions.unshift({
                 type: 'DEPOSIT',
                 amount: amount,
                 method: currentMethodName,
                 details: currentMethodDetails,
                 date: new Date().toLocaleDateString(),
-                status: 'Completed'
+                status: 'В работе',
+                targetTime: futureTime,
+                payoutProcessed: false
             });
 
             localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+            saveToSupabase(email, userData);
             loadUserData(email);
 
             const table = document.getElementById('historyTableBody');
@@ -1467,77 +1530,53 @@
             }
         }
 
-        // --- СКРИПТ ТАЙМЕРА ВЫПЛАТ И НАЧИСЛЕНИЯ БАЛАНСА ---
-        function initPayoutTimer() {
-            const timerEl = document.getElementById('payoutTimer');
-            if (!timerEl) return;
-
+        setInterval(() => {
+            const timers = document.querySelectorAll('.tx-timer');
             let email = localStorage.getItem('apex_logged_user');
-            if (!email) return;
+            if (!email || timers.length === 0) return;
+            
+            let userData = JSON.parse(localStorage.getItem('user_data_' + email));
+            if (!userData) return;
+            
+            let needsUpdate = false;
+            let now = Date.now();
 
-            let timerKey = 'apex_payout_target_' + email;
-            let targetTime = localStorage.getItem(timerKey);
-
-            // Если таймер еще не запущен для этого юзера, ставим 24 часа вперед
-            if (!targetTime || new Date().getTime() > parseInt(targetTime)) {
-                targetTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 часа
-                localStorage.setItem(timerKey, targetTime);
-            }
-
-            function update() {
-                let now = new Date().getTime();
+            timers.forEach(timerEl => {
+                let targetTime = parseInt(timerEl.getAttribute('data-target'));
+                let txIndex = parseInt(timerEl.getAttribute('data-index'));
                 let distance = targetTime - now;
 
                 if (distance <= 0) {
-                    timerEl.innerText = "Выплата поступила!";
+                    if (userData.transactions[txIndex] && !userData.transactions[txIndex].payoutProcessed) {
+                        userData.transactions[txIndex].payoutProcessed = true;
+                        userData.transactions[txIndex].status = 'Выплачено';
+                        
+                        let investAmount = userData.transactions[txIndex].amount;
+                        let profitAmount = investAmount * 0.12; 
+                        
+                        userData.balance += (investAmount + profitAmount);
+                        userData.totalProfit += profitAmount;
+                        userData.activeDeposits -= 1;
+                        needsUpdate = true;
+                    }
+                } else {
+                    let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    let s = Math.floor((distance % (1000 * 60)) / 1000);
                     
-                    // Начисляем автоматическую прибыль (например, +$5 или процент от депозита)
-                    let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
-                        balance: 0, totalProfit: 0, transactions: []
-                    };
-                    
-                    let payoutSum = 5.00; // Сумма автоматической выплаты
-                    userData.balance += payoutSum;
-                    userData.totalProfit += payoutSum;
-                    
-                    userData.transactions.unshift({
-                        type: 'PAYOUT',
-                        amount: payoutSum,
-                        method: 'Автовыплата баланса',
-                        details: 'Ежедневное начисление прибыли',
-                        date: new Date().toLocaleDateString(),
-                        status: 'Processed'
-                    });
-
-                    localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-                    loadUserData(email);
-
-                    // Сбрасываем таймер снова на 24 часа
-                    targetTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-                    localStorage.setItem(timerKey, targetTime);
-                    return;
+                    timerEl.innerText = 
+                        String(h).padStart(2, '0') + ":" + 
+                        String(m).padStart(2, '0') + ":" + 
+                        String(s).padStart(2, '0');
                 }
+            });
 
-                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                timerEl.innerText = 
-                    String(hours).padStart(2, '0') + ":" + 
-                    String(minutes).padStart(2, '0') + ":" + 
-                    String(seconds).padStart(2, '0');
+            if (needsUpdate) {
+                localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+                saveToSupabase(email, userData);
+                loadUserData(email); 
             }
-
-            setInterval(update, 1000);
-            update();
-        }
-
-        // Запускаем таймер после загрузки сессии
-        const originalLogin = window.loginUserSession;
-        window.loginUserSession = function(email) {
-            originalLogin(email);
-            initPayoutTimer();
-        };
+        }, 1000);
     </script>
 </body>
 </html>
