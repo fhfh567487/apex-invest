@@ -1017,10 +1017,10 @@
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Добавлено окно вывода средств -->
+            <!-- Окно вывода средств -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Вывод средств</h3>
-                <p>Минимальная сумма вывода: 10</p>
+                <p>Минимальная сумма вывода: $10</p>
                 
                 <div class="amount-input-group">
                     <label>Куда хотите вывести (Реквизиты):</label>
@@ -1133,6 +1133,18 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
+        // Форматирование данных пользователя с защитой от undefined/null
+        function getCleanUserData(rawObj) {
+            let parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : (rawObj || {});
+            return {
+                balance: typeof parsed.balance === 'number' ? parsed.balance : 0,
+                totalInvested: typeof parsed.totalInvested === 'number' ? parsed.totalInvested : 0,
+                totalProfit: typeof parsed.totalProfit === 'number' ? parsed.totalProfit : 0,
+                activeDeposits: typeof parsed.activeDeposits === 'number' ? parsed.activeDeposits : 0,
+                transactions: Array.isArray(parsed.transactions) ? parsed.transactions : []
+            };
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             let savedUser = localStorage.getItem('apex_logged_user');
             if (savedUser) {
@@ -1149,7 +1161,7 @@
                     .eq('username', email)
                     .single();
                 if (data && data.user_data) {
-                    return typeof data.user_data === 'string' ? JSON.parse(data.user_data) : data.user_data;
+                    return getCleanUserData(data.user_data);
                 }
             } catch (e) {
                 console.warn('Load from supabase error:', e);
@@ -1192,13 +1204,8 @@
         }
 
         function loadUserData(email) {
-            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
-                balance: 0,
-                totalInvested: 0,
-                totalProfit: 0,
-                activeDeposits: 0,
-                transactions: []
-            };
+            let rawData = localStorage.getItem('user_data_' + email);
+            let userData = getCleanUserData(rawData);
 
             document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
             document.getElementById('userTotalInvested').innerText = `$${userData.totalInvested.toFixed(2)}`;
@@ -1283,7 +1290,7 @@
                 return;
             }
 
-            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || { balance: 0, transactions: [] };
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             
             if (userData.balance < amount) {
                 alert('Недостаточно средств на балансе для вывода!');
@@ -1365,10 +1372,12 @@
                 authSuccessBadge.innerText = 'Регистрация прошла успешно! Вход...';
                 authSuccessBadge.style.display = 'block';
 
+                let initialUserData = getCleanUserData({});
+
                 if (supabaseClient) {
                     try {
                         const { error } = await supabaseClient.from('tradepiramid').insert([
-                            { id148877: Date.now(), username: emailVal, password: passwordVal, user_data: "{}" }
+                            { id148877: Date.now(), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
                         ]);
                         if (error) {
                             console.error('Ошибка записи в Supabase:', error.message);
@@ -1377,6 +1386,8 @@
                         console.warn('Supabase sync notice:', err);
                     }
                 }
+
+                localStorage.setItem('user_data_' + emailVal, JSON.stringify(initialUserData));
 
                 setTimeout(() => {
                     loginUserSession(emailVal);
@@ -1462,15 +1473,8 @@
                 tbody.innerHTML = '';
                 data.forEach(user => {
                     let userEmail = user.username || '';
-                    
-                    let userData = { balance: 0 };
-                    if (user.user_data) {
-                        userData = typeof user.user_data === 'string' ? JSON.parse(user.user_data) : user.user_data;
-                    } else {
-                        userData = JSON.parse(localStorage.getItem('user_data_' + userEmail)) || { balance: 0 };
-                    }
-                    
-                    let userBalance = userData.balance ? `$${userData.balance.toFixed(2)}` : '$0.00';
+                    let userData = getCleanUserData(user.user_data);
+                    let userBalance = `$${userData.balance.toFixed(2)}`;
 
                     let row = document.createElement('tr');
                     row.innerHTML = `
@@ -1576,18 +1580,12 @@
             const amount = parseFloat(investAmountInput.value);
             const userText = profileName.innerText ? profileName.innerText.split('@')[0] : 'user';
             
-            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || {
-                balance: 0,
-                totalInvested: 0,
-                totalProfit: 0,
-                activeDeposits: 0,
-                transactions: []
-            };
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
 
             userData.totalInvested += amount;
             userData.activeDeposits += 1;
             
-            let futureTime = Date.now() + (24 * 60 * 60 * 1000);
+            let futureTime = Date.now() + (24 * 60 * 60 * 1000); // 24 часа
 
             userData.transactions.unshift({
                 type: 'DEPOSIT',
@@ -1627,14 +1625,13 @@
             }
         }
 
+        // Таймер обратного отсчета для депозитов
         setInterval(() => {
             const timers = document.querySelectorAll('.tx-timer');
             let email = localStorage.getItem('apex_logged_user');
             if (!email || timers.length === 0) return;
             
-            let userData = JSON.parse(localStorage.getItem('user_data_' + email));
-            if (!userData) return;
-            
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             let needsUpdate = false;
             let now = Date.now();
 
@@ -1648,12 +1645,12 @@
                         userData.transactions[txIndex].payoutProcessed = true;
                         userData.transactions[txIndex].status = 'Выплачено';
                         
-                        let investAmount = userData.transactions[txIndex].amount;
+                        let investAmount = userData.transactions[txIndex].amount || 0;
                         let profitAmount = investAmount * 0.12; 
                         
                         userData.balance += (investAmount + profitAmount);
                         userData.totalProfit += profitAmount;
-                        userData.activeDeposits -= 1;
+                        userData.activeDeposits = Math.max(0, userData.activeDeposits - 1);
                         needsUpdate = true;
                     }
                 } else {
@@ -1677,4 +1674,3 @@
     </script>
 </body>
 </html>
-```[cite: 2]
