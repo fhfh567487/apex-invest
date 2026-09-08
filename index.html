@@ -568,7 +568,7 @@
             font-size: 13px;
         }
 
-        .amount-input-group input {
+        .amount-input-group input, .amount-input-group select {
             width: 100%;
             padding: 12px;
             background: var(--bg-color);
@@ -1017,6 +1017,36 @@
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
+            <!-- Добавлено окно вывода средств -->
+            <div id="stepWithdraw" style="display: none;">
+                <h3>Вывод средств</h3>
+                <p>Минимальная сумма вывода: 10</p>
+                
+                <div class="amount-input-group">
+                    <label>Куда хотите вывести (Реквизиты):</label>
+                    <input type="text" id="withdrawDestination" placeholder="Номер карты или криптокошелек">
+                </div>
+
+                <div class="amount-input-group">
+                    <label>Куда выводить (Платежная система):</label>
+                    <select id="withdrawSystem">
+                        <option value="Банковская карта">Банковская карта</option>
+                        <option value="USDT TRC20">USDT TRC20</option>
+                        <option value="Bitcoin">Bitcoin</option>
+                        <option value="Payeer">Payeer</option>
+                    </select>
+                </div>
+
+                <div class="amount-input-group">
+                    <label>Сколько хотите вывести ($):</label>
+                    <input type="number" id="withdrawAmount" min="10" placeholder="10">
+                </div>
+
+                <button class="btn" onclick="submitWithdrawal()">Подтвердить вывод</button>
+                <br><br>
+                <button class="close-btn" onclick="closeModal()">Отмена</button>
+            </div>
+
             <div class="checkout-box" id="stepCheckout">
                 <h3>Complete Payment</h3>
                 <p>Transfer the exact amount to the address below:</p>
@@ -1081,6 +1111,7 @@
         const adminBtn = document.getElementById('adminBtn');
 
         const stepSelection = document.getElementById('stepSelection');
+        const stepWithdraw = document.getElementById('stepWithdraw');
         const stepCheckout = document.getElementById('stepCheckout');
         const stepSuccess = document.getElementById('stepSuccess');
 
@@ -1220,18 +1251,67 @@
 
         function requestWithdrawal() {
             let email = localStorage.getItem('apex_logged_user');
-            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || { balance: 0 };
-            
-            if (userData.balance <= 0) {
-                alert('На вашем балансе недостаточно средств для вывода.');
-            } else {
-                alert(`Заявка на вывод $${userData.balance.toFixed(2)} создана и отправлена в обработку!`);
+            if (!email) {
+                openAuthModal('login');
+                return;
             }
+            
+            authContainer.style.display = 'none';
+            stepSelection.style.display = 'none';
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'none';
+            stepWithdraw.style.display = 'block';
+            
+            document.getElementById('withdrawDestination').value = '';
+            document.getElementById('withdrawAmount').value = '10';
+            modal.style.display = 'flex';
+        }
+
+        function submitWithdrawal() {
+            let email = localStorage.getItem('apex_logged_user');
+            let amount = parseFloat(document.getElementById('withdrawAmount').value);
+            let destination = document.getElementById('withdrawDestination').value.trim();
+            let system = document.getElementById('withdrawSystem').value;
+
+            if (!destination) {
+                alert('Пожалуйста, укажите реквизиты для вывода!');
+                return;
+            }
+
+            if (isNaN(amount) || amount < 10) {
+                alert('Минимальная сумма для вывода составляет 10 единиц!');
+                return;
+            }
+
+            let userData = JSON.parse(localStorage.getItem('user_data_' + email)) || { balance: 0, transactions: [] };
+            
+            if (userData.balance < amount) {
+                alert('Недостаточно средств на балансе для вывода!');
+                return;
+            }
+
+            userData.balance -= amount;
+            userData.transactions.unshift({
+                type: 'PAYOUT',
+                amount: amount,
+                method: system,
+                details: destination,
+                date: new Date().toLocaleDateString(),
+                status: 'Обработано'
+            });
+
+            localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+            saveToSupabase(email, userData);
+            loadUserData(email);
+
+            alert(`Заявка на вывод $${amount} успешно создана!`);
+            closeModal();
         }
 
         function openAuthModal(type) {
             authContainer.style.display = 'block';
             stepSelection.style.display = 'none';
+            stepWithdraw.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
             authEmailInput.value = '';
@@ -1428,6 +1508,7 @@
             }
 
             authContainer.style.display = 'none';
+            stepWithdraw.style.display = 'none';
             currentPlan = planName;
             minLimit = min;
             maxLimit = max;
@@ -1596,3 +1677,4 @@
     </script>
 </body>
 </html>
+```[cite: 2]
