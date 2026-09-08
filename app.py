@@ -1,62 +1,82 @@
-from flask import Flask, request, jsonify, render_template, g
-import sqlite3
+from flask import Flask, request, jsonify
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-app = Flask(__name__, template_folder='.') # Ищет HTML файл в той же папке
+app = Flask(__name__)
 
-DATABASE = 'users.db'
+# --- НАСТРОЙКИ SMTP ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 465
+SENDER_EMAIL = "your_email@gmail.com"
+SENDER_PASSWORD = "your_app_password"  # Пароль приложения (для Gmail/Yandex/Mail.ru)
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
+def send_withdrawal_email(to_email: str, amount: str | float, wallet_address: str) -> bool:
+    """Функция формирования и отправки email-уведомления"""
+    subject = "Заявка на вывод средств принята"
+    body = (
+        f"Здравствуйте!\n\n"
+        f"Ваша заявка на вывод средств успешно сформирована и передана в обработку.\n\n"
+        f"Детали заявки:\n"
+        f"- Сумма: {amount}\n"
+        f"- Реквизиты/Кошелек: {wallet_address}\n\n"
+        f"Если вы не совершали эту операцию, срочно обратитесь в поддержку."
+    )
 
-# Автоматическое создание таблицы, если её нет
-def init_db():
-    with app.app_context():
-        db = get_db()
-        db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT)')
-        db.commit()
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    try:
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[ERROR] Ошибка отправки письма: {e}")
+        return False
 
-@app.route('/register', methods=['POST'])
-def register():
-    username = request.form.get('username')
-    password = request.form.get('password')
 
-    db = get_db()
-    # Ищем пользователя в базе
-    existing_user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+@app.route('/api/withdraw', methods=['POST'])
+def handle_withdrawal():
+    data = request.get_json()
 
-    if existing_user:
-        return jsonify({"error": "Такой аккаунт уже есть. Пожалуйста, выполните вход."}), 400
+    if not data:
+        return jsonify({"status": "error", "message": "Тело запроса должно быть в формате JSON"}), 400
+
+    email = data.get('email')
+    amount = data.get('amount')
+    wallet = data.get('wallet')
+
+    if not all([email, amount, wallet]):
+        return jsonify({
+            "status": "error", 
+            "message": "Заполните все обязательные поля: email, amount, wallet"
+        }), 400
+
+    # 1. Здесь выполняется логика сохранения в БД (например, db.session.add(...))
+
+    # 2. Отправка письма сразу после логики вывода
+    is_sent = send_withdrawal_email(
+        to_email=email,
+        amount=amount,
+        wallet_address=wallet
+    )
+
+    if is_sent:
+        return jsonify({
+            "status": "success",
+            "message": "Заявка создана, уведомление отправлено на почту."
+        }), 200
     else:
-        db.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-        db.commit()
-        return jsonify({"success": "Аккаунт успешно создан!"}), 200
+        return jsonify({
+            "status": "warning",
+            "message": "Заявка создана, но не удалось отправить письмо на почту."
+        }), 200
 
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-
-    db = get_db()
-    user = db.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password)).fetchone()
-
-    if user:
-        return jsonify({"success": "Вы успешно вошли в систему!"}), 200
-    else:
-        return jsonify({"error": "Неверный логин или пароль"}), 400
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
