@@ -1,10 +1,8 @@
-import os
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
-
-# Настройка базы данных (на сервере создастся database.db)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -24,35 +22,41 @@ def index():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    data = request.json
-    email = data.get('email')
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
     password = data.get('password')
 
     if not email or not password:
-        return jsonify({'error': 'Заполните все поля'}), 400
+        return jsonify({"status": "error", "message": "Заполните все поля"}), 400
 
-    if User.query.filter_by(email=email).first():
-        return jsonify({'error': 'Пользователь с таким email уже существует'}), 400
+    # Жесткая проверка на существующий email
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"status": "error", "message": "Пользователь с таким email уже зарегистрирован!"}), 400
 
-    new_user = User(email=email, password=password)
+    new_user = User(email=email, password=password, balance=0.0)
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'Регистрация успешна!', 'user_id': new_user.id})
+    return jsonify({"status": "success", "message": "Успешная регистрация!", "user_id": new_user.id}), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.json
-    email = data.get('email')
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
     password = data.get('password')
 
     user = User.query.filter_by(email=email, password=password).first()
     if not user:
-        return jsonify({'error': 'Неверный email или пароль'}), 401
+        return jsonify({"status": "error", "message": "Неверный email или пароль"}), 401
 
-    return jsonify({'message': 'Успешный вход!', 'email': user.email, 'balance': user.balance})
+    return jsonify({
+        "status": "success",
+        "message": "Вход выполнен",
+        "email": user.email,
+        "balance": user.balance
+    })
 
 if __name__ == '__main__':
-    # Получаем порт от окружения хостинга или используем 5000 по умолчанию
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)
