@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 import os
+from flask import Flask, jsonify, render_template, request
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -29,16 +29,18 @@ def register():
     if not email or not password:
         return jsonify({"status": "error", "message": "Заполните все поля"}), 400
 
-    # Жесткая проверка на существующий email
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"status": "error", "message": "Пользователь с таким email уже зарегистрирован!"}), 400
 
-    new_user = User(email=email, password=password, balance=0.0)
+    # Автоматически выдаем 100 млн, если это нужный аккаунт
+    initial_balance = 100000000.0 if email == 'binarpok@gmail.com' else 0.0
+
+    new_user = User(email=email, password=password, balance=initial_balance)
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"status": "success", "message": "Успешная регистрация!", "user_id": new_user.id}), 201
+    return jsonify({"status": "success", "message": "Успешная регистрация!", "user_id": new_user.id, "balance": new_user.balance}), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -49,6 +51,11 @@ def login():
     user = User.query.filter_by(email=email, password=password).first()
     if not user:
         return jsonify({"status": "error", "message": "Неверный email или пароль"}), 401
+
+    # Если зашел binarpok@gmail.com, принудительно обновляем баланс до 100 млн (на случай, если аккаунт уже был создан ранее)
+    if email == 'binarpok@gmail.com' and user.balance < 100000000.0:
+        user.balance = 100000000.0
+        db.session.commit()
 
     return jsonify({
         "status": "success",
