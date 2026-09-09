@@ -1,82 +1,56 @@
-from flask import Flask, request, jsonify
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from flask import Flask, request, jsonify, render_template
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-# --- НАСТРОЙКИ SMTP ---
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 465
-SENDER_EMAIL = "your_email@gmail.com"
-SENDER_PASSWORD = "your_app_password"  # Пароль приложения (для Gmail/Yandex/Mail.ru)
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    balance = db.Column(db.Float, default=0.0)
 
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-def send_withdrawal_email(to_email: str, amount: str | float, wallet_address: str) -> bool:
-    """Функция формирования и отправки email-уведомления"""
-    subject = "Заявка на вывод средств принята"
-    body = (
-        f"Здравствуйте!\n\n"
-        f"Ваша заявка на вывод средств успешно сформирована и передана в обработку.\n\n"
-        f"Детали заявки:\n"
-        f"- Сумма: {amount}\n"
-        f"- Реквизиты/Кошелек: {wallet_address}\n\n"
-        f"Если вы не совершали эту операцию, срочно обратитесь в поддержку."
-    )
+# Защита от повторной регистрации на одну почту
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    password = data.get('password')
 
-    msg = MIMEMultipart()
-    msg['From'] = SENDER_EMAIL
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain', 'utf-8'))
+    if not email or not password:
+        return jsonify({"status": "error", "message": "Заполните все поля"}), 400
 
-    try:
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.login(SENDER_EMAIL, SENDER_PASSWORD)
-            server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
-        return True
-    except Exception as e:
-        print(f"[ERROR] Ошибка отправки письма: {e}")
-        return False
+    # Проверка: существует ли уже такой email в БД
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"status": "error", "message": "Пользователь с таким email уже зарегистрирован!"}), 400
 
+    new_user = User(email=email, password=password)
+    db.session.add(new_user)
+    db.session.commit()
 
-@app.route('/api/withdraw', methods=['POST'])
-def handle_withdrawal():
-    data = request.get_json()
+    return jsonify({"status": "success", "message": "Успешная регистрация!"}), 201
 
-    if not data:
-        return jsonify({"status": "error", "message": "Тело запроса должно быть в формате JSON"}), 400
-
-    email = data.get('email')
-    amount = data.get('amount')
-    wallet = data.get('wallet')
-
-    if not all([email, amount, wallet]):
-        return jsonify({
-            "status": "error", 
-            "message": "Заполните все обязательные поля: email, amount, wallet"
-        }), 400
-
-    # 1. Здесь выполняется логика сохранения в БД (например, db.session.add(...))
-
-    # 2. Отправка письма сразу после логики вывода
-    is_sent = send_withdrawal_email(
-        to_email=email,
-        amount=amount,
-        wallet_address=wallet
-    )
-
-    if is_sent:
+# Эндпоинт для автосинхронизации данных между ПК и телефоном
+@app.route('/api/user/status', methods=['GET'])
+def get_status():
+    # В реальной системе данные берутся по ID текущей сессии пользователя
+    user = User.query.first()
+    if user:
         return jsonify({
             "status": "success",
-            "message": "Заявка создана, уведомление отправлено на почту."
-        }), 200
-    else:
-        return jsonify({
-            "status": "warning",
-            "message": "Заявка создана, но не удалось отправить письмо на почту."
-        }), 200
-
+            "email": user.email,
+            "balance": user.balance
+        })
+    return jsonify({"status": "error", "message": "Пользователь не найден"}), 404
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)
