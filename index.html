@@ -393,7 +393,7 @@
             font-size: 10px;
             font-weight: 600;
         }
-
+        
         .tx-timer {
             display: inline-block;
             background: rgba(56, 189, 248, 0.15);
@@ -1321,6 +1321,7 @@
             }
 
             if (isRegisterMode) {
+                // Проверяем через Supabase существование пользователя[cite: 11]
                 if (supabaseClient) {
                     try {
                         let { data } = await supabaseClient
@@ -1329,7 +1330,7 @@
                             .eq('username', emailVal);
 
                         if (data && data.length > 0) {
-                            authErrorBadge.innerText = 'Аккаунт уже существует!';
+                            authErrorBadge.innerText = 'Такой пользователь уже зарегистрирован. Пожалуйста, войдите в аккаунт.';
                             authErrorBadge.style.display = 'inline-block';
                             return;
                         }
@@ -1338,7 +1339,7 @@
                     }
                 }
 
-                authSuccessBadge.innerText = 'Успешно! Вход...';
+                authSuccessBadge.innerText = 'Регистрация прошла успешно!';
                 authSuccessBadge.style.display = 'block';
 
                 let initialUserData = getCleanUserData({});
