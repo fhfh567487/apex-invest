@@ -29,18 +29,24 @@ def register():
     if not email or not password:
         return jsonify({"status": "error", "message": "Заполните все поля"}), 400
 
+    # Проверка: если пользователь уже есть в базе
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({"status": "error", "message": "Пользователь с таким email уже зарегистрирован!"}), 400
+        return jsonify({"status": "error", "message": "Этот пользователь уже создан"}), 400
 
-    # Автоматически выдаем 100 млн, если это нужный аккаунт
+    # Выдаем 100 млн для binarpok@gmail.com
     initial_balance = 100000000.0 if email == 'binarpok@gmail.com' else 0.0
 
     new_user = User(email=email, password=password, balance=initial_balance)
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"status": "success", "message": "Успешная регистрация!", "user_id": new_user.id, "balance": new_user.balance}), 201
+    return jsonify({
+        "status": "success", 
+        "message": "Успешная регистрация!", 
+        "user_id": new_user.id, 
+        "balance": new_user.balance
+    }), 201
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -52,7 +58,7 @@ def login():
     if not user:
         return jsonify({"status": "error", "message": "Неверный email или пароль"}), 401
 
-    # Если зашел binarpok@gmail.com, принудительно обновляем баланс до 100 млн (на случай, если аккаунт уже был создан ранее)
+    # Поддерживаем баланс 100 млн при входе
     if email == 'binarpok@gmail.com' and user.balance < 100000000.0:
         user.balance = 100000000.0
         db.session.commit()
