@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for[cite: 4]
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -31,6 +31,31 @@ init_db()
 def index():
     return render_template('index.html')
 
+@app.route('/admin/add_money', methods=['POST'])
+def admin_add_money():
+    email = request.form.get('email')
+    try:
+        amount = float(request.form.get('amount'))
+    except (TypeError, ValueError):
+        return "Ошибка: неверная сумма!", 400
+
+    # Используем встроенную функцию подключения к БД
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Безопасно обновляем баланс (прибавляем к текущему значению)
+    cursor.execute("""
+        UPDATE users 
+        SET balance = balance + ? 
+        WHERE email = ?
+    """, (amount, email))
+    
+    conn.commit()
+    conn.close()
+
+    # Перенаправляем обратно в админку (убедитесь, что функция называется admin_panel)
+    return redirect(url_for('admin_panel'))
+
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.json
@@ -43,7 +68,6 @@ def register():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. ЗАЩИТА: Проверка на существующую почту (чтобы не взломали)
     cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
     if cursor.fetchone():
         conn.close()
@@ -76,7 +100,6 @@ def login():
     
     return jsonify({"success": False, "message": "Неверный email или пароль!"}), 401
 
-# 2. СИНХРОНИЗАЦИЯ: получение баланса с сервера
 @app.route('/api/user_data', methods=['GET'])
 def get_user_data():
     user_id = session.get('user_id')
