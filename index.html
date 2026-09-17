@@ -1105,13 +1105,35 @@
 
         function getCleanUserData(rawObj) {
             let parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : (rawObj || {});
-            return {
+            let userData = {
                 balance: typeof parsed.balance === 'number' ? parsed.balance : 0,
                 totalInvested: typeof parsed.totalInvested === 'number' ? parsed.totalInvested : 0,
                 totalProfit: typeof parsed.totalProfit === 'number' ? parsed.totalProfit : 0,
                 activeDeposits: typeof parsed.activeDeposits === 'number' ? parsed.activeDeposits : 0,
                 transactions: Array.isArray(parsed.transactions) ? parsed.transactions : []
             };
+
+            // Автоматическое исправление: если есть завершенные операции ("Выполнено" / "Выплачено"), но баланс не пополнился
+            let changed = false;
+            userData.transactions.forEach(tx => {
+                if ((tx.status === 'Выполнено' || tx.status === 'Выплачено') && !tx.payoutProcessed) {
+                    tx.payoutProcessed = true;
+                    let investAmount = tx.amount || 0;
+                    let profitAmount = investAmount * 0.12;
+                    userData.balance += (investAmount + profitAmount);
+                    userData.totalProfit += profitAmount;
+                    changed = true;
+                }
+            });
+
+            // Пересчет количества активных депозитов (только те, которые не выполнены)
+            let activeCount = userData.transactions.filter(tx => tx.type === 'DEPOSIT' && tx.status !== 'Выполнено' && tx.status !== 'Выплачено').length;
+            if (userData.activeDeposits !== activeCount) {
+                userData.activeDeposits = activeCount;
+                changed = true;
+            }
+
+            return userData;
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1175,6 +1197,8 @@
         function loadUserData(email) {
             let rawData = localStorage.getItem('user_data_' + email);
             let userData = getCleanUserData(rawData);
+            // Сохраняем исправленные данные обратно
+            localStorage.setItem('user_data_' + email, JSON.stringify(userData));
 
             document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
             document.getElementById('userTotalInvested').innerText = `$${userData.totalInvested.toFixed(2)}`;
@@ -1191,7 +1215,7 @@
                     let isDep = tx.type === 'DEPOSIT';
                     
                     let timerHtml = '';
-                    if (isDep && tx.targetTime && !tx.payoutProcessed) {
+                    if (isDep && tx.targetTime && !tx.payoutProcessed && tx.status !== 'Выполнено' && tx.status !== 'Выплачено') {
                         timerHtml = `<span class="tx-timer" data-target="${tx.targetTime}" data-index="${index}">--:--:--</span>`;
                     }
 
@@ -1321,7 +1345,6 @@
             }
 
             if (isRegisterMode) {
-                // Проверяем через Supabase существование пользователя
                 if (supabaseClient) {
                     try {
                         let { data } = await supabaseClient
