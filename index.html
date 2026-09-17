@@ -1148,7 +1148,7 @@
                     .from('tradepiramid')
                     .select('user_data')
                     .eq('username', email)
-                    .maybeSingle(); // ИСПРАВЛЕНО: Безопасный метод без ошибки 400
+                    .maybeSingle();
                 if (data && data.user_data) {
                     return getCleanUserData(data.user_data);
                 }
