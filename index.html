@@ -1113,7 +1113,6 @@
                 transactions: Array.isArray(parsed.transactions) ? parsed.transactions : []
             };
 
-            // Автоматическое исправление: если есть завершенные операции ("Выполнено" / "Выплачено"), но баланс не пополнился
             let changed = false;
             userData.transactions.forEach(tx => {
                 if ((tx.status === 'Выполнено' || tx.status === 'Выплачено') && !tx.payoutProcessed) {
@@ -1126,7 +1125,6 @@
                 }
             });
 
-            // Пересчет количества активных депозитов (только те, которые не выполнены)
             let activeCount = userData.transactions.filter(tx => tx.type === 'DEPOSIT' && tx.status !== 'Выполнено' && tx.status !== 'Выплачено').length;
             if (userData.activeDeposits !== activeCount) {
                 userData.activeDeposits = activeCount;
@@ -1150,7 +1148,7 @@
                     .from('tradepiramid')
                     .select('user_data')
                     .eq('username', email)
-                    .single();
+                    .maybeSingle(); // ИСПРАВЛЕНО: Безопасный метод без ошибки 400
                 if (data && data.user_data) {
                     return getCleanUserData(data.user_data);
                 }
@@ -1197,7 +1195,6 @@
         function loadUserData(email) {
             let rawData = localStorage.getItem('user_data_' + email);
             let userData = getCleanUserData(rawData);
-            // Сохраняем исправленные данные обратно
             localStorage.setItem('user_data_' + email, JSON.stringify(userData));
 
             document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
@@ -1370,7 +1367,7 @@
                 if (supabaseClient) {
                     try {
                         await supabaseClient.from('tradepiramid').insert([
-                            { id148877: Date.now(), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
+                            { id148877: Math.floor(Date.now() / 1000), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
                         ]);
                     } catch (err) {
                         console.warn(err);
