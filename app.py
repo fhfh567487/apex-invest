@@ -1,20 +1,31 @@
-import os
-from flask import Flask, jsonify, render_template, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, jsonify, session
+import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.secret_key = 'apex_invest_secret_key'
+DB_NAME = 'database.db'
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    balance = db.Column(db.Float, default=0.0)
+def get_db_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-with app.app_context():
-    db.create_all()
+def init_db():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            balance REAL DEFAULT 1000.0
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 @app.route('/')
 def index():
@@ -22,54 +33,70 @@ def index():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    data = request.get_json() or {}
+    data = request.json
     email = data.get('email', '').strip().lower()
-    password = data.get('password')
+    password = data.get('password', '').strip()
 
     if not email or not password:
-        return jsonify({"status": "error", "message": "Заполните все поля"}), 400
+        return jsonify({"success": False, "message": "Заполните все поля!"}), 400
 
-    # Проверка: если пользователь уже есть в базе
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        return jsonify({"status": "error", "message": "Этот пользователь уже создан"}), 400
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # 1. ЗАЩИТА: Проверка на существующую почту (чтобы не взломали)
+    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+    if cursor.fetchone():
+        conn.close()
+        return jsonify({"success": False, "message": "Пользователь уже существует!"}), 400
 
-    # Выдаем 100 млн для binarpok@gmail.com
-    initial_balance = 100000000.0 if email == 'binarpok@gmail.com' else 0.0
-
-    new_user = User(email=email, password=password, balance=initial_balance)
-    db.session.add(new_user)
-    db.session.commit()
-
-    return jsonify({
-        "status": "success", 
-        "message": "Успешная регистрация!", 
-        "user_id": new_user.id, 
-        "balance": new_user.balance
-    }), 201
+    hashed_password = generate_password_hash(password)
+    cursor.execute("INSERT INTO users (email, password, balance) VALUES (?, ?, ?)", 
+                   (email, hashed_password, 1000.0))
+    conn.commit()
+    session['user_id'] = cursor.lastrowid
+    conn.close()
+    
+    return jsonify({"success": True, "message": "Регистрация успешна!"})
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.get_json() or {}
+    data = request.json
     email = data.get('email', '').strip().lower()
-    password = data.get('password')
+    password = data.get('password', '').strip()
 
-    user = User.query.filter_by(email=email, password=password).first()
-    if not user:
-        return jsonify({"status": "error", "message": "Неверный email или пароль"}), 401
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
 
-    # Поддерживаем баланс 100 млн при входе
-    if email == 'binarpok@gmail.com' and user.balance < 100000000.0:
-        user.balance = 100000000.0
-        db.session.commit()
+    if user and check_password_hash(user['password'], password):
+        session['user_id'] = user['id']
+        return jsonify({"success": True, "message": "Успешный вход!"})
+    
+    return jsonify({"success": False, "message": "Неверный email или пароль!"}), 401
 
-    return jsonify({
-        "status": "success",
-        "message": "Вход выполнен",
-        "email": user.email,
-        "balance": user.balance
-    })
+# 2. СИНХРОНИЗАЦИЯ: получение баланса с сервера
+@app.route('/api/user_data', methods=['GET'])
+def get_user_data():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email, balance FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return jsonify({"success": True, "user": {"email": user["email"], "balance": user["balance"]}})
+    return jsonify({"success": False}), 404
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True, port=5000)
