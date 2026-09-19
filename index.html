@@ -455,7 +455,7 @@
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
             <!-- Окно Авторизации -->
-            <div id="authContainer" style="display: none;">
+            <div id="authContainer">
                 <h3 id="authTitle">Вход в аккаунт</h3>
                 <p id="authDesc">Введите ваши данные для доступа к кабинету</p>
 
@@ -479,7 +479,7 @@
             </div>
 
             <!-- Шаг 1: Ввод суммы и выбор метода -->
-            <div id="stepSelection">
+            <div id="stepSelection" style="display: none;">
                 <h3 id="modalTitle">Инвестиция</h3>
                 <p id="modalDesc">Введите сумму и выберите способ оплаты</p>
                 
@@ -651,6 +651,8 @@
         let isRegisterMode = false;
         let currentMethodName = '';
         let currentMethodDetails = '';
+        let pendingRegistrationData = null;
+        let generatedVerificationCode = '';
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
@@ -674,11 +676,10 @@
                 transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
                 firstName: parsed.firstName || '',
                 lastName: parsed.lastName || '',
-                verificationStatus: parsed.verificationStatus || 'none', // none, pending, verified
+                verificationStatus: parsed.verificationStatus || 'none',
                 verificationTime: parsed.verificationTime || null
             };
 
-            // Автоматическое завершение верификации, если прошло время
             if (userData.verificationStatus === 'pending' && userData.verificationTime && Date.now() >= userData.verificationTime) {
                 userData.verificationStatus = 'verified';
             }
@@ -784,7 +785,6 @@
                 profileAvatar.innerText = email.charAt(0).toUpperCase();
             }
 
-            // Статус верификации внутри панели кабинета
             if (userData.verificationStatus === 'verified') {
                 dashKycStatus.innerText = 'Пройдена';
                 dashKycStatus.style.color = 'var(--accent)';
@@ -915,12 +915,12 @@
                 return;
             }
 
-            authContainer.style.display = 'none';
+            authContainer.style.display = 'block';
             stepSelection.style.display = 'none';
             stepWithdraw.style.display = 'none';
+            stepVerification.style.display = 'block';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
-            stepVerification.style.display = 'block';
 
             document.getElementById('verifDocNumber').value = '';
             modal.style.display = 'flex';
@@ -937,9 +937,7 @@
             }
 
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
-            
-            // Выбираем случайное время от 1 до 4 минут (1, 2, 3 или 4 минуты)
-            let randomMinutes = Math.floor(Math.random() * 4) + 1;
+            let randomMinutes = Math.floor(Math.random() * 4) + 1; // 1 до 4 минут
             let waitMillis = randomMinutes * 60 * 1000;
 
             userData.verificationStatus = 'pending';
@@ -950,7 +948,7 @@
             loadUserData(email);
 
             closeModal();
-            showCustomAlert(`Документы успешно отправлены на проверку (${docType}). Примерное время ожидания проверки: от 1 до 4 минут (около ${randomMinutes} мин.).`, 'Верификация в обработке');
+            showCustomAlert(`Документы успешно отправлены на проверку (${docType}). Примерное время ожидания: от 1 до 4 минут (около ${randomMinutes} мин.).`, 'Верификация в обработке');
         }
 
         function requestWithdrawal() {
@@ -962,7 +960,7 @@
             
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             if (userData.verificationStatus !== 'verified') {
-                showCustomAlert('Для вывода средств необходимо пройти верификацию личности (KYC)! Пожалуйста, нажмите на кнопку «Верификация» в панели кабинета.', 'Требуется верификация');
+                showCustomAlert('Для вывода средств необходимо пройти верификацию личности (KYC)! Нажмите кнопку «Верификация» в панели кабинета.', 'Требуется верификация');
                 return;
             }
             
@@ -1026,33 +1024,51 @@
             stepVerification.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
-            authEmailInput.value = '';
-            authPasswordInput.value = '';
-            authErrorBadge.style.display = 'none';
-            authSuccessBadge.style.display = 'none';
+            
+            // Восстанавливаем разметку авторизации/регистрации по умолчанию
+            authContainer.innerHTML = `
+                <h3 id="authTitle">Вход в аккаунт</h3>
+                <p id="authDesc">Введите ваши данные для доступа к кабинету</p>
+                <div class="auth-success-badge" id="authSuccessBadge">Успешно!</div>
+                <div class="amount-input-group">
+                    <label>Email адрес:</label>
+                    <input type="email" id="authEmail" placeholder="name@example.com">
+                </div>
+                <div class="amount-input-group">
+                    <label>Пароль:</label>
+                    <input type="password" id="authPassword" placeholder="••••••••">
+                </div>
+                <div class="auth-actions-row">
+                    <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Войти</button>
+                    <div class="auth-error-badge" id="authErrorBadge">Ошибка в данных</div>
+                </div>
+                <button class="close-btn" onclick="closeModal()">Закрыть</button>
+            `;
 
             isRegisterMode = (type === 'register');
-            if (isRegisterMode) {
-                authTitle.innerText = 'Создать аккаунт';
-                authSubmitBtn.innerText = 'Зарегистрироваться';
-            } else {
-                authTitle.innerText = 'Вход в систему';
-                authSubmitBtn.innerText = 'Войти';
-            }
+            document.getElementById('authTitle').innerText = isRegisterMode ? 'Создать аккаунт' : 'Вход в систему';
+            document.getElementById('authSubmitBtn').innerText = isRegisterMode ? 'Зарегистрироваться' : 'Войти';
 
             modal.style.display = 'flex';
         }
 
+        // Отправка формы авторизации / регистрации с подтверждением почты через бэкенд
         async function submitAuth() {
-            let emailVal = authEmailInput.value.trim().toLowerCase();
-            let passwordVal = authPasswordInput.value.trim();
+            let emailInput = document.getElementById('authEmail');
+            let passwordInput = document.getElementById('authPassword');
+            let errorBadge = document.getElementById('authErrorBadge');
+            let successBadge = document.getElementById('authSuccessBadge');
+            let submitBtn = document.getElementById('authSubmitBtn');
 
-            authErrorBadge.style.display = 'none';
-            authSuccessBadge.style.display = 'none';
+            let emailVal = emailInput.value.trim().toLowerCase();
+            let passwordVal = passwordInput.value.trim();
+
+            errorBadge.style.display = 'none';
+            successBadge.style.display = 'none';
 
             if (!emailVal || !passwordVal) {
-                authErrorBadge.innerText = 'Заполните все поля!';
-                authErrorBadge.style.display = 'inline-block';
+                errorBadge.innerText = 'Заполните все поля!';
+                errorBadge.style.display = 'inline-block';
                 return;
             }
 
@@ -1065,8 +1081,8 @@
                             .eq('username', emailVal);
 
                         if (data && data.length > 0) {
-                            authErrorBadge.innerText = 'Пользователь уже существует.';
-                            authErrorBadge.style.display = 'inline-block';
+                            errorBadge.innerText = 'Пользователь уже существует.';
+                            errorBadge.style.display = 'inline-block';
                             return;
                         }
                     } catch (e) {
@@ -1074,28 +1090,37 @@
                     }
                 }
 
-                authSuccessBadge.innerText = 'Регистрация прошла успешно!';
-                authSuccessBadge.style.display = 'block';
+                // Генерируем 6-значный код
+                generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+                pendingRegistrationData = { email: emailVal, password: passwordVal };
 
-                let initialUserData = getCleanUserData({});
+                submitBtn.innerText = 'Отправка письма...';
+                submitBtn.disabled = true;
 
-                if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('tradepiramid').insert([
-                            { id148877: Math.floor(Date.now() / 1000), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
-                        ]);
-                    } catch (err) {
-                        console.warn(err);
+                try {
+                    // Отправляем запрос на наш бэкенд Flask для отправки через Resend
+                    let res = await fetch('/api/send-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailVal, code: generatedVerificationCode })
+                    });
+                    let result = await res.json();
+
+                    if (result.success) {
+                        showVerificationCodeStep(emailVal);
+                    } else {
+                        errorBadge.innerText = result.message || 'Ошибка отправки письма';
+                        errorBadge.style.display = 'inline-block';
+                        submitBtn.innerText = 'Зарегистрироваться';
+                        submitBtn.disabled = false;
                     }
+                } catch (err) {
+                    console.error(err);
+                    errorBadge.innerText = 'Ошибка соединения с сервером';
+                    errorBadge.style.display = 'inline-block';
+                    submitBtn.innerText = 'Зарегистрироваться';
+                    submitBtn.disabled = false;
                 }
-
-                localStorage.setItem('user_data_' + emailVal, JSON.stringify(initialUserData));
-
-                setTimeout(() => {
-                    loginUserSession(emailVal);
-                    closeModal();
-                    toggleDashboard(true);
-                }, 500);
 
             } else {
                 let loginSuccess = false;
@@ -1121,10 +1146,64 @@
                     closeModal();
                     toggleDashboard(true);
                 } else {
-                    authErrorBadge.innerText = 'Неверный логин или пароль';
-                    authErrorBadge.style.display = 'inline-block';
+                    errorBadge.innerText = 'Неверный логин или пароль';
+                    errorBadge.style.display = 'inline-block';
                 }
             }
+        }
+
+        // Окно ввода кода подтверждения почты на том же месте
+        function showVerificationCodeStep(email) {
+            authContainer.innerHTML = `
+                <h3>Подтверждение почты</h3>
+                <p>Мы отправили код подтверждения на почту:<br><b style="color: var(--accent);">${email}</b></p>
+                
+                <div class="amount-input-group">
+                    <label>Введите 6-значный код:</label>
+                    <input type="text" id="confirmCodeInput" placeholder="123456" maxlength="6" style="text-align: center; font-size: 20px; letter-spacing: 4px;">
+                </div>
+
+                <div class="auth-actions-row" style="flex-direction: column;">
+                    <button class="btn" onclick="verifyEmailCode()">Подтвердить код</button>
+                    <div class="auth-error-badge" id="codeErrorBadge" style="display: none;">Неверный код</div>
+                </div>
+
+                <button class="close-btn" onclick="closeModal()">Отмена</button>
+            `;
+        }
+
+        // Проверка введенного кода подтверждения
+        async function verifyEmailCode() {
+            let userInputCode = document.getElementById('confirmCodeInput').value.trim();
+            let codeErrorBadge = document.getElementById('codeErrorBadge');
+
+            if (userInputCode !== generatedVerificationCode) {
+                codeErrorBadge.innerText = 'Неверный код! Попробуйте снова.';
+                codeErrorBadge.style.display = 'block';
+                return;
+            }
+
+            let emailVal = pendingRegistrationData.email;
+            let passwordVal = pendingRegistrationData.password;
+
+            let initialUserData = getCleanUserData({});
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('tradepiramid').insert([
+                        { id148877: Math.floor(Date.now() / 1000), username: emailVal, password: passwordVal, user_data: JSON.stringify(initialUserData) }
+                    ]);
+                } catch (err) {
+                    console.warn(err);
+                }
+            }
+
+            localStorage.setItem('user_data_' + emailVal, JSON.stringify(initialUserData));
+
+            loginUserSession(emailVal);
+            closeModal();
+            toggleDashboard(true);
+            showCustomAlert('Почта успешно подтверждена, аккаунт создан!', 'Успешно');
         }
 
         function logout() {
@@ -1204,8 +1283,7 @@
 
             if (!isLogged) {
                 openAuthModal('login');
-                authErrorBadge.innerText = 'Сначала войдите в систему!';
-                authErrorBadge.style.display = 'inline-block';
+                showCustomAlert('Сначала войдите в систему!', 'Внимание');
                 return;
             }
 
@@ -1336,7 +1414,6 @@
             let needsUpdate = false;
             let now = Date.now();
 
-            // Проверка окончания верификации
             if (userData.verificationStatus === 'pending' && userData.verificationTime && now >= userData.verificationTime) {
                 userData.verificationStatus = 'verified';
                 needsUpdate = true;
