@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import random
+from flask import Flask, render_template, request, jsonify, session
 from dotenv import load_dotenv
 import resend
 
@@ -11,28 +12,46 @@ app.secret_key = os.getenv("SECRET_KEY", "super-secret-key")
 # Настройка Resend API
 resend.api_key = os.getenv("RESEND_API_KEY")
 
+# Временное хранилище кодов (в памяти)
+verification_codes = {}
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/api/register', methods=['POST'])
-def register():
+@app.route('/api/login', methods=['POST'])
+def login():
     data = request.get_json()
     email = data.get('email')
+    
     if not email:
         return jsonify({"success": False, "error": "Email обязателен"}), 400
+    
+    # Генерируем случайный 4-значный код подтверждения
+    code = str(random.randint(1000, 9999))
+    verification_codes[email] = code
     
     try:
         params = {
             "from": "Apex Invest <onboarding@resend.dev>",
             "to": [email],
-            "subject": "Подтверждение регистрации в Apex Invest",
-            "html": "<p>Спасибо за регистрацию в Apex Invest! Добро пожаловать на платформу.</p>"
+            "subject": "Код подтверждения для входа в Apex Invest",
+            "html": f"<p>Ваш код для входа в Apex Invest: <b>{code}</b></p>"
         }
-        email_response = resend.Emails.send(params)
-        return jsonify({"success": True, "response": email_response})
+        resend.Emails.send(params)
+        return jsonify({"success": True, "message": "Код отправлен на почту"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/verify', methods=['POST'])
+def verify():
+    data = request.get_json()
+    email = data.get('email')
+    user_code = data.get('code')
+    
+    if verification_codes.get(email) == user_code:
+        return jsonify({"success": True, "message": "Успешный вход!"})
+    return jsonify({"success": False, "error": "Неверный код"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
