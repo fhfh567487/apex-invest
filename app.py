@@ -12,12 +12,35 @@ app.secret_key = os.getenv("SECRET_KEY", "super-secret-key")
 # Настройка Resend API
 resend.api_key = os.getenv("RESEND_API_KEY")
 
-# Временное хранилище кодов (в памяти)
+# Временное хранилище кодов подтверждения
 verification_codes = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({"success": False, "error": "Email обязателен"}), 400
+    
+    code = str(random.randint(1000, 9999))
+    verification_codes[email] = code
+    
+    try:
+        params = {
+            "from": "Apex Invest <onboarding@resend.dev>",
+            "to": [email],
+            "subject": "Подтверждение регистрации в Apex Invest",
+            "html": f"<p>Ваш код подтверждения для регистрации: <b>{code}</b></p>"
+        }
+        resend.Emails.send(params)
+        return jsonify({"success": True, "message": "Код отправлен на почту"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -27,7 +50,6 @@ def login():
     if not email:
         return jsonify({"success": False, "error": "Email обязателен"}), 400
     
-    # Генерируем случайный 4-значный код подтверждения
     code = str(random.randint(1000, 9999))
     verification_codes[email] = code
     
@@ -36,7 +58,7 @@ def login():
             "from": "Apex Invest <onboarding@resend.dev>",
             "to": [email],
             "subject": "Код подтверждения для входа в Apex Invest",
-            "html": f"<p>Ваш код для входа в Apex Invest: <b>{code}</b></p>"
+            "html": f"<p>Ваш код для входа: <b>{code}</b></p>"
         }
         resend.Emails.send(params)
         return jsonify({"success": True, "message": "Код отправлен на почту"})
