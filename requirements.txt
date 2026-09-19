@@ -1,0 +1,4 @@
+flask
+resend
+python-dotenv
+gunicorn
