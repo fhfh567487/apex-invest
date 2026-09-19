@@ -14,6 +14,7 @@
             --text-main: #ffffff;
             --text-muted: #94a3b8;
             --danger: #ff4d4d;
+            --warning: #ffaa00;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -35,6 +36,7 @@
         .profile-avatar { width: 24px; height: 24px; background: var(--accent); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; }
         .profile-name { font-size: 12px; color: #fff; font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .dashboard-nav-btn { background: rgba(0, 255, 136, 0.15); color: var(--accent); border: 1px solid var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        
         .logout-btn { background: transparent; border: none; color: var(--danger); font-size: 11px; cursor: pointer; text-transform: uppercase; font-weight: 700; }
         .admin-nav-btn { background: #ffaa00; color: #000; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; display: none; }
 
@@ -192,9 +194,10 @@
             <div class="dashboard-header">
                 <div class="dashboard-user-info">
                     <h2 id="dashUserEmail">Пользователь</h2>
-                    <p>Статус аккаунта: <span style="color: var(--accent); font-weight: 600;">Активный Инвестор</span></p>
+                    <p>Статус аккаунта: <span style="color: var(--accent); font-weight: 600;">Активный Инвестор</span> | KYC: <span id="dashKycStatus" style="color: var(--warning); font-weight: 600;">Не пройдена</span></p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="openVerificationModal()">🛡️ Верификация</button>
                     <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showProfileView()">⚙️ Профиль</button>
                     <button class="dash-action-btn deposit" style="flex: none; width: auto; padding: 10px 15px;" onclick="scrollToPlans()">+ Пополнить</button>
                 </div>
@@ -494,6 +497,34 @@
                 <button class="close-btn" onclick="closeModal()">Отмена</button>
             </div>
 
+            <!-- Окно верификации (KYC) -->
+            <div id="stepVerification" style="display: none;">
+                <h3>Верификация личности</h3>
+                <p>Для вывода средств и безопасности аккаунта загрузите документ</p>
+                
+                <div class="amount-input-group">
+                    <label>Тип документа:</label>
+                    <select id="verifDocType">
+                        <option value="Паспорт">Паспорт</option>
+                        <option value="Водительские права">Водительские права</option>
+                        <option value="ID-карта / ВНЖ">ID-карта / ВНЖ</option>
+                    </select>
+                </div>
+
+                <div class="amount-input-group">
+                    <label>Номер документа:</label>
+                    <input type="text" id="verifDocNumber" placeholder="Например: 4510 123456">
+                </div>
+
+                <div class="amount-input-group">
+                    <label>Фото / Скан документа:</label>
+                    <input type="file" id="verifFile" style="padding: 8px;">
+                </div>
+
+                <button class="btn" onclick="submitVerification()">Отправить на проверку</button>
+                <button class="close-btn" onclick="closeModal()">Отмена</button>
+            </div>
+
             <!-- Окно вывода средств -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Вывод средств</h3>
@@ -598,6 +629,7 @@
 
         const stepSelection = document.getElementById('stepSelection');
         const stepWithdraw = document.getElementById('stepWithdraw');
+        const stepVerification = document.getElementById('stepVerification');
         const stepCheckout = document.getElementById('stepCheckout');
         const stepSuccess = document.getElementById('stepSuccess');
 
@@ -611,6 +643,7 @@
         const profileView = document.getElementById('profileView');
         const mainPageContent = document.getElementById('mainPageContent');
         const dashUserEmail = document.getElementById('dashUserEmail');
+        const dashKycStatus = document.getElementById('dashKycStatus');
 
         let currentPlan = '';
         let minLimit = 10;
@@ -621,7 +654,6 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        // Функция показа красивого кастомного окна вместо стандартного alert
         function showCustomAlert(text, title = 'Уведомление') {
             document.getElementById('customAlertTitle').innerText = title;
             document.getElementById('customAlertText').innerText = text;
@@ -632,7 +664,6 @@
             document.getElementById('customAlertModal').style.display = 'none';
         }
 
-        // Парсинг данных
         function getCleanUserData(rawObj) {
             let parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : (rawObj || {});
             let userData = {
@@ -642,8 +673,15 @@
                 activeDeposits: typeof parsed.activeDeposits === 'number' ? parsed.activeDeposits : 0,
                 transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
                 firstName: parsed.firstName || '',
-                lastName: parsed.lastName || ''
+                lastName: parsed.lastName || '',
+                verificationStatus: parsed.verificationStatus || 'none', // none, pending, verified
+                verificationTime: parsed.verificationTime || null
             };
+
+            // Автоматическое завершение верификации, если прошло время
+            if (userData.verificationStatus === 'pending' && userData.verificationTime && Date.now() >= userData.verificationTime) {
+                userData.verificationStatus = 'verified';
+            }
 
             let changed = false;
             userData.transactions.forEach(tx => {
@@ -746,6 +784,18 @@
                 profileAvatar.innerText = email.charAt(0).toUpperCase();
             }
 
+            // Статус верификации внутри панели кабинета
+            if (userData.verificationStatus === 'verified') {
+                dashKycStatus.innerText = 'Пройдена';
+                dashKycStatus.style.color = 'var(--accent)';
+            } else if (userData.verificationStatus === 'pending') {
+                dashKycStatus.innerText = 'На проверке';
+                dashKycStatus.style.color = '#38bdf8';
+            } else {
+                dashKycStatus.innerText = 'Не пройдена';
+                dashKycStatus.style.color = 'var(--warning)';
+            }
+
             document.getElementById('userBalance').innerText = `$${userData.balance.toFixed(2)}`;
             document.getElementById('userTotalInvested').innerText = `$${userData.totalInvested.toFixed(2)}`;
             document.getElementById('userTotalProfit').innerText = `$${userData.totalProfit.toFixed(2)}`;
@@ -819,17 +869,11 @@
             userData.lastName = document.getElementById('profileLastName').value.trim();
             
             localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-            
             await saveToSupabase(email, userData, newPass || null);
             
             loadUserData(email);
             hideProfileView();
-
-            if (newPass) {
-                showCustomAlert('Настройки профиля и пароль успешно обновлены!', 'Успешно');
-            } else {
-                showCustomAlert('Настройки профиля успешно сохранены!', 'Успешно');
-            }
+            showCustomAlert('Настройки профиля успешно сохранены!', 'Успешно');
         }
 
         function toggleDashboard(forceState) {
@@ -854,6 +898,61 @@
             }, 100);
         }
 
+        function openVerificationModal() {
+            let email = localStorage.getItem('apex_logged_user');
+            if (!email) {
+                openAuthModal('login');
+                return;
+            }
+
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
+            if (userData.verificationStatus === 'verified') {
+                showCustomAlert('Ваша личность уже успешно верифицирована!', 'Верификация');
+                return;
+            }
+            if (userData.verificationStatus === 'pending') {
+                showCustomAlert('Ваши документы уже находятся на проверке. Пожалуйста, ожидайте.', 'Верификация');
+                return;
+            }
+
+            authContainer.style.display = 'none';
+            stepSelection.style.display = 'none';
+            stepWithdraw.style.display = 'none';
+            stepCheckout.style.display = 'none';
+            stepSuccess.style.display = 'none';
+            stepVerification.style.display = 'block';
+
+            document.getElementById('verifDocNumber').value = '';
+            modal.style.display = 'flex';
+        }
+
+        function submitVerification() {
+            let email = localStorage.getItem('apex_logged_user');
+            let docType = document.getElementById('verifDocType').value;
+            let docNum = document.getElementById('verifDocNumber').value.trim();
+
+            if (!docNum) {
+                showCustomAlert('Пожалуйста, введите номер документа!', 'Ошибка');
+                return;
+            }
+
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
+            
+            // Выбираем случайное время от 1 до 4 минут (1, 2, 3 или 4 минуты)
+            let randomMinutes = Math.floor(Math.random() * 4) + 1;
+            let waitMillis = randomMinutes * 60 * 1000;
+
+            userData.verificationStatus = 'pending';
+            userData.verificationTime = Date.now() + waitMillis;
+
+            localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+            saveToSupabase(email, userData);
+            loadUserData(email);
+
+            closeModal();
+            showCustomAlert(`Документы успешно отправлены на проверку (${docType}). Примерное время ожидания проверки: от 1 до 4 минут (около ${randomMinutes} мин.).`, 'Верификация в обработке');
+        }
+
         function requestWithdrawal() {
             let email = localStorage.getItem('apex_logged_user');
             if (!email) {
@@ -861,8 +960,15 @@
                 return;
             }
             
+            let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
+            if (userData.verificationStatus !== 'verified') {
+                showCustomAlert('Для вывода средств необходимо пройти верификацию личности (KYC)! Пожалуйста, нажмите на кнопку «Верификация» в панели кабинета.', 'Требуется верификация');
+                return;
+            }
+            
             authContainer.style.display = 'none';
             stepSelection.style.display = 'none';
+            stepVerification.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
             stepWithdraw.style.display = 'block';
@@ -917,6 +1023,7 @@
             authContainer.style.display = 'block';
             stepSelection.style.display = 'none';
             stepWithdraw.style.display = 'none';
+            stepVerification.style.display = 'none';
             stepCheckout.style.display = 'none';
             stepSuccess.style.display = 'none';
             authEmailInput.value = '';
@@ -1104,6 +1211,7 @@
 
             authContainer.style.display = 'none';
             stepWithdraw.style.display = 'none';
+            stepVerification.style.display = 'none';
             currentPlan = planName;
             minLimit = min;
             maxLimit = max;
@@ -1222,41 +1330,49 @@
         setInterval(() => {
             const timers = document.querySelectorAll('.tx-timer');
             let email = localStorage.getItem('apex_logged_user');
-            if (!email || timers.length === 0) return;
+            if (!email) return;
             
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             let needsUpdate = false;
             let now = Date.now();
 
-            timers.forEach(timerEl => {
-                let targetTime = parseInt(timerEl.getAttribute('data-target'));
-                let txIndex = parseInt(timerEl.getAttribute('data-index'));
-                let distance = targetTime - now;
+            // Проверка окончания верификации
+            if (userData.verificationStatus === 'pending' && userData.verificationTime && now >= userData.verificationTime) {
+                userData.verificationStatus = 'verified';
+                needsUpdate = true;
+            }
 
-                if (distance <= 0) {
-                    if (userData.transactions[txIndex] && !userData.transactions[txIndex].payoutProcessed) {
-                        userData.transactions[txIndex].payoutProcessed = true;
-                        userData.transactions[txIndex].status = 'Выплачено';
+            if (timers.length > 0) {
+                timers.forEach(timerEl => {
+                    let targetTime = parseInt(timerEl.getAttribute('data-target'));
+                    let txIndex = parseInt(timerEl.getAttribute('data-index'));
+                    let distance = targetTime - now;
+
+                    if (distance <= 0) {
+                        if (userData.transactions[txIndex] && !userData.transactions[txIndex].payoutProcessed) {
+                            userData.transactions[txIndex].payoutProcessed = true;
+                            userData.transactions[txIndex].status = 'Выплачено';
+                            
+                            let investAmount = userData.transactions[txIndex].amount || 0;
+                            let profitAmount = investAmount * 0.12; 
+                            
+                            userData.balance += (investAmount + profitAmount);
+                            userData.totalProfit += profitAmount;
+                            userData.activeDeposits = Math.max(0, userData.activeDeposits - 1);
+                            needsUpdate = true;
+                        }
+                    } else {
+                        let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        let s = Math.floor((distance % (1000 * 60)) / 1000);
                         
-                        let investAmount = userData.transactions[txIndex].amount || 0;
-                        let profitAmount = investAmount * 0.12; 
-                        
-                        userData.balance += (investAmount + profitAmount);
-                        userData.totalProfit += profitAmount;
-                        userData.activeDeposits = Math.max(0, userData.activeDeposits - 1);
-                        needsUpdate = true;
+                        timerEl.innerText = 
+                            String(h).padStart(2, '0') + ":" + 
+                            String(m).padStart(2, '0') + ":" + 
+                            String(s).padStart(2, '0');
                     }
-                } else {
-                    let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    let s = Math.floor((distance % (1000 * 60)) / 1000);
-                    
-                    timerEl.innerText = 
-                        String(h).padStart(2, '0') + ":" + 
-                        String(m).padStart(2, '0') + ":" + 
-                        String(s).padStart(2, '0');
-                }
-            });
+                });
+            }
 
             if (needsUpdate) {
                 localStorage.setItem('user_data_' + email, JSON.stringify(userData));
