@@ -1428,5 +1428,25 @@
             });
         }, 1000);
     </script>
-</body>
+<script>
+    // Отключаем встроенный авто-скролл браузера
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    // Восстанавливаем позицию при загрузке страницы
+    document.addEventListener("DOMContentLoaded", function() {
+        let scrollPosition = sessionStorage.getItem("scrollPosition");
+        if (scrollPosition !== null) {
+            window.scrollTo(0, parseInt(scrollPosition));
+            sessionStorage.removeItem("scrollPosition");
+        }
+    });
+
+    // Сохраняем позицию перед перезагрузкой
+    window.addEventListener("beforeunload", function() {
+        sessionStorage.setItem("scrollPosition", window.scrollY);
+    });
+</script>
+</body>С
 </html>
