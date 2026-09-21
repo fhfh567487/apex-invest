@@ -1,88 +1,76 @@
-import os
-import random
-from flask import Flask, render_template, request, jsonify, session
-from dotenv import load_dotenv
-import resend
-
-load_dotenv()
+from flask import Flask, render_template, request, jsonify
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "super-secret-key")
 
-# Настройка Resend API
-resend.api_key = os.getenv("RESEND_API_KEY")
+# Имитация базы данных пользователей и депозитов в памяти
+user_data = {
+    "balance": 2000.0,
+    "deposits": []
+}
 
-# Временное хранилище кодов подтверждения
-verification_codes = {}
+def process_daily_accruals():
+    """Автоматически начисляет 15% в день за каждые прошедшие 24 часа"""
+    now = datetime.now()
+    for deposit in user_data["deposits"]:
+        if deposit["status"] == "active":
+            last_accrual = datetime.fromisoformat(deposit["last_accrual"])
+            elapsed_days = (now - last_accrual).days
 
-@app.route('/')
+            if elapsed_days >= 1 and deposit["days_left"] > 0:
+                days_to_pay = min(elapsed_days, deposit["days_left"])
+                
+                # 450% / 30 дней = 15% в день
+                daily_profit = deposit["amount"] * (deposit["daily_percent"] / 100.0)
+                payout = daily_profit * days_to_pay
+
+                # Пополнение баланса
+                user_data["balance"] += payout
+                deposit["days_left"] -= days_to_pay
+                
+                # Обновление даты последнего начисления
+                new_accrual = last_accrual + timedelta(days=days_to_pay)
+                deposit["last_accrual"] = new_accrual.isoformat()
+
+                if deposit["days_left"] <= 0:
+                    deposit["status"] = "completed"
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/register', methods=['POST'])
-@app.route('/api/register', methods=['POST'])
-def register():
-    data = request.get_json() or request.form
-    email = data.get('email')
-    
-    if not email:
-        return jsonify({"success": False, "error": "Email обязателен"}), 400
-    
-    code = str(random.randint(1000, 9999))
-    verification_codes[email] = code
-    
-    print(f"\n[DEBUG] КОД ПОДТВЕРЖДЕНИЯ ДЛЯ {email}: {code}\n")
-    
-    try:
-        params = {
-            "from": "Apex Invest <onboarding@resend.dev>",
-            "to": [email],
-            "subject": "Подтверждение регистрации в Apex Invest",
-            "html": f"<p>Ваш код подтверждения для регистрации: <b>{code}</b></p>"
-        }
-        resend.Emails.send(params)
-    except Exception as e:
-        print(f"[Resend Notice] {e}")
-    
-    return jsonify({"success": True, "message": "Код отправлен"})
+@app.route("/api/user", methods=["GET"])
+def get_user_data():
+    process_daily_accruals()  # Проверяем начисления при каждом запросе
+    return jsonify(user_data)
 
-@app.route('/login', methods=['POST'])
-@app.route('/api/login', methods=['POST'])
-def login():
-    data = request.get_json() or request.form
-    email = data.get('email')
-    
-    if not email:
-        return jsonify({"success": False, "error": "Email обязателен"}), 400
-    
-    code = str(random.randint(1000, 9999))
-    verification_codes[email] = code
-    
-    print(f"\n[DEBUG] КОД ДЛЯ ВХОДА ДЛЯ {email}: {code}\n")
-    
-    try:
-        params = {
-            "from": "Apex Invest <onboarding@resend.dev>",
-            "to": [email],
-            "subject": "Код подтверждения для входа в Apex Invest",
-            "html": f"<p>Ваш код для входа: <b>{code}</b></p>"
-        }
-        resend.Emails.send(params)
-    except Exception as e:
-        print(f"[Resend Notice] {e}")
-        
-    return jsonify({"success": True, "message": "Код отправлен"})
+@app.route("/api/invest", methods=["POST"])
+def invest():
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
 
-@app.route('/verify', methods=['POST'])
-@app.route('/api/verify', methods=['POST'])
-def verify():
-    data = request.get_json() or request.form
-    email = data.get('email')
-    user_code = data.get('code')
-    
-    if verification_codes.get(email) == user_code:
-        return jsonify({"success": True, "message": "Успешный вход!"})
-    return jsonify({"success": False, "error": "Неверный код"}), 400
+    if amount <= 0 or amount > user_data["balance"]:
+        return jsonify({"error": "Недостаточно средств на балансе!"}), 400
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    user_data["balance"] -= amount
+    
+    start_time = datetime.now()
+    end_time = start_time + timedelta(days=30)
+    
+    new_deposit = {
+        "id": len(user_data["deposits"]) + 1,
+        "amount": amount,
+        "daily_percent": 15.0,  # 15% в день
+        "days_total": 30,
+        "days_left": 30,
+        "start_date": start_time.isoformat(),
+        "end_date": end_time.isoformat(),
+        "last_accrual": start_time.isoformat(),
+        "status": "active"
+    }
+    
+    user_data["deposits"].append(new_deposit)
+    return jsonify({"success": True, "deposit": new_deposit, "balance": user_data["balance"]})
+
+if __name__ == "__main__":
+    app.run(debug=True)
