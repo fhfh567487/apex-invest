@@ -838,7 +838,7 @@
             if (userData.kyc.status === 'verified') {
                 statusBox.innerHTML = '<span style="color: var(--accent);">Ваш документ успешно проверен и подтвержден!</span>';
             } else if (userData.kyc.status === 'pending') {
-                statusBox.innerHTML = '<span style="color: var(--warning);">Документы находятся на автоматической проверке...</span>';
+                statusBox.innerHTML = '<span style="color: var(--warning);">Документы находятся на проверке...</span>';
             } else {
                 statusBox.innerHTML = '<span style="color: var(--text-muted);">Загрузите фото документа для прохождения проверки.</span>';
             }
@@ -877,7 +877,7 @@
                 localStorage.setItem('user_data_' + email, JSON.stringify(userData));
                 saveToSupabase(email, userData);
                 loadUserData(email);
-                showCustomAlert('Документы отправлены! Автоматическая проверка займет от 1 до 3 минут.', 'В обработке');
+                showCustomAlert('Документы отправлены! Проверка займет от 1 до 3 минут.', 'В обработке');
                 hideKycView();
             };
 
@@ -1369,7 +1369,6 @@
             }
         }
 
-        // Единственный безопасный локальный таймер
         setInterval(() => {
             let email = localStorage.getItem('apex_logged_user');
             if (!email) return;
@@ -1380,7 +1379,7 @@
 
             let now = Date.now();
 
-            // Авто-одобрение KYC строго через 1-3 минуты без лишних повторов
+            // Одобрение KYC строго через 1-3 минуты
             if (userData.kyc && userData.kyc.status === 'pending' && userData.kyc.approveAt) {
                 if (now >= userData.kyc.approveAt) {
                     userData.kyc.status = 'verified';
