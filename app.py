@@ -5,12 +5,17 @@ import requests
 
 app = Flask(__name__)
 
-# CORS разрешает запросы с вашего сайта (включая https://)
+# CORS разрешает кросс-доменные запросы с вашего сайта
 CORS(app)
 
 # Настройки Telegram
 TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_ОТ_BOTFATHER"  # Замените на токен вашего бота
 TELEGRAM_CHAT_ID = "8686442131"                 # Ваш Telegram ID[cite: 6]
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return "Сервер поддержки для Telegram-бота работает!", 200
 
 
 @app.route('/send_message', methods=['POST'])
@@ -54,6 +59,5 @@ def send_message():
 
 # Запуск сервера
 if __name__ == '__main__':
-    # Render передает номер порта через переменную окружения PORT
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
