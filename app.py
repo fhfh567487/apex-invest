@@ -31,7 +31,6 @@ def register():
     code = str(random.randint(1000, 9999))
     verification_codes[email] = code
     
-    # 💡 Печатаем код в консоль Render, чтобы его всегда можно было узнать!
     print(f"\n[DEBUG] КОД ПОДТВЕРЖДЕНИЯ ДЛЯ {email}: {code}\n")
     
     try:
@@ -43,9 +42,8 @@ def register():
         }
         resend.Emails.send(params)
     except Exception as e:
-        print(f"[Resend Notice] Письмо заблокировано Resend (ограничение бесплатного тарифа): {e}")
+        print(f"[Resend Notice] {e}")
     
-    # Возвращаем успех, чтобы форма на сайте не выдавала ошибку и ждала код
     return jsonify({"success": True, "message": "Код отправлен"})
 
 @app.route('/login', methods=['POST'])
@@ -71,7 +69,7 @@ def login():
         }
         resend.Emails.send(params)
     except Exception as e:
-        print(f"[Resend Notice] Письмо заблокировано Resend: {e}")
+        print(f"[Resend Notice] {e}")
         
     return jsonify({"success": True, "message": "Код отправлен"})
 
