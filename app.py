@@ -1,76 +1,53 @@
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
+CORS(app)  # Разрешает кросс-доменные запросы с вашего сайта/виджета
 
-# Имитация базы данных пользователей и депозитов в памяти
-user_data = {
-    "balance": 2000.0,
-    "deposits": []
-}
+# Настройки Telegram
+TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_ОТ_BOTFATHER"  # Замените на токен вашего бота
+TELEGRAM_CHAT_ID = "8686442131"                 # Ваш Telegram ID
 
-def process_daily_accruals():
-    """Автоматически начисляет 15% в день за каждые прошедшие 24 часа"""
-    now = datetime.now()
-    for deposit in user_data["deposits"]:
-        if deposit["status"] == "active":
-            last_accrual = datetime.fromisoformat(deposit["last_accrual"])
-            elapsed_days = (now - last_accrual).days
 
-            if elapsed_days >= 1 and deposit["days_left"] > 0:
-                days_to_pay = min(elapsed_days, deposit["days_left"])
-                
-                # 450% / 30 дней = 15% в день
-                daily_profit = deposit["amount"] * (deposit["daily_percent"] / 100.0)
-                payout = daily_profit * days_to_pay
-
-                # Пополнение баланса
-                user_data["balance"] += payout
-                deposit["days_left"] -= days_to_pay
-                
-                # Обновление даты последнего начисления
-                new_accrual = last_accrual + timedelta(days=days_to_pay)
-                deposit["last_accrual"] = new_accrual.isoformat()
-
-                if deposit["days_left"] <= 0:
-                    deposit["status"] = "completed"
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/api/user", methods=["GET"])
-def get_user_data():
-    process_daily_accruals()  # Проверяем начисления при каждом запросе
-    return jsonify(user_data)
-
-@app.route("/api/invest", methods=["POST"])
-def invest():
+@app.route('/send_message', methods=['POST'])
+def send_message():
     data = request.get_json()
-    amount = float(data.get("amount", 0))
 
-    if amount <= 0 or amount > user_data["balance"]:
-        return jsonify({"error": "Недостаточно средств на балансе!"}), 400
+    if not data or 'message' not in data:
+        return jsonify({'status': 'error', 'message': 'Поле "message" отсутствует'}), 400
 
-    user_data["balance"] -= amount
-    
-    start_time = datetime.now()
-    end_time = start_time + timedelta(days=30)
-    
-    new_deposit = {
-        "id": len(user_data["deposits"]) + 1,
-        "amount": amount,
-        "daily_percent": 15.0,  # 15% в день
-        "days_total": 30,
-        "days_left": 30,
-        "start_date": start_time.isoformat(),
-        "end_date": end_time.isoformat(),
-        "last_accrual": start_time.isoformat(),
-        "status": "active"
+    name = data.get('name', 'Аноним')
+    contact = data.get('contact', 'Не указан')
+    message = data.get('message')
+
+    # Шаблон сообщения в Telegram
+    text = (
+        f"📩 <b>Новое обращение с сайта!</b>\n\n"
+        f"👤 <b>Имя:</b> {name}\n"
+        f"📞 <b>Контакт:</b> {contact}\n"
+        f"💬 <b>Сообщение:</b>\n{message}"
+    )
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        'chat_id': TELEGRAM_CHAT_ID,
+        'text': text,
+        'parse_mode': 'HTML'
     }
-    
-    user_data["deposits"].append(new_deposit)
-    return jsonify({"success": True, "deposit": new_deposit, "balance": user_data["balance"]})
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        result = response.json()
+
+        if result.get('ok'):
+            return jsonify({'status': 'success', 'message': 'Отправлено в Telegram'}), 200
+        else:
+            return jsonify({'status': 'error', 'details': result.get('description')}), 500
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'details': str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
