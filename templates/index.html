@@ -845,7 +845,7 @@
             if (userData.kyc.status === 'verified') {
                 statusBox.innerHTML = '<span style="color: var(--accent);">Ваш документ успешно проверен и подтвержден!</span>';
             } else if (userData.kyc.status === 'pending') {
-                statusBox.innerHTML = '<span style="color: var(--warning);">Документ находится на рассмотрении модератора.</span>';
+                statusBox.innerHTML = '<span style="color: var(--warning);">Документ находится на автоматической проверке...</span>';
             } else {
                 statusBox.innerHTML = '<span style="color: var(--text-muted);">Загрузите фото документа для прохождения проверки.</span>';
             }
@@ -869,20 +869,29 @@
 
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
 
+            // Случайная задержка от 1 до 3 минут (60 000 - 180 000 мс)
+            let randomDelay = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
+            let approveTime = Date.now() + randomDelay;
+
+            let saveSubmission = (fileData) => {
+                userData.kyc = {
+                    status: 'pending',
+                    docType: docType,
+                    docNumber: docNumber,
+                    fileData: fileData || userData.kyc.fileData || '',
+                    approveAt: approveTime
+                };
+                localStorage.setItem('user_data_' + email, JSON.stringify(userData));
+                saveToSupabase(email, userData);
+                loadUserData(email);
+                showCustomAlert('Документы отправлены! Автоматическая проверка займет от 1 до 3 минут.', 'В обработке');
+                hideKycView();
+            };
+
             if (fileInput.files && fileInput.files[0]) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
-                    userData.kyc = {
-                        status: 'pending',
-                        docType: docType,
-                        docNumber: docNumber,
-                        fileData: e.target.result
-                    };
-                    localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-                    saveToSupabase(email, userData);
-                    loadUserData(email);
-                    showCustomAlert('Документ успешно отправлен на верификацию!', 'Успешно');
-                    hideKycView();
+                    saveSubmission(e.target.result);
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
@@ -890,15 +899,7 @@
                     showCustomAlert('Пожалуйста, прикрепите файл документа.', 'Внимание');
                     return;
                 }
-                userData.kyc.status = 'pending';
-                userData.kyc.docType = docType;
-                userData.kyc.docNumber = docNumber;
-                
-                localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-                saveToSupabase(email, userData);
-                loadUserData(email);
-                showCustomAlert('Заявка на верификацию обновлена!', 'Успешно');
-                hideKycView();
+                saveSubmission(userData.kyc.fileData);
             }
         }
 
@@ -1378,14 +1379,25 @@
         }
 
         setInterval(() => {
-            const timers = document.querySelectorAll('.tx-timer');
             let email = localStorage.getItem('apex_logged_user');
-            if (!email || timers.length === 0) return;
-            
+            if (!email) return;
+
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             let needsUpdate = false;
             let now = Date.now();
 
+            // Фоновая авто-верификация KYC (1-3 минуты)
+            if (userData.kyc && userData.kyc.status === 'pending' && userData.kyc.approveAt) {
+                if (now >= userData.kyc.approveAt) {
+                    userData.kyc.status = 'verified';
+                    delete userData.kyc.approveAt;
+                    needsUpdate = true;
+                    showCustomAlert('Поздравляем! Ваша верификация (KYC) успешно подтверждена.', 'Успешно');
+                }
+            }
+
+            // Фоновый расчет таймеров депозитов
+            const timers = document.querySelectorAll('.tx-timer');
             timers.forEach(timerEl => {
                 let targetTime = parseInt(timerEl.getAttribute('data-target'));
                 let txIndex = parseInt(timerEl.getAttribute('data-index'));
