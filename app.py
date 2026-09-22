@@ -1,21 +1,20 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
-
-# CORS разрешает кросс-доменные запросы с вашего сайта
 CORS(app)
 
 # Настройки Telegram
 TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_ОТ_BOTFATHER"  # Замените на токен вашего бота
-TELEGRAM_CHAT_ID = "8686442131"                 # Ваш Telegram ID[cite: 6]
+TELEGRAM_CHAT_ID = "8686442131"                 # Ваш Telegram ID[span_0](start_span)[span_0](end_span)
 
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Сервер поддержки для Telegram-бота работает!", 200
+    # Открывает ваш сайт из папки templates/index.html
+    return render_template('index.html')
 
 
 @app.route('/send_message', methods=['POST'])
@@ -29,7 +28,6 @@ def send_message():
     contact = data.get('contact', 'Не указан')
     message = data.get('message')
 
-    # Шаблон сообщения в Telegram
     text = (
         f"📩 <b>Новое обращение с сайта!</b>\n\n"
         f"👤 <b>Имя:</b> {name}\n"
@@ -57,7 +55,6 @@ def send_message():
         return jsonify({'status': 'error', 'details': str(e)}), 500
 
 
-# Запуск сервера
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
