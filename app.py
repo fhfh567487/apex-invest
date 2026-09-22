@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Настройки Telegram
-TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН_ОТ_BOTFATHER"  # Замените на токен вашего бота
+TELEGRAM_BOT_TOKEN = "8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c"  # Замените на токен вашего бота
 TELEGRAM_CHAT_ID = "8686442131"                 # Ваш Telegram ID[span_0](start_span)[span_0](end_span)
 
 
