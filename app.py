@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TOKEN = os.getenv("8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c")
-SUPPORT_CHAT_ID_RAW = -1004484725748
+TOKEN = os.getenv("BOT_TOKEN")
+SUPPORT_CHAT_ID_RAW = os.getenv("SUPPORT_CHAT_ID")
 
 if not TOKEN or not SUPPORT_CHAT_ID_RAW:
     raise ValueError("Ошибка: BOT_TOKEN и SUPPORT_CHAT_ID должны быть указаны в переменных окружения!")
