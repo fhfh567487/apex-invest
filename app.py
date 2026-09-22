@@ -1,72 +1,84 @@
 import os
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
 import requests
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
-# Создаем экземпляр Flask и настраиваем CORS
 app = Flask(__name__)
+# Включаем CORS для всех доменов, чтобы сайт мог отправлять запросы
 CORS(app)
 
-# Настройки Telegram
+# --- НАСТРОЙКИ TELEGRAM ---
+# Ваш токен бота (проверьте, что он совпадает с тем, что вы создавали в BotFather)
 TELEGRAM_BOT_TOKEN = "8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c"
-TELEGRAM_CHAT_ID = "8686442131"
+# ID вашей группы (тот, который вы прислали ранее)
+TELEGRAM_CHAT_ID = "-1004484725748"
+
+# Базовый URL для API Telegram
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
 
-@app.route('/', methods=['GET'])
-def home():
-    return render_template('index.html')
-
-
-@app.route('/send_message', methods=['POST'])
-def send_message():
-    # Поддерживаем как JSON, так и обычные формы (FormData)
-    if request.is_json:
-        data = request.get_json() or {}
-    else:
-        data = request.form.to_dict()
-
-    message = data.get('message') or data.get('text')
-
-    if not message:
-        return jsonify({'success': False, 'status': 'error', 'message': 'Поле "message" отсутствует'}), 400
-
-    name = data.get('name', 'Аноним')
-    contact = data.get('contact', 'Не указан')
-
+def send_telegram_message(name, phone):
+    """Отправляет форматированное сообщение в Telegram"""
     text = (
-        f"📩 <b>Новое обращение с сайта!</b>\n\n"
-        f"👤 <b>Имя:</b> {name}\n"
-        f"📞 <b>Контакт:</b> {contact}\n"
-        f"💬 <b>Сообщение:</b>\n{message}"
+        "🔔 **Новая заявка с сайта Apex Invest** 🔔\n\n"
+        f"👤 **Имя:** `{name}`\n"
+        f"📞 **Телефон:** `{phone}`"
     )
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         'chat_id': TELEGRAM_CHAT_ID,
         'text': text,
-        'parse_mode': 'HTML'
+        'parse_mode': 'Markdown' # Используем Markdown для жирного текста и моноширинного шрифта
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=10)
-        result = response.json()
-
-        if result.get('ok'):
-            # Возвращаем ключи и со статусом, и с success, чтобы JS на сайте точно понял, что всё успешно
-            return jsonify({'success': True, 'status': 'success', 'message': 'Отправлено в Telegram'}), 200
-        else:
-            return jsonify({'success': False, 'status': 'error', 'details': result.get('description')}), 400
-
-    except Exception as e:
-        return jsonify({'success': False, 'status': 'error', 'details': str(e)}), 500
+        response = requests.post(TELEGRAM_API_URL, data=payload)
+        # Если API Telegram вернул ошибку, вызываем исключение
+        response.raise_for_status()
+        return True, response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при отправке в Telegram: {e}")
+        return False, str(e)
 
 
-# Роут для поддержки, который ожидает фронтенд
-@app.route('/api/support', methods=['POST'])
-def api_support():
-    return send_message()
+# --- МАРШРУТЫ (API ENDPOINTS) ---
+
+@app.route('/', methods=['GET'])
+def health_check():
+    """Простая проверка, что сервер работает"""
+    return jsonify({"status": "ok", "message": "Backend is running"}), 200
 
 
+@app.route('/api/submit-form', methods=['POST'])
+def submit_form():
+    """Обработчик формы"""
+    # Получаем данные из JSON-запроса, который отправляет ваш сайт
+    data = request.json
+
+    # Проверка: если данных нет или они не в формате JSON
+    if not data:
+        return jsonify({"status": "error", "message": "Invalid JSON data"}), 400
+
+    # Извлекаем имя и телефон
+    name = data.get('name')
+    phone = data.get('phone')
+
+    # Валидация: проверяем, что поля заполнены
+    if not name or not phone:
+        return jsonify({"status": "error", "message": "Name and phone are required"}), 400
+
+    # Отправляем данные в Telegram
+    success, error_info = send_telegram_message(name, phone)
+
+    if success:
+        return jsonify({"status": "success", "message": "Data sent to Telegram"}), 200
+    else:
+        return jsonify({"status": "error", "message": "Failed to send to Telegram", "details": error_info}), 500
+
+
+# --- ЗАПУСК СЕРВЕРА ---
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    # Render обычно устанавливает порт в переменной окружения PORT
+    port = int(os.environ.get('PORT', 10000))
+    # Запускаем Flask на всех интерфейсах (0.0.0.0)
     app.run(host='0.0.0.0', port=port)
