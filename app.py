@@ -1,71 +1,67 @@
 import os
-import requests
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
+import telebot
+from dotenv import load_dotenv
 
-app = Flask(__name__, template_folder='templates')
-CORS(app)
+# Загрузка переменных из .env файла
+load_dotenv()
 
-# --- НАСТРОЙКИ TELEGRAM ---
-TELEGRAM_BOT_TOKEN = "8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c"
-TELEGRAM_CHAT_ID = "-1004484725748"
-TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+TOKEN = os.getenv("BOT_TOKEN")
+SUPPORT_CHAT_ID_RAW = os.getenv("SUPPORT_CHAT_ID")
 
-def send_telegram_message(text_content):
-    """Универсальная отправка сообщения в Telegram"""
-    payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': text_content,
-        'parse_mode': 'Markdown'
-    }
+if not TOKEN or not SUPPORT_CHAT_ID_RAW:
+    raise ValueError("Ошибка: переменные BOT_TOKEN и SUPPORT_CHAT_ID должны быть указаны в .env")
+
+SUPPORT_CHAT_ID = int(SUPPORT_CHAT_ID_RAW)
+bot = telebot.TeleBot(TOKEN)
+
+
+@bot.message_handler(func=lambda msg: msg.text and msg.text.lower().startswith(('почта', '/почта')))
+def handle_support_request(message):
+    parts = message.text.split(maxsplit=1)
+    
+    if len(parts) < 2 or not parts[1].strip():
+        bot.reply_to(
+            message, 
+            " Ошибка: укажите текст сообщения!\n"
+            "Пример: `почта Не могу войти в аккаунт`",
+            parse_mode="Markdown"
+        )
+        return
+
+    user_text = parts[1].strip()
+    username = f"@{message.from_user.username}" if message.from_user.username else "нет"
+    
+    support_card = (
+        f" **Новое обращение!**\n"
+        f" **Имя:** {message.from_user.first_name}\n"
+        f" **Юзернейм:** {username}\n"
+        f" **ID пользователя:** `{message.from_user.id}`\n\n"
+        f" **Сообщение:**\n{user_text}"
+    )
+
+    bot.send_message(SUPPORT_CHAT_ID, support_card, parse_mode="Markdown")
+    
+    # Отправляем сообщение подтверждения пользователю
+    bot.reply_to(message, "Ваше сообщение отправлено в поддержку")
+
+
+@bot.message_handler(func=lambda msg: msg.chat.id == SUPPORT_CHAT_ID and msg.reply_to_message is not None)
+def handle_admin_reply(message):
     try:
-        response = requests.post(TELEGRAM_API_URL, data=payload)
-        response.raise_for_status()
-        return True, response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка при отправке в Telegram: {e}")
-        return False, str(e)
+        orig_text = message.reply_to_message.text
+        
+        if "ID пользователя:" in orig_text:
+            user_id = int(orig_text.split("ID пользователя:")[1].split()[0].replace('`', ''))
+            
+            bot.send_message(
+                user_id, 
+                f" **Ответ от поддержки:**\n\n{message.text}"
+            )
+            bot.reply_to(message, " Ответ переслан пользователю!")
+    except Exception as e:
+        bot.reply_to(message, f" Не удалось переслать ответ. Ошибка: {e}")
 
-# --- МАРШРУТЫ САЙТА И API ---
 
-@app.route('/', methods=['GET'])
-def home():
-    """Главная страница сайта (index.html)"""
-    return render_template('index.html')
-
-@app.route('/api/submit-form', methods=['POST'])
-def submit_form():
-    """Обработчик обычной формы заявки"""
-    data = request.json or request.form
-    name = data.get('name', 'Не указано')
-    phone = data.get('phone', 'Не указано')
-
-    message = (
-        "🔔 **Новая заявка с сайта Apex Invest**\n\n"
-        f"👤 **Имя:** `{name}`\n"
-        f"📞 **Телефон:** `{phone}`"
-    )
-
-    success, error = send_telegram_message(message)
-    # Возвращаем четкий JSON со статусом success, который ждет сайт
-    return jsonify({"status": "success", "message": "Sent!"}), 200
-
-@app.route('/api/support', methods=['POST'])
-def support_form():
-    """Обработчик формы поддержки"""
-    data = request.json or request.form
-    user_message = data.get('message') or data.get('text') or data.get('query') or str(data)
-
-    message = (
-        "💬 **Сообщение в поддержку Apex**\n\n"
-        f"📝 **Текст:**\n`{user_message}`"
-    )
-
-    success, error = send_telegram_message(message)
-    # Возвращаем статус success в любом случае, раз сообщения доходят
-    return jsonify({"status": "success", "message": "Sent!"}), 200
-
-# --- ЗАПУСК ---
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
+    print("Бот поддержки успешно запущен!")
+    bot.infinity_polling()
