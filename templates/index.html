@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         .btn { display: inline-block; width: 100%; padding: 14px; background: var(--accent); color: #000; border: none; border-radius: 10px; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; -webkit-tap-highlight-color: transparent; }
         .btn:hover { box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); transform: translateY(-2px); }
 
-        /* КАБИНЕТ */
+        /* DASHBOARD */
         .user-dashboard { display: none; max-width: 1200px; margin: 20px auto 40px; padding: 0 15px; }
         .dashboard-header { background: var(--card-bg); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 16px; padding: 25px 20px; margin-bottom: 25px; display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; }
         .dashboard-header::before { content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: var(--accent); box-shadow: 0 0 15px var(--accent); }
@@ -116,7 +116,7 @@
         .dash-action-btn.withdraw { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
         .dash-action-btn.withdraw:hover { background: rgba(255,255,255,0.05); border-color: #fff; }
 
-        /* МОДАЛКИ & ПРОФИЛЬ */
+        /* MODALS & PROFILE */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
         .modal { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 25px 20px; width: 100%; max-width: 420px; position: relative; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
         .modal h3 { font-size: 22px; margin-bottom: 8px; color: #fff; font-weight: 700; }
@@ -153,7 +153,7 @@
         .admin-section h2 { color: var(--warning); margin-bottom: 15px; font-size: 22px; }
         .tx-timer { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; margin-left: 6px; }
 
-        /* ВИТДЖЕТ ПОДДЕРЖКИ В ПРАВОМ НИЖНЕМ УГЛУ */
+        /* SUPPORT WIDGET (BOTTOM RIGHT) */
         #chat-button {
             position: fixed;
             bottom: 24px;
@@ -274,78 +274,78 @@
         <div class="header-left">
             <div class="logo" onclick="toggleDashboard(false)">Apex <span>Invest</span></div>
             <div class="auth-buttons" id="authButtonsBlock">
-                <button class="auth-btn login" onclick="openAuthModal('login')">Вход</button>
-                <button class="auth-btn register" onclick="openAuthModal('register')">Регистрация</button>
+                <button class="auth-btn login" onclick="openAuthModal('login')">Sign In</button>
+                <button class="auth-btn register" onclick="openAuthModal('register')">Register</button>
             </div>
             <div class="user-profile" id="userProfileBlock">
                 <div class="profile-avatar" id="profileAvatar">U</div>
                 <div class="profile-name" id="profileName">user@example.com</div>
-                <button class="dashboard-nav-btn" onclick="toggleDashboard()">Кабинет</button>
-                <button class="admin-nav-btn" id="adminBtn" onclick="toggleAdminPanel()">Админ</button>
-                <button class="logout-btn" onclick="logout()">Выход</button>
+                <button class="dashboard-nav-btn" onclick="toggleDashboard()">Dashboard</button>
+                <button class="admin-nav-btn" id="adminBtn" onclick="toggleAdminPanel()">Admin</button>
+                <button class="logout-btn" onclick="logout()">Sign Out</button>
             </div>
         </div>
     </header>
 
-    <!-- СЕКЦИЯ ЛИЧНОГО КАБИНЕТА -->
+    <!-- USER DASHBOARD SECTION -->
     <section class="user-dashboard" id="userDashboard">
         
-        <!-- Основной вид кабинета -->
+        <!-- Main Dashboard View -->
         <div id="dashboardOverview">
             <div class="dashboard-header">
                 <div class="dashboard-user-info">
-                    <h2 id="dashUserEmail">Пользователь</h2>
-                    <p>Статус аккаунта: <span style="color: var(--accent); font-weight: 600;">Активный Инвестор</span></p>
-                    <p style="margin-top: 4px;">Статус верификации (KYC): <span id="kycBadgeText" style="color: var(--warning); font-weight: 700;">Не пройдена</span></p>
+                    <h2 id="dashUserEmail">User</h2>
+                    <p>Account Status: <span style="color: var(--accent); font-weight: 600;">Active Investor</span></p>
+                    <p style="margin-top: 4px;">KYC Status: <span id="kycBadgeText" style="color: var(--warning); font-weight: 700;">Not Verified</span></p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showKycView()">🪪 Верификация</button>
-                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showProfileView()">⚙️ Профиль</button>
-                    <button class="dash-action-btn deposit" style="flex: none; width: auto; padding: 10px 15px;" onclick="scrollToPlans()">+ Пополнить</button>
+                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showKycView()">🪪 Verification</button>
+                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showProfileView()">⚙️ Profile</button>
+                    <button class="dash-action-btn deposit" style="flex: none; width: auto; padding: 10px 15px;" onclick="scrollToPlans()">+ Top Up</button>
                 </div>
             </div>
 
             <div class="dashboard-grid">
                 <div class="dash-card">
-                    <div class="dash-card-title">Доступный Баланс</div>
+                    <div class="dash-card-title">Available Balance</div>
                     <div class="dash-card-value green" id="userBalance">$0.00</div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-card-title">Всего инвестировано</div>
+                    <div class="dash-card-title">Total Invested</div>
                     <div class="dash-card-value" id="userTotalInvested">$0.00</div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-card-title">Заработано прибыли</div>
+                    <div class="dash-card-title">Total Profit Earned</div>
                     <div class="dash-card-value green" id="userTotalProfit">$0.00</div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-card-title">Активных депозитов</div>
+                    <div class="dash-card-title">Active Deposits</div>
                     <div class="dash-card-value" id="userActiveDeposits">0</div>
                 </div>
             </div>
 
             <div class="dashboard-actions">
-                <button class="dash-action-btn deposit" onclick="scrollToPlans()">Открыть новый депозит</button>
-                <button class="dash-action-btn withdraw" onclick="requestWithdrawal()">Запросить вывод средств</button>
+                <button class="dash-action-btn deposit" onclick="scrollToPlans()">Open New Deposit</button>
+                <button class="dash-action-btn withdraw" onclick="requestWithdrawal()">Request Withdrawal</button>
             </div>
 
             <div class="history-section" style="padding: 0; margin-bottom: 0;">
-                <h3 style="margin-bottom: 15px; color: #fff; font-size: 18px; font-weight: 700;">Мои операции</h3>
+                <h3 style="margin-bottom: 15px; color: #fff; font-size: 18px; font-weight: 700;">My Transactions</h3>
                 <div class="table-responsive">
                     <table class="history-table">
                         <thead>
                             <tr>
-                                <th>Тип</th>
-                                <th>Сумма</th>
-                                <th>Способ</th>
-                                <th>Реквизиты</th>
-                                <th>Дата</th>
-                                <th>Статус</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Details</th>
+                                <th>Date</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="userTransactionsBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">У вас пока нет активных транзакций</td>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">You have no active transactions yet</td>
                             </tr>
                         </tbody>
                     </table>
@@ -353,105 +353,105 @@
             </div>
         </div>
 
-        <!-- Вид: Верификация KYC -->
+        <!-- View: KYC Verification -->
         <div id="kycView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
-                <h2 style="font-size: 24px; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Верификация личности (KYC)</h2>
-                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">Для полноценного доступа к инвестициям и выводу средств из любых стран загрузите документ, удостоверяющий личность.</p>
+                <h2 style="font-size: 24px; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Identity Verification (KYC)</h2>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">To gain full access to investments and withdrawals from any country, please upload an identity document.</p>
 
                 <div class="amount-input-group">
-                    <label>Тип документа:</label>
+                    <label>Document Type:</label>
                     <select id="kycDocType">
-                        <option value="Паспорт РФ">Паспорт РФ</option>
-                        <option value="Международный загранпаспорт">Международный загранпаспорт (International Passport)</option>
-                        <option value="Водительские права">Водительские права (Driver's License)</option>
+                        <option value="National Passport">National Passport</option>
+                        <option value="International Passport">International Passport</option>
+                        <option value="Driver's License">Driver's License</option>
                     </select>
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Номер документа:</label>
-                    <input type="text" id="kycDocNumber" placeholder="Например: 4518 123456 или AB1234567">
+                    <label>Document Number:</label>
+                    <input type="text" id="kycDocNumber" placeholder="e.g., AB1234567">
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Фото / Скан документа:</label>
+                    <label>Document Photo / Scan:</label>
                     <input type="file" id="kycFile" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.2);">
                 </div>
 
                 <div id="kycStatusBox" style="margin: 20px 0; font-size: 14px; font-weight: 600;"></div>
 
                 <div style="display: flex; gap: 15px; margin-top: 25px;">
-                    <button class="dash-action-btn deposit" id="submitKycBtn" onclick="submitKycData()">Отправить на проверку</button>
-                    <button class="dash-action-btn withdraw" onclick="hideKycView()">Назад в кабинет</button>
+                    <button class="dash-action-btn deposit" id="submitKycBtn" onclick="submitKycData()">Submit for Review</button>
+                    <button class="dash-action-btn withdraw" onclick="hideKycView()">Back to Dashboard</button>
                 </div>
             </div>
         </div>
 
-        <!-- Вид: Настройки профиля -->
+        <!-- View: Profile Settings -->
         <div id="profileView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
-                <h2 style="font-size: 24px; color: #fff; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Личные данные</h2>
+                <h2 style="font-size: 24px; color: #fff; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Personal Details</h2>
                 
                 <div class="amount-input-group">
-                    <label>Имя:</label>
-                    <input type="text" id="profileFirstName" placeholder="Введите имя">
+                    <label>First Name:</label>
+                    <input type="text" id="profileFirstName" placeholder="Enter first name">
                 </div>
                 
                 <div class="amount-input-group">
-                    <label>Фамилия:</label>
-                    <input type="text" id="profileLastName" placeholder="Введите фамилию">
+                    <label>Last Name:</label>
+                    <input type="text" id="profileLastName" placeholder="Enter last name">
                 </div>
 
-                <h3 style="font-size: 18px; color: #fff; margin: 30px 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Безопасность</h3>
+                <h3 style="font-size: 18px; color: #fff; margin: 30px 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Security</h3>
 
                 <div class="amount-input-group">
-                    <label>Новый пароль:</label>
-                    <input type="password" id="profileNewPassword" placeholder="Оставьте пустым, чтобы не менять">
+                    <label>New Password:</label>
+                    <input type="password" id="profileNewPassword" placeholder="Leave blank to keep current">
                 </div>
                 
                 <div class="amount-input-group">
-                    <label>Подтвердите пароль:</label>
-                    <input type="password" id="profileConfirmPassword" placeholder="Повторите новый пароль">
+                    <label>Confirm Password:</label>
+                    <input type="password" id="profileConfirmPassword" placeholder="Repeat new password">
                 </div>
                 
                 <div style="display: flex; gap: 15px; margin-top: 30px;">
-                    <button class="dash-action-btn deposit" onclick="saveProfileData()">Сохранить настройки</button>
-                    <button class="dash-action-btn withdraw" onclick="hideProfileView()">Назад в кабинет</button>
+                    <button class="dash-action-btn deposit" onclick="saveProfileData()">Save Settings</button>
+                    <button class="dash-action-btn withdraw" onclick="hideProfileView()">Back to Dashboard</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ (Лендинг) -->
+    <!-- MAIN CONTENT (Landing) -->
     <div id="mainPageContent">
         <section class="hero">
-            <h1>Капитал Будущего.<br>Инвестиции в <span>Tesla Motors</span></h1>
-            <p>100% привлекаемых средств направляются в акции Tesla Inc. и развитие инфраструктуры автономных автопарков Robotaxi.</p>
+            <h1>Capital of the Future.<br>Investing in <span>Tesla Motors</span></h1>
+            <p>100% of raised funds are directed to Tesla Inc. shares and the development of the Robotaxi autonomous fleet infrastructure.</p>
         </section>
 
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-value glow" id="statOnline">284</div>
-                <div class="stat-label">Инвесторов онлайн</div>
+                <div class="stat-label">Investors Online</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value">$1,428,590</div>
-                <div class="stat-label">Всего инвестировано</div>
+                <div class="stat-label">Total Invested</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value glow">$889,045</div>
-                <div class="stat-label">Выплачено прибыли</div>
+                <div class="stat-label">Profit Paid Out</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">124 Дня</div>
-                <div class="stat-label">Успешной работы</div>
+                <div class="stat-value">124 Days</div>
+                <div class="stat-label">Successful Operation</div>
             </div>
         </div>
 
         <section class="vision-section">
             <div class="vision-header">
-                <h2>Архитекторы Нового <span class="accent-text">Мира</span></h2>
-                <p>Мы создали Apex Invest для тех, кто видит дальше завтрашнего дня. Мы не просто приумножаем ваш капитал — мы делаем вас совладельцами технологий, которые прямо сейчас меняют облик нашей цивилизации.</p>
+                <h2>Architects of a New <span class="accent-text">World</span></h2>
+                <p>We created Apex Invest for those who see beyond tomorrow. We don't just grow your capital — we make you co-owners of technologies that are reshaping the face of our civilization right now.</p>
             </div>
             
             <div class="vision-grid">
@@ -459,66 +459,66 @@
                     <div class="vision-img-box">
                         <img src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tesla Autopilot">
                     </div>
-                    <h3>Эра Автопилота</h3>
-                    <p>Ваши инвестиции напрямую ускоряют развитие нейросетей Tesla Full Self-Driving. Мы стоим на пороге запуска глобальной сети автономных такси (Robotaxi), которая перевернет мировую экономику.</p>
+                    <h3>The Autopilot Era</h3>
+                    <p>Your investments directly accelerate the development of Tesla Full Self-Driving neural networks. We are on the verge of launching a global autonomous taxi network (Robotaxi) that will transform the global economy.</p>
                 </div>
                 
                 <div class="vision-card">
                     <div class="vision-img-box">
                         <img src="https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Green Energy">
                     </div>
-                    <h3>Энергия Будущего</h3>
-                    <p>Масштабирование проектов Tesla Energy — солнечных панелей Solar Roof и промышленных аккумуляторов Megapack. Переход планеты на возобновляемые источники энергии приносит колоссальные дивиденды.</p>
+                    <h3>Energy of the Future</h3>
+                    <p>Scaling Tesla Energy projects — Solar Roof solar panels and Megapack industrial batteries. The planet's transition to renewable energy sources yields massive dividends.</p>
                 </div>
                 
                 <div class="vision-card">
                     <div class="vision-img-box">
                         <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="AI Core">
                     </div>
-                    <h3>ИИ и Робототехника</h3>
-                    <p>Проект человекоподобных роботов Optimus и суперкомпьютеров Dojo. Заводская автоматизация нового уровня позволяет Tesla снижать издержки и монополизировать технологический рынок.</p>
+                    ### AI and Robotics
+                    <p>The Optimus humanoid robot project and Dojo supercomputers. Next-level factory automation enables Tesla to lower costs and monopolize the technology market.</p>
                 </div>
             </div>
 
             <div class="vision-footer">
-                <p>Присоединяйтесь к экосистеме будущего уже сегодня. Искусственный интеллект, чистая энергия и робототехника — это не сценарий из фильмов, это реальность, на которой вы можете заработать.</p>
+                <p>Join the ecosystem of the future today. Artificial intelligence, clean energy, and robotics are not sci-fi scenarios — they are a reality you can profit from.</p>
             </div>
         </section>
 
         <div class="history-section">
-            <h2 class="section-title">Последние операции</h2>
+            <h2 class="section-title">Latest Transactions</h2>
             <div class="table-responsive">
                 <table class="history-table">
                     <thead>
                         <tr>
-                            <th>Тип</th>
-                            <th>Пользователь</th>
-                            <th>Сумма</th>
-                            <th>Платежная система</th>
-                            <th>Статус</th>
+                            <th>Type</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Payment System</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody">
                         <tr>
-                            <td><span class="badge-deposit">ДЕПОЗИТ</span></td>
+                            <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>alex***99</td>
                             <td style="font-weight: 600;">$500</td>
                             <td>USDT TRC20 (TJ9v...aS5dF)</td>
-                            <td style="color: var(--accent); font-weight: 600;">Выполнено</td>
+                            <td style="color: var(--accent); font-weight: 600;">Completed</td>
                         </tr>
                         <tr>
-                            <td><span class="badge-payout">ВЫПЛАТА</span></td>
+                            <td><span class="badge-payout">PAYOUT</span></td>
                             <td>crypto***king</td>
                             <td style="font-weight: 600;">$180</td>
                             <td>Bitcoin (1A1z...fNa)</td>
-                            <td style="color: var(--accent); font-weight: 600;">Отправлено</td>
+                            <td style="color: var(--accent); font-weight: 600;">Sent</td>
                         </tr>
                         <tr>
-                            <td><span class="badge-deposit">ДЕПОЗИТ</span></td>
+                            <td><span class="badge-deposit">DEPOSIT</span></td>
                             <td>invest***77</td>
                             <td style="font-weight: 600;">$90</td>
-                            <td>Банковская карта (4276***)</td>
-                            <td style="color: var(--accent); font-weight: 600;">Выполнено</td>
+                            <td>Bank Card (4276***)</td>
+                            <td style="color: var(--accent); font-weight: 600;">Completed</td>
                         </tr>
                     </tbody>
                 </table>
@@ -526,40 +526,40 @@
         </div>
 
         <div class="container" id="plansContainer">
-            <h2 class="section-title">Инвестиционные Планы</h2>
+            <h2 class="section-title">Investment Plans</h2>
             
             <div class="plans-grid">
                 <div class="plan-card">
                     <h3 class="plan-title">Novice</h3>
                     <div class="plan-range">$10 – $99</div>
                     <ul class="plan-features">
-                        <li>Срок депозита: <span>1 день</span></li>
-                        <li>Начисления: <span>В конце срока</span></li>
-                        <li>Чистая прибыль: <span style="color: var(--accent);">+12%</span></li>
+                        <li>Deposit Term: <span>1 day</span></li>
+                        <li>Accruals: <span>End of term</span></li>
+                        <li>Net Profit: <span style="color: var(--accent);">+12%</span></li>
                     </ul>
-                    <button class="btn" onclick="openModal('Novice', 10, 99)">Инвестировать</button>
+                    <button class="btn" onclick="openModal('Novice', 10, 99)">Invest</button>
                 </div>
 
                 <div class="plan-card featured">
                     <h3 class="plan-title">Pro</h3>
                     <div class="plan-range">$100 – $499</div>
                     <ul class="plan-features">
-                        <li>Срок депозита: <span>10 дней</span></li>
-                        <li>Начисления: <span>Ежедневно (25%/день)</span></li>
-                        <li>Чистая прибыль: <span style="color: var(--accent);">+250%</span></li>
+                        <li>Deposit Term: <span>10 days</span></li>
+                        <li>Accruals: <span>Daily (25%/day)</span></li>
+                        <li>Net Profit: <span style="color: var(--accent);">+250%</span></li>
                     </ul>
-                    <button class="btn" onclick="openModal('Pro', 100, 499)">Инвестировать</button>
+                    <button class="btn" onclick="openModal('Pro', 100, 499)">Invest</button>
                 </div>
 
                 <div class="plan-card">
                     <h3 class="plan-title">Master</h3>
                     <div class="plan-range">$500 – $10,000</div>
                     <ul class="plan-features">
-                        <li>Срок депозита: <span>30 дней</span></li>
-                        <li>Начисления: <span>Ежедневно (15%/день)</span></li>
-                        <li>Чистая прибыль: <span style="color: var(--accent);">+450%</span></li>
+                        <li>Deposit Term: <span>30 days</span></li>
+                        <li>Accruals: <span>Daily (15%/day)</span></li>
+                        <li>Net Profit: <span style="color: var(--accent);">+450%</span></li>
                     </ul>
-                    <button class="btn" onclick="openModal('Master', 500, 10000)">Инвестировать</button>
+                    <button class="btn" onclick="openModal('Master', 500, 10000)">Invest</button>
                 </div>
             </div>
         </div>
@@ -567,23 +567,23 @@
 
     <!-- Admin Panel Section -->
     <div class="admin-section" id="adminSection">
-        <h2>База инвесторов и KYC (Supabase)</h2>
-        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Нажмите на email пользователя для входа в кабинет, либо просмотрите статус верификации.</p>
-        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: var(--warning); font-size: 12px; color: #000;" onclick="loadAdminUsers()">Обновить данные</button>
+        <h2>Investor Database & KYC (Supabase)</h2>
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Click a user's email to access their dashboard, or review their verification status.</p>
+        <button class="btn" style="width: auto; padding: 8px 16px; margin-bottom: 15px; background: var(--warning); font-size: 12px; color: #000;" onclick="loadAdminUsers()">Refresh Data</button>
         <div class="table-responsive">
             <table class="history-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Email / Логин</th>
-                        <th>Пароль</th>
-                        <th>Баланс</th>
-                        <th>Статус KYC</th>
-                        <th>Документ</th>
+                        <th>Email / Login</th>
+                        <th>Password</th>
+                        <th>Balance</th>
+                        <th>KYC Status</th>
+                        <th>Document</th>
                     </tr>
                 </thead>
                 <tbody id="adminUsersBody">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Загрузка...</td></tr>
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -592,125 +592,125 @@
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <!-- Окно Авторизации -->
+            <!-- Auth Window -->
             <div id="authContainer" style="display: none;">
-                <h3 id="authTitle">Вход в аккаунт</h3>
-                <p id="authDesc">Введите ваши данные для доступа к кабинету</p>
+                <h3 id="authTitle">Sign In to Account</h3>
+                <p id="authDesc">Enter your details to access your dashboard</p>
 
-                <div class="auth-success-badge" id="authSuccessBadge">Успешно!</div>
+                <div class="auth-success-badge" id="authSuccessBadge">Success!</div>
 
                 <div class="amount-input-group">
-                    <label>Email адрес:</label>
+                    <label>Email Address:</label>
                     <input type="email" id="authEmail" placeholder="name@example.com">
                 </div>
                 <div class="amount-input-group">
-                    <label>Пароль:</label>
+                    <label>Password:</label>
                     <input type="password" id="authPassword" placeholder="••••••••">
                 </div>
 
                 <div class="auth-actions-row">
-                    <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Войти</button>
-                    <div class="auth-error-badge" id="authErrorBadge">Ошибка в данных</div>
+                    <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
+                    <div class="auth-error-badge" id="authErrorBadge">Data Error</div>
                 </div>
 
-                <button class="close-btn" onclick="closeModal()">Закрыть</button>
+                <button class="close-btn" onclick="closeModal()">Close</button>
             </div>
 
-            <!-- Шаг 1: Ввод суммы и выбор метода -->
+            <!-- Step 1: Amount Input & Method Selection -->
             <div id="stepSelection">
-                <h3 id="modalTitle">Инвестиция</h3>
-                <p id="modalDesc">Введите сумму и выберите способ оплаты</p>
+                <h3 id="modalTitle">Investment</h3>
+                <p id="modalDesc">Enter amount and select payment method</p>
                 
                 <div class="amount-input-group">
-                    <label for="investAmount">Сумма инвестиции ($):</label>
+                    <label for="investAmount">Investment Amount ($):</label>
                     <input type="number" id="investAmount" min="10" max="10000" oninput="validateAmount()">
                 </div>
 
                 <div class="payment-methods">
-                    <button class="pay-btn" onclick="proceedToCheckout('USDT')">Криптовалюта USDT (TRC20)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('BTC')">Криптовалюта Bitcoin (BTC)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('ETH')">Криптовалюта Ethereum (ETH)</button>
-                    <button class="pay-btn" onclick="proceedToCheckout('CARD')">Банковская карта (P2P)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('USDT')">Cryptocurrency USDT (TRC20)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('BTC')">Cryptocurrency Bitcoin (BTC)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('ETH')">Cryptocurrency Ethereum (ETH)</button>
+                    <button class="pay-btn" onclick="proceedToCheckout('CARD')">Bank Card (P2P)</button>
                 </div>
-                <button class="close-btn" onclick="closeModal()">Отмена</button>
+                <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Окно вывода средств -->
+            <!-- Withdrawal Window -->
             <div id="stepWithdraw" style="display: none;">
-                <h3>Вывод средств</h3>
-                <p>Минимальная сумма для вывода: $10</p>
+                <h3>Withdrawal</h3>
+                <p>Minimum withdrawal amount: $10</p>
                 
                 <div class="amount-input-group">
-                    <label>Номер счета / Кошелек:</label>
-                    <input type="text" id="withdrawDestination" placeholder="Введите реквизиты">
+                    <label>Account Number / Wallet:</label>
+                    <input type="text" id="withdrawDestination" placeholder="Enter details">
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Платежная система:</label>
+                    <label>Payment System:</label>
                     <select id="withdrawSystem">
                         <option value="USDT TRC20">USDT (TRC20)</option>
                         <option value="Bitcoin">Bitcoin (BTC)</option>
-                        <option value="Банковская карта">Банковская карта</option>
+                        <option value="Bank Card">Bank Card</option>
                     </select>
                 </div>
 
                 <div class="amount-input-group">
-                    <label>Сумма на вывод ($):</label>
+                    <label>Withdrawal Amount ($):</label>
                     <input type="number" id="withdrawAmount" min="10" placeholder="10">
                 </div>
 
-                <button class="btn" onclick="submitWithdrawal()">Заказать выплату</button>
-                <button class="close-btn" onclick="closeModal()">Отмена</button>
+                <button class="btn" onclick="submitWithdrawal()">Request Payout</button>
+                <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Шаг 2: Выдача реквизитов -->
+            <!-- Step 2: Payment Details -->
             <div class="checkout-box" id="stepCheckout">
-                <h3>Оплата депозита</h3>
-                <p>Переведите точную сумму на указанные реквизиты:</p>
+                <h3>Deposit Payment</h3>
+                <p>Transfer the exact amount to the specified details:</p>
                 
                 <div class="invoice-details">
-                    <p>План: <span><span id="checkPlan">Novice</span></span></p>
-                    <p>К оплате: <span><span id="checkAmount" class="hl">$10</span></span></p>
-                    <p>Способ: <span><span id="checkMethod">USDT</span></span></p>
+                    <p>Plan: <span><span id="checkPlan">Novice</span></span></p>
+                    <p>Amount Due: <span><span id="checkAmount" class="hl">$10</span></span></p>
+                    <p>Method: <span><span id="checkMethod">USDT</span></span></p>
                 </div>
 
-                <div class="qr-placeholder">SCAN QR<br><span style="font-size: 8px; font-weight: normal; color: #666;">(Для оплаты с телефона)</span></div>
+                <div class="qr-placeholder">SCAN QR<br><span style="font-size: 8px; font-weight: normal; color: #666;">(For mobile payment)</span></div>
                 <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
 
-                <button class="btn" onclick="simulateSuccess()">Я оплатил заявку</button>
-                <button class="close-btn" onclick="resetModal()">Назад к выбору</button>
+                <button class="btn" onclick="simulateSuccess()">I Have Paid</button>
+                <button class="close-btn" onclick="resetModal()">Back to Methods</button>
             </div>
 
-            <!-- Шаг 3: Успех -->
+            <!-- Step 3: Success -->
             <div class="success-screen" id="stepSuccess">
                 <div class="success-icon">&#10004;</div>
-                <h3>Депозит в обработке!</h3>
-                <p style="margin-bottom: 25px;">Ваша заявка принята. Средства поступят в работу после подтверждения сети.</p>
-                <button class="btn" onclick="closeModal()">Перейти в кабинет</button>
+                <h3>Deposit Processing!</h3>
+                <p style="margin-bottom: 25px;">Your request has been accepted. Funds will be put to work after network confirmation.</p>
+                <button class="btn" onclick="closeModal()">Go to Dashboard</button>
             </div>
         </div>
     </div>
 
-    <!-- Кастомное модальное окно для сообщений / уведомлений -->
+    <!-- Custom Alert Modal -->
     <div class="modal-overlay" id="customAlertModal">
         <div class="modal" style="max-width: 380px;">
-            <h3 id="customAlertTitle" style="margin-bottom: 12px; color: #fff;">Уведомление</h3>
+            <h3 id="customAlertTitle" style="margin-bottom: 12px; color: #fff;">Notification</h3>
             <p id="customAlertText" style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.5;"></p>
-            <button class="btn" onclick="closeCustomAlert()">Понятно</button>
+            <button class="btn" onclick="closeCustomAlert()">Got It</button>
         </div>
     </div>
 
-    <!-- ВИДЖЕТ ЧАТА ПОДДЕРЖКИ -->
+    <!-- SUPPORT CHAT WIDGET -->
     <div id="chat-button" onclick="toggleSupportChat()">💬</div>
 
     <div id="chat-window">
         <div class="chat-header">
-            <span>Поддержка Apex</span>
+            <span>Apex Support</span>
             <button onclick="toggleSupportChat()">✕</button>
         </div>
         <div class="chat-body">
-            <textarea id="chat-message" placeholder="Опишите вашу проблему..."></textarea>
-            <button id="chat-send-btn" onclick="sendSupportMessage()">Отправить</button>
+            <textarea id="chat-message" placeholder="Describe your issue..."></textarea>
+            <button id="chat-send-btn" onclick="sendSupportMessage()">Send</button>
         </div>
     </div>
 
@@ -718,7 +718,7 @@
         <p>&copy; 2026 Apex Invest. Architecting the future alongside Tesla Vision.</p>
     </footer>
 
-    <!-- Скрипты -->
+    <!-- Scripts -->
     <script>
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
@@ -783,7 +783,7 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Функции поддержки Чат-Виджета */
+        /* Support Chat Widget Functions */
         function toggleSupportChat() {
             const win = document.getElementById('chat-window');
             win.style.display = (win.style.display === 'block') ? 'none' : 'block';
@@ -795,41 +795,41 @@
             const text = textarea.value.trim();
 
             if (!text) {
-                showCustomAlert('Введите текст сообщения!', 'Внимание');
+                showCustomAlert('Please enter a message!', 'Attention');
                 return;
             }
 
-            const loggedUser = localStorage.getItem('apex_logged_user') || 'Гость (не авторизован)';
+            const loggedUser = localStorage.getItem('apex_logged_user') || 'Guest (unauthorized)';
 
             sendBtn.disabled = true;
-            sendBtn.innerText = 'Отправка...';
+            sendBtn.innerText = 'Sending...';
 
             try {
                 const response = await fetch('/api/support', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        message: `👤 Пользователь: ${loggedUser}\n💬 Текст: ${text}` 
+                        message: `👤 User: ${loggedUser}\n💬 Message: ${text}` 
                     })
                 });
                 const result = await response.json();
 
                 if (result.success) {
-                    showCustomAlert('Ваше сообщение успешно отправлено в поддержку!', 'Успешно');
+                    showCustomAlert('Your message has been successfully sent to support!', 'Success');
                     textarea.value = '';
                     toggleSupportChat();
                 } else {
-                    showCustomAlert('Ошибка: ' + (result.error || 'Не удалось отправить'), 'Ошибка');
+                    showCustomAlert('Error: ' + (result.error || 'Failed to send'), 'Error');
                 }
             } catch (err) {
-                showCustomAlert('Ошибка при соединении с сервером', 'Ошибка');
+                showCustomAlert('Server connection error', 'Error');
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = 'Отправить';
+                sendBtn.innerText = 'Send';
             }
         }
 
-        function showCustomAlert(text, title = 'Уведомление') {
+        function showCustomAlert(text, title = 'Notification') {
             document.getElementById('customAlertTitle').innerText = title;
             document.getElementById('customAlertText').innerText = text;
             document.getElementById('customAlertModal').style.display = 'flex';
@@ -862,7 +862,7 @@
                     let daysPaid = tx.daysPaid || 0;
                     let startDate = tx.startDate || (tx.targetTime ? (tx.targetTime - totalDays * 86400000) : (now - 86400000));
 
-                    if (!tx.payoutProcessed && tx.status !== 'Выполнено' && tx.status !== 'Выплачено') {
+                    if (!tx.payoutProcessed && tx.status !== 'Completed' && tx.status !== 'Paid') {
                         let daysPassedTotal = Math.floor((now - startDate) / 86400000);
                         let dueDays = Math.min(totalDays, daysPassedTotal) - daysPaid;
 
@@ -878,14 +878,14 @@
 
                         if (daysPaid >= totalDays) {
                             userData.balance += tx.amount;
-                            tx.status = 'Выплачено';
+                            tx.status = 'Paid';
                             tx.payoutProcessed = true;
                         }
                     }
                 }
             });
 
-            let activeCount = userData.transactions.filter(tx => tx.type === 'DEPOSIT' && tx.status !== 'Выполнено' && tx.status !== 'Выплачено').length;
+            let activeCount = userData.transactions.filter(tx => tx.type === 'DEPOSIT' && tx.status !== 'Completed' && tx.status !== 'Paid').length;
             userData.activeDeposits = activeCount;
 
             return userData;
@@ -972,13 +972,13 @@
 
             const kycBadge = document.getElementById('kycBadgeText');
             if (userData.kyc.status === 'verified') {
-                kycBadge.innerText = 'Верифицирован ✓';
+                kycBadge.innerText = 'Verified ✓';
                 kycBadge.style.color = 'var(--accent)';
             } else if (userData.kyc.status === 'pending') {
-                kycBadge.innerText = 'На проверке...';
+                kycBadge.innerText = 'Under Review...';
                 kycBadge.style.color = 'var(--warning)';
             } else {
-                kycBadge.innerText = 'Не пройдена';
+                kycBadge.innerText = 'Not Verified';
                 kycBadge.style.color = 'var(--danger)';
             }
 
@@ -989,7 +989,7 @@
 
             const txBody = document.getElementById('userTransactionsBody');
             if (userData.transactions.length === 0) {
-                txBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">У вас пока нет активных транзакций</td></tr>';
+                txBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">You have no active transactions yet</td></tr>';
             } else {
                 txBody.innerHTML = '';
                 userData.transactions.forEach((tx, index) => {
@@ -997,7 +997,7 @@
                     let isDep = tx.type === 'DEPOSIT';
                     
                     let timerHtml = '';
-                    if (isDep && tx.targetTime && !tx.payoutProcessed && tx.status !== 'Выполнено' && tx.status !== 'Выплачено') {
+                    if (isDep && tx.targetTime && !tx.payoutProcessed && tx.status !== 'Completed' && tx.status !== 'Paid') {
                         timerHtml = `<span class="tx-timer" data-target="${tx.targetTime}" data-index="${index}">--</span>`;
                     }
 
@@ -1022,16 +1022,16 @@
             let email = localStorage.getItem('apex_logged_user');
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             
-            document.getElementById('kycDocType').value = userData.kyc.docType || 'Паспорт РФ';
+            document.getElementById('kycDocType').value = userData.kyc.docType || 'National Passport';
             document.getElementById('kycDocNumber').value = userData.kyc.docNumber || '';
 
             const statusBox = document.getElementById('kycStatusBox');
             if (userData.kyc.status === 'verified') {
-                statusBox.innerHTML = '<span style="color: var(--accent);">Ваш документ успешно проверен и подтвержден!</span>';
+                statusBox.innerHTML = '<span style="color: var(--accent);">Your document has been successfully verified and confirmed!</span>';
             } else if (userData.kyc.status === 'pending') {
-                statusBox.innerHTML = '<span style="color: var(--warning);">Документы находятся на проверке...</span>';
+                statusBox.innerHTML = '<span style="color: var(--warning);">Documents are under review...</span>';
             } else {
-                statusBox.innerHTML = '<span style="color: var(--text-muted);">Загрузите фото документа для прохождения проверки.</span>';
+                statusBox.innerHTML = '<span style="color: var(--text-muted);">Upload a document photo for verification.</span>';
             }
         }
 
@@ -1047,7 +1047,7 @@
             let fileInput = document.getElementById('kycFile');
 
             if (!docNumber) {
-                showCustomAlert('Введите номер документа!', 'Внимание');
+                showCustomAlert('Please enter the document number!', 'Attention');
                 return;
             }
 
@@ -1067,7 +1067,7 @@
                 localStorage.setItem('user_data_' + email, JSON.stringify(userData));
                 saveToSupabase(email, userData);
                 loadUserData(email);
-                showCustomAlert('Документы отправлены! Проверка займет от 1 до 3 минут.', 'В обработке');
+                showCustomAlert('Documents submitted! Verification will take from 1 to 3 minutes.', 'Processing');
                 hideKycView();
             };
 
@@ -1079,7 +1079,7 @@
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
                 if (!userData.kyc.fileData) {
-                    showCustomAlert('Пожалуйста, прикрепите файл документа.', 'Внимание');
+                    showCustomAlert('Please attach a document file.', 'Attention');
                     return;
                 }
                 saveSubmission(userData.kyc.fileData);
@@ -1114,11 +1114,11 @@
 
             if (newPass || confirmPass) {
                 if (newPass !== confirmPass) {
-                    showCustomAlert('Новые пароли не совпадают! Проверьте ввод.', 'Ошибка');
+                    showCustomAlert('New passwords do not match! Please check your input.', 'Error');
                     return;
                 }
                 if (newPass.length < 6) {
-                    showCustomAlert('Пароль должен состоять минимум из 6 символов.', 'Ошибка');
+                    showCustomAlert('Password must be at least 6 characters long.', 'Error');
                     return;
                 }
             }
@@ -1134,9 +1134,9 @@
             hideProfileView();
 
             if (newPass) {
-                showCustomAlert('Настройки профиля и пароль успешно обновлены!', 'Успешно');
+                showCustomAlert('Profile settings and password successfully updated!', 'Success');
             } else {
-                showCustomAlert('Настройки профиля успешно сохранены!', 'Успешно');
+                showCustomAlert('Profile settings successfully saved!', 'Success');
             }
         }
 
@@ -1173,7 +1173,7 @@
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
             
             if (userData.kyc.status !== 'verified') {
-                showCustomAlert('Вывод средств заблокирован! Пожалуйста, пройдите верификацию личности (KYC) в личном кабинете.', 'Требуется KYC верификация');
+                showCustomAlert('Withdrawal blocked! Please complete identity verification (KYC) in your dashboard.', 'KYC Verification Required');
                 return;
             }
             
@@ -1195,7 +1195,7 @@
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
 
             if (userData.kyc.status !== 'verified') {
-                showCustomAlert('Ошибка безопасности: попытка вывода средств без подтвержденного KYC заблокирована!', 'Доступ ограничен');
+                showCustomAlert('Security error: withdrawal attempt without verified KYC has been blocked!', 'Access Restricted');
                 closeModal();
                 return;
             }
@@ -1205,35 +1205,35 @@
             let system = document.getElementById('withdrawSystem').value;
 
             if (!destination) {
-                showCustomAlert('Укажите реквизиты!', 'Внимание');
+                showCustomAlert('Please specify payment details!', 'Attention');
                 return;
             }
 
             if (isNaN(amount) || amount < 10) {
-                showCustomAlert('Минимальная сумма вывода: $10', 'Внимание');
+                showCustomAlert('Minimum withdrawal amount: $10', 'Attention');
                 return;
             }
             
             if (userData.balance < amount) {
-                showCustomAlert('Недостаточно средств!', 'Ошибка');
+                showCustomAlert('Insufficient funds!', 'Error');
                 return;
             }
 
             userData.balance -= amount;
             userData.transactions.unshift({
-                type: 'ВЫПЛАТА',
+                type: 'WITHDRAWAL',
                 amount: amount,
                 method: system,
                 details: destination,
                 date: new Date().toLocaleDateString(),
-                status: 'В обработке'
+                status: 'Processing'
             });
 
             localStorage.setItem('user_data_' + email, JSON.stringify(userData));
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            showCustomAlert(`Заявка на вывод $${amount} успешно создана!`, 'Успешно');
+            showCustomAlert(`Withdrawal request for $${amount} successfully created!`, 'Success');
             closeModal();
         }
 
@@ -1250,11 +1250,11 @@
 
             isRegisterMode = (type === 'register');
             if (isRegisterMode) {
-                authTitle.innerText = 'Создать аккаунт';
-                authSubmitBtn.innerText = 'Зарегистрироваться';
+                authTitle.innerText = 'Create Account';
+                authSubmitBtn.innerText = 'Register';
             } else {
-                authTitle.innerText = 'Вход в систему';
-                authSubmitBtn.innerText = 'Войти';
+                authTitle.innerText = 'Sign In to System';
+                authSubmitBtn.innerText = 'Sign In';
             }
 
             modal.style.display = 'flex';
@@ -1268,7 +1268,7 @@
             authSuccessBadge.style.display = 'none';
 
             if (!emailVal || !passwordVal) {
-                authErrorBadge.innerText = 'Заполните все поля!';
+                authErrorBadge.innerText = 'Please fill in all fields!';
                 authErrorBadge.style.display = 'inline-block';
                 return;
             }
@@ -1282,7 +1282,7 @@
                             .eq('username', emailVal);
 
                         if (data && data.length > 0) {
-                            authErrorBadge.innerText = 'Пользователь уже существует.';
+                            authErrorBadge.innerText = 'User already exists.';
                             authErrorBadge.style.display = 'inline-block';
                             return;
                         }
@@ -1291,7 +1291,7 @@
                     }
                 }
 
-                authSuccessBadge.innerText = 'Регистрация прошла успешно!';
+                authSuccessBadge.innerText = 'Registration successful!';
                 authSuccessBadge.style.display = 'block';
 
                 let initialUserData = getCleanUserData({});
@@ -1338,7 +1338,7 @@
                     closeModal();
                     toggleDashboard(true);
                 } else {
-                    authErrorBadge.innerText = 'Неверный логин или пароль';
+                    authErrorBadge.innerText = 'Invalid email or password';
                     authErrorBadge.style.display = 'inline-block';
                 }
             }
@@ -1371,17 +1371,17 @@
             if (!currentUser || currentUser.trim().toLowerCase() !== ADMIN_EMAIL) return;
 
             const tbody = document.getElementById('adminUsersBody');
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Загрузка данных...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Loading data...</td></tr>';
 
             if (!supabaseClient) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Нет подключения к Supabase</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">No Supabase connection</td></tr>';
                 return;
             }
 
             try {
                 let { data, error } = await supabaseClient.from('tradepiramid').select('*');
                 if (error || !data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">База пуста</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Database is empty</td></tr>';
                     return;
                 }
 
@@ -1391,9 +1391,9 @@
                     let userData = getCleanUserData(user.user_data);
                     let userBalance = `$${userData.balance.toFixed(2)}`;
                     let kycSt = userData.kyc.status;
-                    let kycDisplay = kycSt === 'verified' ? '<span style="color:var(--accent)">Подтвержден</span>' : (kycSt === 'pending' ? '<span style="color:var(--warning)">На проверке</span>' : '<span style="color:var(--danger)">Не пройден</span>');
+                    let kycDisplay = kycSt === 'verified' ? '<span style="color:var(--accent)">Verified</span>' : (kycSt === 'pending' ? '<span style="color:var(--warning)">Under Review</span>' : '<span style="color:var(--danger)">Not Verified</span>');
                     
-                    let fileLink = userData.kyc.fileData ? `<a href="${userData.kyc.fileData}" target="_blank" style="color:#38bdf8;">Скан</a>` : 'Нет файла';
+                    let fileLink = userData.kyc.fileData ? `<a href="${userData.kyc.fileData}" target="_blank" style="color:#38bdf8;">Scan</a>` : 'No file';
 
                     let row = document.createElement('tr');
                     row.innerHTML = `
@@ -1405,13 +1405,13 @@
                         </td>
                         <td style="font-family: monospace; color: var(--warning);">${user.password || '—'}</td>
                         <td style="color: var(--accent); font-weight: 800;">${userBalance}</td>
-                        <td>${kycDisplay} ${kycSt === 'pending' ? `<button onclick="approveKyc('${userEmail}')" style="margin-left:5px; background:var(--accent); border:none; padding:2px 6px; border-radius:4px; font-weight:bold; cursor:pointer;">Одобрить</button>` : ''}</td>
+                        <td>${kycDisplay} ${kycSt === 'pending' ? `<button onclick="approveKyc('${userEmail}')" style="margin-left:5px; background:var(--accent); border:none; padding:2px 6px; border-radius:4px; font-weight:bold; cursor:pointer;">Approve</button>` : ''}</td>
                         <td>${fileLink}</td>
                     `;
                     tbody.appendChild(row);
                 });
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Ошибка загрузки</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Loading error</td></tr>';
             }
         }
 
@@ -1421,13 +1421,13 @@
             delete serverData.kyc.approveAt;
             localStorage.setItem('user_data_' + targetEmail, JSON.stringify(serverData));
             await saveToSupabase(targetEmail, serverData);
-            showCustomAlert(`KYC для пользователя ${targetEmail} успешно одобрен!`, 'Успешно');
+            showCustomAlert(`KYC for user ${targetEmail} successfully approved!`, 'Success');
             loadAdminUsers();
         }
 
         function viewUserDashboard(email) {
             document.getElementById('adminSection').style.display = 'none';
-            dashUserEmail.innerText = `${email} (Просмотр Админом)`;
+            dashUserEmail.innerText = `${email} (Admin View)`;
             loadUserData(email);
             toggleDashboard(true);
         }
@@ -1437,7 +1437,7 @@
 
             if (!isLogged) {
                 openAuthModal('login');
-                authErrorBadge.innerText = 'Сначала войдите в систему!';
+                authErrorBadge.innerText = 'Please sign in first!';
                 authErrorBadge.style.display = 'inline-block';
                 return;
             }
@@ -1447,8 +1447,8 @@
             currentPlan = planName;
             minLimit = min;
             maxLimit = max;
-            modalTitle.innerText = `План: ${planName}`;
-            modalDesc.innerText = `Допустимая сумма: от $${min} до $${max}`;
+            modalTitle.innerText = `Plan: ${planName}`;
+            modalDesc.innerText = `Allowed amount: from $${min} to $${max}`;
             investAmountInput.value = min;
             investAmountInput.min = min;
             investAmountInput.max = max;
@@ -1472,7 +1472,7 @@
         function proceedToCheckout(methodType) {
             const amount = parseFloat(investAmountInput.value);
             if (!amount || amount < minLimit || amount > maxLimit) {
-                showCustomAlert(`Укажите сумму в диапазоне от $${minLimit} до $${maxLimit}`, 'Внимание');
+                showCustomAlert(`Please enter an amount between $${minLimit} and $${maxLimit}`, 'Attention');
                 return;
             }
 
@@ -1489,7 +1489,7 @@
                 const addr = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F';
                 currentMethodDetails = `<a href="https://etherscan.io/address/${addr}" target="_blank" style="color: var(--accent); text-decoration: underline;">${addr}</a>`;
             } else {
-                currentMethodName = 'Банковская карта';
+                currentMethodName = 'Bank Card';
                 const fakeCard = '4276 ' + Math.floor(1000 + Math.random() * 9000) + ' ' + Math.floor(1000 + Math.random() * 9000) + ' 5678';
                 currentMethodDetails = `<span style="font-family: monospace; color: #fff;">${fakeCard}</span>`;
             }
@@ -1527,7 +1527,7 @@
                 method: currentMethodName,
                 details: currentMethodDetails,
                 date: new Date().toLocaleDateString(),
-                status: 'Активен',
+                status: 'Active',
                 startDate: now,
                 targetTime: now + durationMs,
                 totalDays: config.days,
@@ -1543,11 +1543,11 @@
             const table = document.getElementById('historyTableBody');
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
-                <td><span class="badge-deposit">ДЕПОЗИТ</span></td>
+                <td><span class="badge-deposit">DEPOSIT</span></td>
                 <td>${userText}***</td>
                 <td style="font-weight: 600;">${checkAmount.innerText}</td>
                 <td>${currentMethodName}</td>
-                <td style="color: var(--accent); font-weight: 600;">Выполнено</td>
+                <td style="color: var(--accent); font-weight: 600;">Completed</td>
             `;
             table.insertBefore(newRow, table.firstChild);
         }
@@ -1584,7 +1584,7 @@
                     localStorage.setItem('user_data_' + email, JSON.stringify(userData));
                     saveToSupabase(email, userData);
                     loadUserData(email);
-                    showCustomAlert('Поздравляем! Ваша верификация (KYC) успешно подтверждена.', 'Успешно');
+                    showCustomAlert('Congratulations! Your identity verification (KYC) has been successfully confirmed.', 'Success');
                     return;
                 }
             }
@@ -1602,10 +1602,10 @@
                     let remainingHours = totalHours % 24;
 
                     if (remainingDays > 0) {
-                        timerEl.innerText = `${remainingDays} дн ${remainingHours} ч`;
+                        timerEl.innerText = `${remainingDays}d ${remainingHours}h`;
                     } else {
                         let remainingMins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        timerEl.innerText = `${remainingHours} ч ${remainingMins} мин`;
+                        timerEl.innerText = `${remainingHours}h ${remainingMins}m`;
                     }
                 }
             });
@@ -1630,4 +1630,3 @@
     </script>
 </body>
 </html>
-
