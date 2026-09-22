@@ -182,13 +182,15 @@
             position: fixed;
             bottom: 96px;
             right: 24px;
-            width: 320px;
+            width: 340px;
+            height: 480px;
             background: var(--card-bg);
             border: 1px solid rgba(0, 255, 136, 0.3);
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
             z-index: 9999;
             display: none;
+            flex-direction: column;
             overflow: hidden;
         }
 
@@ -215,44 +217,83 @@
         }
 
         .chat-body {
-            padding: 16px;
+            flex: 1;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #0b0f19;
         }
 
-        .chat-body textarea {
-            width: 100%;
-            height: 100px;
-            background: rgba(0, 0, 0, 0.2);
+        .chat-logs {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-right: 4px;
+        }
+
+        .chat-msg {
+            max-width: 82%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .chat-msg.user {
+            background: var(--accent);
+            color: #000;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            font-weight: 600;
+        }
+
+        .chat-msg.admin {
+            background: #1e293b;
+            color: #fff;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-controls input {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.4);
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 10px;
-            resize: none;
-            box-sizing: border-box;
             outline: none;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        .chat-body textarea:focus {
+        .chat-controls input:focus {
             border-color: var(--accent);
         }
 
-        .chat-body button {
-            width: 100%;
-            margin-top: 12px;
-            padding: 12px;
+        .chat-controls button {
+            padding: 10px 16px;
             background: var(--accent);
             color: #000000;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.2s;
         }
 
-        .chat-body button:hover {
+        .chat-controls button:hover {
             box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
-            transform: translateY(-2px);
         }
 
         footer { text-align: center; padding: 30px 15px; color: var(--text-muted); font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 40px; }
@@ -475,7 +516,7 @@
                     <div class="vision-img-box">
                         <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="AI Core">
                     </div>
-                    ### AI and Robotics
+                    <h3>AI and Robotics</h3>
                     <p>The Optimus humanoid robot project and Dojo supercomputers. Next-level factory automation enables Tesla to lower costs and monopolize the technology market.</p>
                 </div>
             </div>
@@ -709,8 +750,11 @@
             <button onclick="toggleSupportChat()">✕</button>
         </div>
         <div class="chat-body">
-            <textarea id="chat-message" placeholder="Describe your issue..."></textarea>
-            <button id="chat-send-btn" onclick="sendSupportMessage()">Send</button>
+            <div class="chat-logs" id="chatLogs"></div>
+            <div class="chat-controls">
+                <input type="text" id="chat-message" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendSupportMessage()">
+                <button id="chat-send-btn" onclick="sendSupportMessage()">Send</button>
+            </div>
         </div>
     </div>
 
@@ -783,51 +827,81 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget Functions */
+        /* Support Chat Widget Functions (Real-time Bi-directional) */
+        let sessionId = localStorage.getItem('chat_session_id');
+        if (!sessionId) {
+            sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('chat_session_id', sessionId);
+        }
+
+        let displayedChatCount = 0;
+
         function toggleSupportChat() {
             const win = document.getElementById('chat-window');
-            win.style.display = (win.style.display === 'block') ? 'none' : 'block';
+            const isFlex = win.style.display === 'flex';
+            win.style.display = isFlex ? 'none' : 'flex';
+            if (!isFlex) {
+                fetchSupportMessages();
+            }
+        }
+
+        async function fetchSupportMessages() {
+            try {
+                const res = await fetch('/api/chat/get?session_id=' + sessionId);
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const container = document.getElementById('chatLogs');
+
+                if (data.messages && data.messages.length > displayedChatCount) {
+                    for (let i = displayedChatCount; i < data.messages.length; i++) {
+                        const item = data.messages[i];
+                        const div = document.createElement('div');
+                        div.className = 'chat-msg ' + item.sender;
+                        div.innerText = (item.sender === 'admin' ? '👨‍💻 Support: ' : '') + item.text;
+                        container.appendChild(div);
+                    }
+                    displayedChatCount = data.messages.length;
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (e) {
+                console.error("Chat polling error:", e);
+            }
         }
 
         async function sendSupportMessage() {
-            const textarea = document.getElementById('chat-message');
+            const input = document.getElementById('chat-message');
             const sendBtn = document.getElementById('chat-send-btn');
-            const text = textarea.value.trim();
+            const text = input.value.trim();
 
-            if (!text) {
-                showCustomAlert('Please enter a message!', 'Attention');
-                return;
-            }
+            if (!text) return;
 
-            const loggedUser = localStorage.getItem('apex_logged_user') || 'Guest (unauthorized)';
-
+            input.value = '';
             sendBtn.disabled = true;
-            sendBtn.innerText = 'Sending...';
 
             try {
-                const response = await fetch('/api/support', {
+                const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        message: `👤 User: ${loggedUser}\n💬 Message: ${text}` 
+                        session_id: sessionId, 
+                        message: text 
                     })
                 });
-                const result = await response.json();
-
-                if (result.success) {
-                    showCustomAlert('Your message has been successfully sent to support!', 'Success');
-                    textarea.value = '';
-                    toggleSupportChat();
+                
+                if (response.ok) {
+                    fetchSupportMessages();
                 } else {
-                    showCustomAlert('Error: ' + (result.error || 'Failed to send'), 'Error');
+                    showCustomAlert('Error sending message', 'Error');
                 }
             } catch (err) {
                 showCustomAlert('Server connection error', 'Error');
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.innerText = 'Send';
             }
         }
+
+        setInterval(fetchSupportMessages, 2000);
 
         function showCustomAlert(text, title = 'Notification') {
             document.getElementById('customAlertTitle').innerText = title;
