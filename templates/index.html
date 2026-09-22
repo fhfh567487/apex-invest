@@ -827,14 +827,37 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
+        /* ---------------------------------------------------- */
         /* Support Chat Widget Functions (Real-time Bi-directional) */
-        let sessionId = localStorage.getItem('chat_session_id');
-        if (!sessionId) {
-            sessionId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('chat_session_id', sessionId);
+        /* ---------------------------------------------------- */
+        
+        let sessionId = '';
+        let displayedChatCount = 0;
+
+        // Инициализация сессии: если авторизован — берем его email, если нет — берем временный ID
+        function initChatSession() {
+            let loggedEmail = localStorage.getItem('apex_logged_user');
+            
+            if (loggedEmail) {
+                sessionId = loggedEmail; // Связываем чат с аккаунтом пользователя
+            } else {
+                sessionId = localStorage.getItem('chat_session_id');
+                if (!sessionId) {
+                    sessionId = 'anon_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('chat_session_id', sessionId);
+                }
+            }
+
+            // Очищаем историю при каждой смене пользователя/выходе
+            displayedChatCount = 0;
+            const chatLogs = document.getElementById('chatLogs');
+            if (chatLogs) chatLogs.innerHTML = '';
+
+            fetchSupportMessages();
         }
 
-        let displayedChatCount = 0;
+        // Запускаем инициализацию при старте
+        initChatSession();
 
         function toggleSupportChat() {
             const win = document.getElementById('chat-window');
@@ -846,8 +869,9 @@
         }
 
         async function fetchSupportMessages() {
+            if (!sessionId) return;
             try {
-                const res = await fetch('/api/chat/get?session_id=' + sessionId);
+                const res = await fetch('/api/chat/get?session_id=' + encodeURIComponent(sessionId));
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -874,7 +898,7 @@
             const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value.trim();
 
-            if (!text) return;
+            if (!text || !sessionId) return;
 
             input.value = '';
             sendBtn.disabled = true;
@@ -901,7 +925,10 @@
             }
         }
 
+        // Опрашиваем сервер на наличие новых сообщений
         setInterval(fetchSupportMessages, 2000);
+
+        /* ---------------------------------------------------- */
 
         function showCustomAlert(text, title = 'Notification') {
             document.getElementById('customAlertTitle').innerText = title;
@@ -1006,6 +1033,9 @@
 
         async function loginUserSession(email) {
             localStorage.setItem('apex_logged_user', email);
+            
+            // ОБНОВЛЕНИЕ: Переинициализируем чат, чтобы подтянулась история пользователя
+            initChatSession();
             
             authButtonsBlock.style.display = 'none';
             userProfileBlock.style.display = 'flex';
@@ -1420,6 +1450,10 @@
 
         function logout() {
             localStorage.removeItem('apex_logged_user');
+            
+            // ОБНОВЛЕНИЕ: Сбрасываем чат на гостевой профиль при выходе
+            initChatSession();
+            
             userProfileBlock.style.display = 'none';
             authButtonsBlock.style.display = 'flex';
             document.getElementById('adminSection').style.display = 'none';
