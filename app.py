@@ -3,7 +3,6 @@ import requests
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
-# Указываем Flask, где искать HTML-файлы (в папке templates)
 app = Flask(__name__, template_folder='templates')
 CORS(app)
 
@@ -12,16 +11,11 @@ TELEGRAM_BOT_TOKEN = "8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c"
 TELEGRAM_CHAT_ID = "-1004484725748"
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-def send_telegram_message(name, phone):
-    """Отправляет заявку в группу Telegram"""
-    text = (
-        "🔔 **Новая заявка с сайта Apex Invest** 🔔\n\n"
-        f"👤 **Имя:** `{name}`\n"
-        f"📞 **Телефон:** `{phone}`"
-    )
+def send_telegram_message(text_content):
+    """Универсальная отправка сообщения в Telegram"""
     payload = {
         'chat_id': TELEGRAM_CHAT_ID,
-        'text': text,
+        'text': text_content,
         'parse_mode': 'Markdown'
     }
     try:
@@ -32,32 +26,47 @@ def send_telegram_message(name, phone):
         print(f"Ошибка при отправке в Telegram: {e}")
         return False, str(e)
 
-# --- МАРШРУТЫ ---
+# --- МАРШРУТЫ САЙТА И API ---
 
 @app.route('/', methods=['GET'])
 def home():
-    """Открывает сам сайт (файл index.html из папки templates)"""
+    """Главная страница сайта (index.html)"""
     return render_template('index.html')
 
 @app.route('/api/submit-form', methods=['POST'])
 def submit_form():
-    """Принимает данные из формы на сайте и шлет в Telegram"""
-    data = request.json
-    if not data:
-        return jsonify({"status": "error", "message": "Invalid JSON data"}), 400
+    """Обработчик обычной формы заявки"""
+    data = request.json or request.form
+    name = data.get('name', 'Не указано')
+    phone = data.get('phone', 'Не указано')
 
-    name = data.get('name')
-    phone = data.get('phone')
+    message = (
+        "🔔 **Новая заявка с сайта Apex Invest**\n\n"
+        f"👤 **Имя:** `{name}`\n"
+        f"📞 **Телефон:** `{phone}`"
+    )
 
-    if not name or not phone:
-        return jsonify({"status": "error", "message": "Name and phone are required"}), 400
-
-    success, error_info = send_telegram_message(name, phone)
-
+    success, error = send_telegram_message(message)
     if success:
-        return jsonify({"status": "success", "message": "Data sent to Telegram"}), 200
-    else:
-        return jsonify({"status": "error", "message": "Failed to send to Telegram", "details": error_info}), 500
+        return jsonify({"status": "success", "message": "Sent!"}), 200
+    return jsonify({"status": "error", "message": str(error)}), 500
+
+@app.route('/api/support', methods=['POST'])
+def support_form():
+    """Обработчик формы поддержки (как на вашем скриншоте с сообщением 'Ку')"""
+    data = request.json or request.form
+    # Поддерживаем разные варианты ключей из фронтенда (message, text, query)
+    user_message = data.get('message') or data.get('text') or data.get('query') or str(data)
+
+    message = (
+        "💬 **Сообщение в поддержку Apex**\n\n"
+        f"📝 **Текст:**\n`{user_message}`"
+    )
+
+    success, error = send_telegram_message(message)
+    if success:
+        return jsonify({"status": "success", "message": "Sent!"}), 200
+    return jsonify({"status": "error", "message": str(error)}), 500
 
 # --- ЗАПУСК ---
 if __name__ == '__main__':
