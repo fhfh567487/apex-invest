@@ -35,7 +35,7 @@ def home():
     try:
         return render_template('index.html')
     except Exception:
-        return "Сайт и бот запущены!"
+        return "Сайт и бот поддержки запущены!"
 
 # 1. Прием сообщения или скриншота от пользователя
 @app.route('/api/chat/send', methods=['POST', 'OPTIONS'])
