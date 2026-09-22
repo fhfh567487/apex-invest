@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import requests
 
-# Сначала создаем экземпляр Flask и настраиваем CORS
+# Создаем экземпляр Flask и настраиваем CORS
 app = Flask(__name__)
 CORS(app)
 
@@ -19,14 +19,19 @@ def home():
 
 @app.route('/send_message', methods=['POST'])
 def send_message():
-    data = request.get_json()
+    # Поддерживаем как JSON, так и обычные формы (FormData)
+    if request.is_json:
+        data = request.get_json() or {}
+    else:
+        data = request.form.to_dict()
 
-    if not data or 'message' not in data:
-        return jsonify({'status': 'error', 'message': 'Поле "message" отсутствует'}), 400
+    message = data.get('message') or data.get('text')
+
+    if not message:
+        return jsonify({'success': False, 'status': 'error', 'message': 'Поле "message" отсутствует'}), 400
 
     name = data.get('name', 'Аноним')
     contact = data.get('contact', 'Не указан')
-    message = data.get('message')
 
     text = (
         f"📩 <b>Новое обращение с сайта!</b>\n\n"
@@ -47,12 +52,13 @@ def send_message():
         result = response.json()
 
         if result.get('ok'):
-            return jsonify({'status': 'success', 'message': 'Отправлено в Telegram'}), 200
+            # Возвращаем ключи и со статусом, и с success, чтобы JS на сайте точно понял, что всё успешно
+            return jsonify({'success': True, 'status': 'success', 'message': 'Отправлено в Telegram'}), 200
         else:
-            return jsonify({'status': 'error', 'details': result.get('description')}), 500
+            return jsonify({'success': False, 'status': 'error', 'details': result.get('description')}), 400
 
     except Exception as e:
-        return jsonify({'status': 'error', 'details': str(e)}), 500
+        return jsonify({'success': False, 'status': 'error', 'details': str(e)}), 500
 
 
 # Роут для поддержки, который ожидает фронтенд
