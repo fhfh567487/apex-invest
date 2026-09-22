@@ -1,3 +1,22 @@
+import os
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+import requests
+
+# Сначала создаем экземпляр Flask и настраиваем CORS
+app = Flask(__name__)
+CORS(app)
+
+# Настройки Telegram
+TELEGRAM_BOT_TOKEN = "8950844520:AAGuwJtuHRjHpaEU-qhyS08vgwBhomDJ31c"
+TELEGRAM_CHAT_ID = "8686442131"
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return render_template('index.html')
+
+
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.get_json()
@@ -35,7 +54,13 @@ def send_message():
     except Exception as e:
         return jsonify({'status': 'error', 'details': str(e)}), 500
 
-# Добавляем дублирующий роут для поддержки фронтенда
+
+# Роут для поддержки, который ожидает фронтенд
 @app.route('/api/support', methods=['POST'])
 def api_support():
     return send_message()
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
