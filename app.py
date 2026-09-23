@@ -45,6 +45,18 @@ def init_db():
             auth_token TEXT
         )
     """)
+    # Миграция: добавить колонки, если таблица была старой
+    cursor.execute("PRAGMA table_info(users)")
+    cols = {row[1] for row in cursor.fetchall()}
+    if "telegram_chat_id" not in cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN telegram_chat_id INTEGER")
+        print("DB migration: added telegram_chat_id")
+    if "auth_token" not in cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN auth_token TEXT")
+        print("DB migration: added auth_token")
+    if "username" not in cols:
+        cursor.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        print("DB migration: added username")
     conn.commit()
     conn.close()
 
