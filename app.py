@@ -1,130 +1,150 @@
 import os
+import sqlite3
 import threading
-import base64
-from io import BytesIO
-from flask import Flask, render_template, request, jsonify
+import secrets
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import telebot
 from dotenv import load_dotenv
 
+# Загружаем переменные из .env
 load_dotenv()
 
-TOKEN = os.getenv("BOT_TOKEN")
-SUPPORT_CHAT_ID_RAW = os.getenv("SUPPORT_CHAT_ID")
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "Appexinvestet_bot")
 
-if not TOKEN or not SUPPORT_CHAT_ID_RAW:
-    raise ValueError("Ошибка: BOT_TOKEN и SUPPORT_CHAT_ID должны быть указаны в переменных окружения!")
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "apex_secret_key_123")
 
-SUPPORT_CHAT_ID = int(SUPPORT_CHAT_ID_RAW)
-bot = telebot.TeleBot(TOKEN)
+# --- ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ ---
+DB_NAME = "database.db"
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # Таблица пользователей
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            telegram_chat_id INTEGER,
+            auth_token TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-# Разрешаем CORS
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+init_db()
 
-# Хранилище сообщений чата в памяти
-CHAT_STORAGE = {}
-
-@app.route('/')
-def home():
+# --- ИНИЦИАЛИЗАЦИЯ TELEGRAM БОТА ---
+bot = None
+if BOT_TOKEN:
     try:
-        return render_template('index.html')
-    except Exception:
-        return "Сайт и бот поддержки запущены!"
-
-# Прием сообщения или скриншота от пользователя
-@app.route('/api/chat/send', methods=['POST', 'OPTIONS'])
-@app.route('/send_message', methods=['POST', 'OPTIONS'])
-@app.route('/api/support', methods=['POST', 'OPTIONS'])
-def send_from_site():
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'}), 200
-
-    try:
-        data = request.json or request.form or {}
-        session_id = data.get('session_id') or data.get('email') or 'user_guest'
-        user_text = (data.get('message') or data.get('text') or '').strip()
-        image_data = data.get('image')
-
-        if not user_text and not image_data:
-            return jsonify({'error': 'Сообщение пустое'}), 400
-
-        if session_id not in CHAT_STORAGE:
-            CHAT_STORAGE[session_id] = []
-
-        msg_obj = {'sender': 'user', 'text': user_text}
-        if image_data:
-            msg_obj['image'] = image_data
-        CHAT_STORAGE[session_id].append(msg_obj)
-
-        if image_data:
-            header, encoded = image_data.split(",", 1) if "," in image_data else ("", image_data)
-            img_bytes = base64.b64decode(encoded)
-            photo_file = BytesIO(img_bytes)
-            photo_file.name = "screenshot.jpg"
-
-            caption = (
-                f"💬 Скриншот из онлайн-чата!\n\n"
-                f"🔑 Сессия: {session_id}\n\n"
-                f"✉️ Текст: {user_text if user_text else 'Без текста'}"
-            )
-            bot.send_photo(SUPPORT_CHAT_ID, photo_file, caption=caption)
-        else:
-            support_card = (
-                f"💬 Новое сообщение из онлайн-чата!\n\n"
-                f"🔑 Сессия: {session_id}\n\n"
-                f"✉️ Текст:\n{user_text}"
-            )
-            bot.send_message(SUPPORT_CHAT_ID, support_card)
-
-        return jsonify({'status': 'ok', 'message': 'Отправлено'})
+        bot = telebot.TeleBot(BOT_TOKEN)
+        print("✅ Telegram bot initialized")
     except Exception as e:
-        print("[ОШИБКА ОБРАБОТКИ]:", str(e))
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Error initializing bot: {e}")
 
-# Получение истории сообщений сайтом
-@app.route('/api/chat/get', methods=['GET', 'OPTIONS'])
-def get_for_site():
-    if request.method == 'OPTIONS':
-        return jsonify({'status': 'ok'}), 200
+if bot:
+    @bot.message_handler(commands=['start'])
+    def handle_start(message):
+        chat_id = message.chat.id
+        args = message.text.split()
 
-    session_id = request.args.get('session_id')
-    if not session_id or session_id not in CHAT_STORAGE:
-        return jsonify({'messages': []})
+        # Если перешли по ссылке вида /start <token>
+        if len(args) > 1:
+            auth_token = args[1]
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            
+            # Ищем пользователя с таким токеном
+            cursor.execute("SELECT id, username FROM users WHERE auth_token = ?", (auth_token,))
+            user = cursor.fetchone()
 
-    return jsonify({'messages': CHAT_STORAGE[session_id]})
+            if user:
+                user_id, username = user
+                # Привязываем telegram_chat_id и сбрасываем одноразовый токен
+                cursor.execute("UPDATE users SET telegram_chat_id = ?, auth_token = NULL WHERE id = ?", (chat_id, user_id))
+                conn.commit()
+                conn.close()
 
-# Пересылка ответа из Telegram обратно на сайт
-@bot.message_handler(func=lambda msg: msg.chat.id == SUPPORT_CHAT_ID and msg.reply_to_message is not None)
-def handle_admin_reply(message):
-    orig_text = message.reply_to_message.text or message.reply_to_message.caption or ""
+                welcome_msg = (
+                    f"🎉 *Аккаунт Apex успешно привязан!*\n\n"
+                    f"Здравствуйте, *{username}*! Теперь вы будете получать мгновенные "
+                    f"уведомления о пополнениях, выводах и входах в аккаунт."
+                )
+                bot.reply_to(message, welcome_msg, parse_mode="Markdown")
+                return
+            conn.close()
 
-    if "Сессия:" in orig_text:
+        # Обычный запуск /start без параметра
+        bot.reply_to(
+            message,
+            "👋 *Добро пожаловать в Apex Invest Bot!*\n\n"
+            "Чтобы привязать аккаунт, нажмите кнопку *«Подключить бота»* в личном кабинете на сайте.",
+            parse_mode="Markdown"
+        )
+
+    def run_bot():
+        print("🚀 Telegram bot polling started...")
+        bot.infinity_polling(skip_pending=True)
+
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+
+# --- ВЕБ-МАРШРУТЫ (FLASK) ---
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+# API для получения ссылки с кодом привязки бота
+@app.route("/api/telegram/connect", methods=["POST"])
+def connect_telegram():
+    data = request.json or {}
+    user_id = data.get("user_id", 1)  # Замените на ID из вашей системы авторизации/сессии
+
+    # Генерируем уникальный токен авторизации
+    auth_token = secrets.token_hex(8)
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET auth_token = ? WHERE id = ?", (auth_token, user_id))
+    conn.commit()
+    conn.close()
+
+    deep_link = f"https://t.me/{BOT_USERNAME}?start={auth_token}"
+    return jsonify({"success": True, "link": deep_link})
+
+# API для отправки Push-уведомления пользователю в Telegram
+@app.route("/api/notify", methods=["POST"])
+def notify_user():
+    data = request.json or {}
+    user_id = data.get("user_id")
+    text = data.get("message")
+
+    if not user_id or not text:
+        return jsonify({"success": False, "error": "user_id and message are required"}), 400
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT telegram_chat_id FROM users WHERE id = ?", (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row or not row[0]:
+        return jsonify({"success": False, "error": "Telegram not linked for this user"}), 404
+
+    chat_id = row[0]
+
+    if bot:
         try:
-            session_id = orig_text.split("Сессия:")[1].split()[0].replace('`', '').strip()
-
-            if session_id not in CHAT_STORAGE:
-                CHAT_STORAGE[session_id] = []
-
-            CHAT_STORAGE[session_id].append({'sender': 'admin', 'text': message.text})
-            bot.reply_to(message, "✅ Ответ доставлен в чат на сайте!")
-            return
+            bot.send_message(chat_id, text, parse_mode="Markdown")
+            return jsonify({"success": True})
         except Exception as e:
-            bot.reply_to(message, f"❌ Ошибка отправки на сайт: {e}")
-            return
+            return jsonify({"success": False, "error": str(e)}), 500
 
-    bot.reply_to(message, "⚠️ Не удалось определить сессию сайта.")
+    return jsonify({"success": False, "error": "Bot is not active"}), 500
 
-def run_bot():
-    print("Бот и сервер поддержки успешно запущены!")
-    bot.infinity_polling()
-
-if __name__ == '__main__':
-    threading.Thread(target=run_bot, daemon=True).start()
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=port)
