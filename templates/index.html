@@ -377,6 +377,7 @@
                     <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showKycView()">🪪 Verification</button>
                     <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px;" onclick="showProfileView()">⚙️ Profile</button>
                     <button class="dash-action-btn deposit" style="flex: none; width: auto; padding: 10px 15px;" onclick="scrollToPlans()">+ Top Up</button>
+                    <button class="dash-action-btn withdraw" style="flex: none; width: auto; padding: 10px 15px; border-color: #29b6f6; color: #29b6f6;" onclick="openTelegramBot()">✈️ Telegram</button>
                 </div>
             </div>
 
@@ -1055,6 +1056,7 @@
                 transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
                 firstName: parsed.firstName || '',
                 lastName: parsed.lastName || '',
+                telegram: parsed.telegram || '',
                 kyc: parsed.kyc || { status: 'none', docType: '', docNumber: '', fileData: '' }
             };
 
@@ -1310,6 +1312,21 @@
         function hideProfileView() {
             dashboardOverview.style.display = 'block';
             profileView.style.display = 'none';
+        }
+
+        function openTelegramBot() {
+            let email = localStorage.getItem('apex_logged_user');
+            if (!email) {
+                openAuthModal('login');
+                return;
+            }
+
+            // Deep link with user email so the bot can identify the account
+            const startPayload = btoa(email).replace(/=+$/, '');
+            const botUrl = 'https://t.me/Appexinvestet_bot?start=' + startPayload;
+
+            // Open Telegram bot
+            window.open(botUrl, '_blank');
         }
 
         async function saveProfileData() {
