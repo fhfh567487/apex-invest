@@ -1315,22 +1315,8 @@
         }
 
         function openTelegramBot() {
-            let email = localStorage.getItem('apex_logged_user');
-            if (!email) {
-                openAuthModal('login');
-                return;
-            }
-
-            // Telegram start: only A-Z a-z 0-9 _ (max 64). Hex-encode email.
-            let startPayload = '';
-            for (let i = 0; i < email.length; i++) {
-                startPayload += email.charCodeAt(i).toString(16).padStart(2, '0');
-            }
-            if (startPayload.length > 64) {
-                startPayload = startPayload.substring(0, 64);
-            }
-
-            const botUrl = 'https://t.me/Appexinvestet_bot?start=' + startPayload;
+            // Открываем бота — привязка по email + пароль внутри Telegram
+            const botUrl = 'https://t.me/Appexinvestet_bot?start=link';
             window.open(botUrl, '_blank');
         }
 
