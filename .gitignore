@@ -1,1 +1,25 @@
+# Секреты — не выкладывать на GitHub
+.env
+.env.*
+!.env.example
 
+# Базы данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Node.js (если используешь)
+node_modules/
+
+# Служебные файлы системы и редакторов
+.idea/
+.vscode/
+.DS_Store
+*.log
