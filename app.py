@@ -2,7 +2,7 @@ import os
 import threading
 import base64
 from io import BytesIO
-from flask import Flask, render_template, request, jsonify, render_template_string
+from flask import Flask, render_template, request, jsonify
 import telebot
 from dotenv import load_dotenv
 
@@ -27,7 +27,7 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-# Хранилище сообщений чата в памяти: { session_id: [ {"sender": "user"/"admin", "text": "...", "image": "..."}, ... ] }
+# Хранилище сообщений чата в памяти
 CHAT_STORAGE = {}
 
 @app.route('/')
@@ -37,7 +37,7 @@ def home():
     except Exception:
         return "Сайт и бот поддержки запущены!"
 
-# 1. Прием сообщения или скриншота от пользователя
+# Прием сообщения или скриншота от пользователя
 @app.route('/api/chat/send', methods=['POST', 'OPTIONS'])
 @app.route('/send_message', methods=['POST', 'OPTIONS'])
 @app.route('/api/support', methods=['POST', 'OPTIONS'])
@@ -62,7 +62,6 @@ def send_from_site():
             msg_obj['image'] = image_data
         CHAT_STORAGE[session_id].append(msg_obj)
 
-        # Отправка в Telegram
         if image_data:
             header, encoded = image_data.split(",", 1) if "," in image_data else ("", image_data)
             img_bytes = base64.b64decode(encoded)
@@ -88,7 +87,7 @@ def send_from_site():
         print("[ОШИБКА ОБРАБОТКИ]:", str(e))
         return jsonify({'error': str(e)}), 500
 
-# 2. Получение истории сообщений сайтом
+# Получение истории сообщений сайтом
 @app.route('/api/chat/get', methods=['GET', 'OPTIONS'])
 def get_for_site():
     if request.method == 'OPTIONS':
@@ -100,7 +99,7 @@ def get_for_site():
 
     return jsonify({'messages': CHAT_STORAGE[session_id]})
 
-# 3. Пересылка вашего ответа из Telegram обратно на сайт
+# Пересылка ответа из Telegram обратно на сайт
 @bot.message_handler(func=lambda msg: msg.chat.id == SUPPORT_CHAT_ID and msg.reply_to_message is not None)
 def handle_admin_reply(message):
     orig_text = message.reply_to_message.text or message.reply_to_message.caption or ""
