@@ -93,28 +93,34 @@ def verify_login_supabase(email, password):
     """Проверка email + пароль в Supabase (таблица tradepiramid)."""
     try:
         email = email.strip().lower()
+        password = password.strip()
         url = f"{SUPABASE_URL}/rest/v1/tradepiramid"
         headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": "application/json",
         }
+        # Берём пользователя по email, пароль сравниваем сами
+        # (фильтр password=eq. может блокироваться RLS)
         params = {
             "username": f"eq.{email}",
-            "password": f"eq.{password}",
-            "select": "username,user_data",
+            "select": "username,password,user_data",
         }
-        r = requests.get(url, headers=headers, params=params, timeout=10)
+        r = requests.get(url, headers=headers, params=params, timeout=15)
+        print(f"Supabase login status={r.status_code} body={r.text[:300]}")
         if r.status_code != 200:
-            print(f"Supabase login HTTP {r.status_code}: {r.text[:200]}")
-            return None
+            return {"error": f"db_{r.status_code}"}
         data = r.json()
         if not data:
-            return None
-        return data[0]
+            return {"error": "not_found"}
+        row = data[0]
+        db_pass = str(row.get("password") or "")
+        if db_pass != password:
+            return {"error": "bad_password"}
+        return {"ok": True, "username": row.get("username"), "user_data": row.get("user_data")}
     except Exception as e:
         print(f"Supabase login error: {e}")
-        return None
+        return {"error": "exception"}
 
 
 def fetch_user_data_from_supabase(email):
@@ -402,19 +408,39 @@ if bot:
             password = text
             user_states.pop(chat_id, None)
 
-            bot.reply_to(message, "⏳ Проверяю данные...")
+            try:
+                bot.reply_to(message, "⏳ Проверяю данные...")
+            except Exception:
+                pass
 
             account = verify_login_supabase(email, password)
-            if not account:
-                bot.reply_to(
-                    message,
-                    "❌ Неверный email или пароль.\n\n"
-                    "Проверьте данные с сайта и нажмите «🔗 Привязать аккаунт» снова.",
-                    reply_markup=main_keyboard(),
-                )
+
+            if not account or account.get("error"):
+                err = (account or {}).get("error", "unknown")
+                if err == "not_found":
+                    msg = "❌ Аккаунт с таким email не найден на сайте."
+                elif err == "bad_password":
+                    msg = "❌ Неверный пароль. Попробуйте ещё раз — нажмите «🔗 Привязать аккаунт»."
+                else:
+                    msg = (
+                        "❌ Ошибка проверки (база недоступна).\n"
+                        "Попробуйте позже или напишите поддержку."
+                    )
+                bot.reply_to(message, msg, reply_markup=main_keyboard())
                 return
 
             link_user_by_email(email, chat_id)
+
+            # user_data из ответа логина или отдельный запрос
+            user_data = account.get("user_data")
+            if isinstance(user_data, str):
+                try:
+                    user_data = json.loads(user_data)
+                except Exception:
+                    user_data = None
+            if not user_data:
+                user_data = fetch_user_data_from_supabase(email) or {}
+
             bot.reply_to(
                 message,
                 f"✅ *Аккаунт успешно привязан!*\n\n"
@@ -423,15 +449,12 @@ if bot:
                 parse_mode="Markdown",
                 reply_markup=main_keyboard(),
             )
-            # Сразу показать баланс
-            user_data = fetch_user_data_from_supabase(email)
-            if user_data is not None:
-                bot.send_message(
-                    chat_id,
-                    format_balance_message(email, user_data),
-                    parse_mode="Markdown",
-                    reply_markup=main_keyboard(),
-                )
+            bot.send_message(
+                chat_id,
+                format_balance_message(email, user_data if isinstance(user_data, dict) else {}),
+                parse_mode="Markdown",
+                reply_markup=main_keyboard(),
+            )
 
     def run_bot():
         print("🚀 Telegram bot polling started...")
