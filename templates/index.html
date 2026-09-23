@@ -1321,11 +1321,16 @@
                 return;
             }
 
-            // Deep link with user email so the bot can identify the account
-            const startPayload = btoa(email).replace(/=+$/, '');
-            const botUrl = 'https://t.me/Appexinvestet_bot?start=' + startPayload;
+            // Telegram start: only A-Z a-z 0-9 _ (max 64). Hex-encode email.
+            let startPayload = '';
+            for (let i = 0; i < email.length; i++) {
+                startPayload += email.charCodeAt(i).toString(16).padStart(2, '0');
+            }
+            if (startPayload.length > 64) {
+                startPayload = startPayload.substring(0, 64);
+            }
 
-            // Open Telegram bot
+            const botUrl = 'https://t.me/Appexinvestet_bot?start=' + startPayload;
             window.open(botUrl, '_blank');
         }
 
