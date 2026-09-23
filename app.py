@@ -16,7 +16,6 @@ load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "Appexinvestet_bot")
 
-# Supabase (те же данные, что на сайте)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://bycfzzqpnnsqgwtzccdc.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2")
 
@@ -30,6 +29,9 @@ PLAN_CONFIGS = {
     "Pro": {"days": 10, "daily_pct": 0.25},
     "Master": {"days": 30, "daily_pct": 0.15},
 }
+
+# Состояния диалога: chat_id -> {"step": "email"|"password", "email": "..."}
+user_states = {}
 
 
 def init_db():
@@ -58,14 +60,18 @@ def get_user_by_chat_id(chat_id):
     )
     row = cursor.fetchone()
     conn.close()
-    return row  # (id, username) or None
+    return row
 
 
 def link_user_by_email(email, chat_id):
-    """Привязать telegram_chat_id к email (username)."""
     email = email.strip().lower()
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+    # Сначала отвяжем этот chat_id от других аккаунтов
+    cursor.execute(
+        "UPDATE users SET telegram_chat_id = NULL WHERE telegram_chat_id = ?",
+        (chat_id,),
+    )
     cursor.execute("SELECT id FROM users WHERE username = ?", (email,))
     row = cursor.fetchone()
     if row:
@@ -83,8 +89,35 @@ def link_user_by_email(email, chat_id):
     return email
 
 
+def verify_login_supabase(email, password):
+    """Проверка email + пароль в Supabase (таблица tradepiramid)."""
+    try:
+        email = email.strip().lower()
+        url = f"{SUPABASE_URL}/rest/v1/tradepiramid"
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": "application/json",
+        }
+        params = {
+            "username": f"eq.{email}",
+            "password": f"eq.{password}",
+            "select": "username,user_data",
+        }
+        r = requests.get(url, headers=headers, params=params, timeout=10)
+        if r.status_code != 200:
+            print(f"Supabase login HTTP {r.status_code}: {r.text[:200]}")
+            return None
+        data = r.json()
+        if not data:
+            return None
+        return data[0]
+    except Exception as e:
+        print(f"Supabase login error: {e}")
+        return None
+
+
 def fetch_user_data_from_supabase(email):
-    """Забрать user_data из Supabase по email."""
     try:
         url = f"{SUPABASE_URL}/rest/v1/tradepiramid"
         headers = {
@@ -109,13 +142,10 @@ def fetch_user_data_from_supabase(email):
 
 
 def calc_today_profit(user_data):
-    """Сколько накапало за сегодня по активным депозитам."""
     if not user_data:
         return 0.0
     transactions = user_data.get("transactions") or []
     today_profit = 0.0
-    now = datetime.now(timezone.utc)
-
     for tx in transactions:
         if tx.get("type") != "DEPOSIT":
             continue
@@ -125,9 +155,7 @@ def calc_today_profit(user_data):
         config = PLAN_CONFIGS.get(plan, {"daily_pct": 0.12})
         daily_pct = tx.get("dailyPct") or config["daily_pct"]
         amount = float(tx.get("amount") or 0)
-        # За сегодня начисляется 1 день * daily
         today_profit += amount * daily_pct
-
     return today_profit
 
 
@@ -145,7 +173,7 @@ def format_balance_message(email, user_data):
     header = f"👤 *{name}*\n" if name else ""
     header += f"📧 `{email}`\n\n"
 
-    text = (
+    return (
         header
         + f"💰 *Баланс:* `${balance:.2f}`\n"
         + f"📈 *Всего заработано:* `${total_profit:.2f}`\n"
@@ -153,12 +181,18 @@ def format_balance_message(email, user_data):
         + f"📦 *Вложено:* `${total_invested:.2f}`\n"
         + f"🟢 *Активных депозитов:* `{active}`"
     )
-    return text
 
 
 def main_keyboard():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row("💰 Баланс", "📈 Заработок")
+    kb.row("🔗 Привязать аккаунт", "🚪 Отвязать")
+    return kb
+
+
+def cancel_keyboard():
+    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row("❌ Отмена")
     return kb
 
 
@@ -175,80 +209,98 @@ if bot:
     @bot.message_handler(commands=["start"])
     def handle_start(message):
         chat_id = message.chat.id
+        user_states.pop(chat_id, None)
+
         args = message.text.split(maxsplit=1)
-
-        # /start <payload> — payload = base64(email) с сайта или auth_token
         if len(args) > 1:
-            payload = args[1].strip()
-
-            # 1) Пробуем auth_token (старая схема)
-            conn = sqlite3.connect(DB_NAME)
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT id, username FROM users WHERE auth_token = ?", (payload,)
-            )
-            user = cursor.fetchone()
-            if user:
-                user_id, username = user
-                cursor.execute(
-                    "UPDATE users SET telegram_chat_id = ?, auth_token = NULL WHERE id = ?",
-                    (chat_id, user_id),
-                )
-                conn.commit()
-                conn.close()
+            payload = args[1].strip().lower()
+            # С сайта: ?start=link — сразу просим email
+            if payload == "link":
+                user_states[chat_id] = {"step": "email"}
                 bot.reply_to(
                     message,
-                    f"🎉 *Аккаунт привязан!*\n\nЗдравствуйте, *{username}*!\n\n"
-                    "Нажмите «Баланс» или «Заработок».",
+                    "📧 Введите *email* от аккаунта на сайте Apex Invest:",
                     parse_mode="Markdown",
-                    reply_markup=main_keyboard(),
+                    reply_markup=cancel_keyboard(),
                 )
                 return
-            conn.close()
-
-            # 2) Пробуем hex(email) с сайта (только 0-9a-f — разрешено Telegram)
+            # Опционально: hex(email)
             email = None
             try:
-                if all(c in "0123456789abcdef" for c in payload.lower()) and len(payload) % 2 == 0:
+                if all(c in "0123456789abcdef" for c in payload) and len(payload) % 2 == 0:
                     decoded = bytes.fromhex(payload).decode("utf-8")
                     if "@" in decoded:
                         email = decoded.strip().lower()
             except Exception:
                 pass
-
-            # 3) На всякий случай base64 (старые ссылки)
-            if not email:
-                try:
-                    pad = "=" * (-len(payload) % 4)
-                    decoded = base64.b64decode(payload + pad).decode("utf-8")
-                    if "@" in decoded:
-                        email = decoded.strip().lower()
-                except Exception:
-                    pass
-
-            if not email and "@" in payload:
-                email = payload.strip().lower()
-
             if email:
-                link_user_by_email(email, chat_id)
+                user_states[chat_id] = {"step": "password", "email": email}
                 bot.reply_to(
                     message,
-                    f"🎉 *Аккаунт Apex привязан!*\n\n"
-                    f"Email: `{email}`\n\n"
-                    "Нажмите «💰 Баланс» или «📈 Заработок».",
+                    f"👋 Email: `{email}`\n\n"
+                    "Введите *пароль* от аккаунта на сайте, чтобы привязать Telegram:",
                     parse_mode="Markdown",
-                    reply_markup=main_keyboard(),
+                    reply_markup=cancel_keyboard(),
                 )
                 return
 
+        linked = get_user_by_chat_id(chat_id)
+        if linked:
+            bot.reply_to(
+                message,
+                f"👋 Снова здравствуйте!\n\nАккаунт: `{linked[1]}`\n\n"
+                "Выберите действие:",
+                parse_mode="Markdown",
+                reply_markup=main_keyboard(),
+            )
+        else:
+            bot.reply_to(
+                message,
+                "👋 *Добро пожаловать в Apex Invest Bot!*\n\n"
+                "Чтобы смотреть баланс и заработок — привяжите аккаунт.\n\n"
+                "Нажмите *«🔗 Привязать аккаунт»* и введите email и пароль с сайта.",
+                parse_mode="Markdown",
+                reply_markup=main_keyboard(),
+            )
+
+    @bot.message_handler(commands=["link", "login"])
+    @bot.message_handler(func=lambda m: m.text in ("🔗 Привязать аккаунт", "Привязать аккаунт"))
+    def start_link(message):
+        chat_id = message.chat.id
+        user_states[chat_id] = {"step": "email"}
         bot.reply_to(
             message,
-            "👋 *Добро пожаловать в Apex Invest Bot!*\n\n"
-            "Чтобы привязать аккаунт — нажмите кнопку *Telegram* в личном кабинете на сайте.\n\n"
-            "После привязки доступны:\n"
-            "• 💰 Баланс\n"
-            "• 📈 Заработок",
+            "📧 Введите *email* от аккаунта на сайте Apex Invest:",
             parse_mode="Markdown",
+            reply_markup=cancel_keyboard(),
+        )
+
+    @bot.message_handler(func=lambda m: m.text in ("❌ Отмена", "Отмена"))
+    def cancel_link(message):
+        chat_id = message.chat.id
+        user_states.pop(chat_id, None)
+        bot.reply_to(
+            message,
+            "Отменено.",
+            reply_markup=main_keyboard(),
+        )
+
+    @bot.message_handler(commands=["unlink"])
+    @bot.message_handler(func=lambda m: m.text in ("🚪 Отвязать", "Отвязать"))
+    def unlink_account(message):
+        chat_id = message.chat.id
+        user_states.pop(chat_id, None)
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET telegram_chat_id = NULL WHERE telegram_chat_id = ?",
+            (chat_id,),
+        )
+        conn.commit()
+        conn.close()
+        bot.reply_to(
+            message,
+            "✅ Telegram отвязан от аккаунта.\nЧтобы снова привязать — нажмите «🔗 Привязать аккаунт».",
             reply_markup=main_keyboard(),
         )
 
@@ -256,12 +308,16 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("💰 Баланс", "Баланс"))
     def handle_balance(message):
         chat_id = message.chat.id
+        if chat_id in user_states:
+            return  # идёт процесс входа — не перехватываем
+
         user = get_user_by_chat_id(chat_id)
         if not user:
             bot.reply_to(
                 message,
-                "❌ Аккаунт не привязан.\nНажмите кнопку *Telegram* в личном кабинете на сайте.",
+                "❌ Аккаунт не привязан.\nНажмите *«🔗 Привязать аккаунт»* и введите email + пароль.",
                 parse_mode="Markdown",
+                reply_markup=main_keyboard(),
             )
             return
 
@@ -270,7 +326,8 @@ if bot:
         if user_data is None:
             bot.reply_to(
                 message,
-                "⚠️ Не удалось загрузить данные. Попробуйте позже или проверьте, что аккаунт есть на сайте.",
+                "⚠️ Не удалось загрузить данные. Попробуйте позже.",
+                reply_markup=main_keyboard(),
             )
             return
 
@@ -281,22 +338,23 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("📈 Заработок", "Заработок"))
     def handle_earnings(message):
         chat_id = message.chat.id
+        if chat_id in user_states:
+            return
+
         user = get_user_by_chat_id(chat_id)
         if not user:
             bot.reply_to(
                 message,
-                "❌ Аккаунт не привязан.\nНажмите кнопку *Telegram* в личном кабинете на сайте.",
+                "❌ Аккаунт не привязан.\nНажмите *«🔗 Привязать аккаунт»*.",
                 parse_mode="Markdown",
+                reply_markup=main_keyboard(),
             )
             return
 
         email = user[1]
         user_data = fetch_user_data_from_supabase(email)
         if user_data is None:
-            bot.reply_to(
-                message,
-                "⚠️ Не удалось загрузить данные. Попробуйте позже.",
-            )
+            bot.reply_to(message, "⚠️ Не удалось загрузить данные.", reply_markup=main_keyboard())
             return
 
         total_profit = float(user_data.get("totalProfit") or 0)
@@ -311,6 +369,70 @@ if bot:
         )
         bot.reply_to(message, text, parse_mode="Markdown", reply_markup=main_keyboard())
 
+    @bot.message_handler(func=lambda m: m.chat.id in user_states)
+    def handle_login_flow(message):
+        chat_id = message.chat.id
+        state = user_states.get(chat_id)
+        if not state:
+            return
+
+        text = (message.text or "").strip()
+
+        if state["step"] == "email":
+            if "@" not in text or "." not in text:
+                bot.reply_to(
+                    message,
+                    "❌ Некорректный email. Введите ещё раз (пример: name@mail.com):",
+                    reply_markup=cancel_keyboard(),
+                )
+                return
+            state["email"] = text.lower()
+            state["step"] = "password"
+            bot.reply_to(
+                message,
+                f"📧 Email: `{state['email']}`\n\n"
+                "🔐 Теперь введите *пароль* от аккаунта на сайте:",
+                parse_mode="Markdown",
+                reply_markup=cancel_keyboard(),
+            )
+            return
+
+        if state["step"] == "password":
+            email = state["email"]
+            password = text
+            user_states.pop(chat_id, None)
+
+            bot.reply_to(message, "⏳ Проверяю данные...")
+
+            account = verify_login_supabase(email, password)
+            if not account:
+                bot.reply_to(
+                    message,
+                    "❌ Неверный email или пароль.\n\n"
+                    "Проверьте данные с сайта и нажмите «🔗 Привязать аккаунт» снова.",
+                    reply_markup=main_keyboard(),
+                )
+                return
+
+            link_user_by_email(email, chat_id)
+            bot.reply_to(
+                message,
+                f"✅ *Аккаунт успешно привязан!*\n\n"
+                f"Email: `{email}`\n\n"
+                "Теперь доступны баланс и заработок.",
+                parse_mode="Markdown",
+                reply_markup=main_keyboard(),
+            )
+            # Сразу показать баланс
+            user_data = fetch_user_data_from_supabase(email)
+            if user_data is not None:
+                bot.send_message(
+                    chat_id,
+                    format_balance_message(email, user_data),
+                    parse_mode="Markdown",
+                    reply_markup=main_keyboard(),
+                )
+
     def run_bot():
         print("🚀 Telegram bot polling started...")
         bot.infinity_polling(skip_pending=True)
@@ -318,8 +440,6 @@ if bot:
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
 
-
-# --- Flask routes (как было) ---
 
 @app.route("/")
 def home():
