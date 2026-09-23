@@ -206,16 +206,25 @@ if bot:
                 return
             conn.close()
 
-            # 2) Пробуем base64(email) с сайта
+            # 2) Пробуем hex(email) с сайта (только 0-9a-f — разрешено Telegram)
             email = None
             try:
-                # добавляем padding если нужно
-                pad = "=" * (-len(payload) % 4)
-                decoded = base64.b64decode(payload + pad).decode("utf-8")
-                if "@" in decoded:
-                    email = decoded.strip().lower()
+                if all(c in "0123456789abcdef" for c in payload.lower()) and len(payload) % 2 == 0:
+                    decoded = bytes.fromhex(payload).decode("utf-8")
+                    if "@" in decoded:
+                        email = decoded.strip().lower()
             except Exception:
                 pass
+
+            # 3) На всякий случай base64 (старые ссылки)
+            if not email:
+                try:
+                    pad = "=" * (-len(payload) % 4)
+                    decoded = base64.b64decode(payload + pad).decode("utf-8")
+                    if "@" in decoded:
+                        email = decoded.strip().lower()
+                except Exception:
+                    pass
 
             if not email and "@" in payload:
                 email = payload.strip().lower()
