@@ -166,6 +166,8 @@ def calc_today_profit(user_data):
 
 
 def format_balance_message(email, user_data):
+    if not isinstance(user_data, dict):
+        user_data = {}
     balance = float(user_data.get("balance") or 0)
     total_profit = float(user_data.get("totalProfit") or 0)
     total_invested = float(user_data.get("totalInvested") or 0)
@@ -176,17 +178,17 @@ def format_balance_message(email, user_data):
     if user_data.get("firstName") or user_data.get("lastName"):
         name = f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}".strip()
 
-    header = f"👤 *{name}*\n" if name else ""
-    header += f"📧 `{email}`\n\n"
-
-    return (
-        header
-        + f"💰 *Баланс:* `${balance:.2f}`\n"
-        + f"📈 *Всего заработано:* `${total_profit:.2f}`\n"
-        + f"📅 *За сегодня (ожидаемо):* `${today:.2f}`\n"
-        + f"📦 *Вложено:* `${total_invested:.2f}`\n"
-        + f"🟢 *Активных депозитов:* `{active}`"
-    )
+    lines = []
+    if name:
+        lines.append(f"👤 {name}")
+    lines.append(f"📧 {email}")
+    lines.append("")
+    lines.append(f"💰 Баланс: ${balance:.2f}")
+    lines.append(f"📈 Всего заработано: ${total_profit:.2f}")
+    lines.append(f"📅 За сегодня: ${today:.2f}")
+    lines.append(f"📦 Вложено: ${total_invested:.2f}")
+    lines.append(f"🟢 Активных депозитов: {active}")
+    return "\n".join(lines)
 
 
 def main_keyboard():
@@ -338,7 +340,7 @@ if bot:
             return
 
         text = format_balance_message(email, user_data)
-        bot.reply_to(message, text, parse_mode="Markdown", reply_markup=main_keyboard())
+        bot.reply_to(message, text, reply_markup=main_keyboard())
 
     @bot.message_handler(commands=["earn", "profit", "today"])
     @bot.message_handler(func=lambda m: m.text in ("📈 Заработок", "Заработок"))
@@ -368,12 +370,12 @@ if bot:
         balance = float(user_data.get("balance") or 0)
 
         text = (
-            f"📈 *Заработок*\n\n"
-            f"📅 *За сегодня:* `${today:.2f}`\n"
-            f"💎 *Всего заработано:* `${total_profit:.2f}`\n"
-            f"💰 *Текущий баланс:* `${balance:.2f}`"
+            f"📈 Заработок\n\n"
+            f"📅 За сегодня: ${today:.2f}\n"
+            f"💎 Всего заработано: ${total_profit:.2f}\n"
+            f"💰 Текущий баланс: ${balance:.2f}"
         )
-        bot.reply_to(message, text, parse_mode="Markdown", reply_markup=main_keyboard())
+        bot.reply_to(message, text, reply_markup=main_keyboard())
 
     @bot.message_handler(func=lambda m: m.chat.id in user_states)
     def handle_login_flow(message):
@@ -404,57 +406,63 @@ if bot:
             return
 
         if state["step"] == "password":
-            email = state["email"]
+            email = state.get("email", "")
             password = text
             user_states.pop(chat_id, None)
 
             try:
-                bot.reply_to(message, "⏳ Проверяю данные...")
-            except Exception:
-                pass
+                bot.send_message(chat_id, "⏳ Проверяю данные...")
+            except Exception as e:
+                print("send check msg error:", e)
 
-            account = verify_login_supabase(email, password)
+            try:
+                account = verify_login_supabase(email, password)
+                print("login result:", account)
 
-            if not account or account.get("error"):
-                err = (account or {}).get("error", "unknown")
-                if err == "not_found":
-                    msg = "❌ Аккаунт с таким email не найден на сайте."
-                elif err == "bad_password":
-                    msg = "❌ Неверный пароль. Попробуйте ещё раз — нажмите «🔗 Привязать аккаунт»."
-                else:
-                    msg = (
-                        "❌ Ошибка проверки (база недоступна).\n"
-                        "Попробуйте позже или напишите поддержку."
-                    )
-                bot.reply_to(message, msg, reply_markup=main_keyboard())
-                return
+                if not account or account.get("error"):
+                    err = (account or {}).get("error", "unknown")
+                    if err == "not_found":
+                        msg = "❌ Аккаунт с таким email не найден на сайте."
+                    elif err == "bad_password":
+                        msg = "❌ Неверный пароль. Нажмите «🔗 Привязать аккаунт» и попробуйте снова."
+                    else:
+                        msg = "❌ Ошибка проверки базы. Попробуйте позже."
+                    bot.send_message(chat_id, msg, reply_markup=main_keyboard())
+                    return
 
-            link_user_by_email(email, chat_id)
+                link_user_by_email(email, chat_id)
 
-            # user_data из ответа логина или отдельный запрос
-            user_data = account.get("user_data")
-            if isinstance(user_data, str):
+                user_data = account.get("user_data")
+                if isinstance(user_data, str):
+                    try:
+                        user_data = json.loads(user_data)
+                    except Exception:
+                        user_data = {}
+                if not isinstance(user_data, dict):
+                    user_data = fetch_user_data_from_supabase(email) or {}
+
+                bot.send_message(
+                    chat_id,
+                    f"✅ Аккаунт успешно привязан!\n\nEmail: {email}\n\nТеперь доступны баланс и заработок.",
+                    reply_markup=main_keyboard(),
+                )
+                bot.send_message(
+                    chat_id,
+                    format_balance_message(email, user_data),
+                    reply_markup=main_keyboard(),
+                )
+            except Exception as e:
+                print("password step EXCEPTION:", type(e), e)
                 try:
-                    user_data = json.loads(user_data)
+                    bot.send_message(
+                        chat_id,
+                        f"❌ Ошибка: {type(e).__name__}: {e}",
+                        reply_markup=main_keyboard(),
+                    )
                 except Exception:
-                    user_data = None
-            if not user_data:
-                user_data = fetch_user_data_from_supabase(email) or {}
+                    pass
+            return
 
-            bot.reply_to(
-                message,
-                f"✅ *Аккаунт успешно привязан!*\n\n"
-                f"Email: `{email}`\n\n"
-                "Теперь доступны баланс и заработок.",
-                parse_mode="Markdown",
-                reply_markup=main_keyboard(),
-            )
-            bot.send_message(
-                chat_id,
-                format_balance_message(email, user_data if isinstance(user_data, dict) else {}),
-                parse_mode="Markdown",
-                reply_markup=main_keyboard(),
-            )
 
     def run_bot():
         print("🚀 Telegram bot polling started...")
