@@ -531,11 +531,39 @@ if bot:
 
 
     def run_bot():
-        print("🚀 Telegram bot polling started...")
-        bot.infinity_polling(skip_pending=True)
+        """Надёжный polling: снимаем webhook, перезапускаем при ошибках."""
+        import time
 
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
+        # Снимаем webhook — иначе getUpdates молчит
+        try:
+            bot.delete_webhook(drop_pending_updates=False)
+            print("✅ Webhook cleared, switching to polling")
+        except Exception as e:
+            print(f"⚠️ delete_webhook: {e}")
+
+        while True:
+            try:
+                print("🚀 Telegram bot polling started...")
+                # long_polling_timeout — реже обрывы на PaaS
+                bot.infinity_polling(
+                    skip_pending=False,  # обработаем висящие /start
+                    timeout=20,
+                    long_polling_timeout=20,
+                    allowed_updates=["message"],
+                )
+            except Exception as e:
+                print(f"❌ Bot polling error: {type(e).__name__}: {e}")
+                print("⏳ Restart polling in 5 sec...")
+                time.sleep(5)
+
+    # Запускаем только в одном процессе (gunicorn worker 0 или локально)
+    # GUNICORN_WORKER_ID / RUN_BOT: на части хостов worker id нет — тогда стартуем всегда,
+    # но Procfile должен быть с -w 1, иначе Conflict getUpdates.
+    _should_run_bot = os.environ.get("RUN_BOT", "1") != "0"
+    if _should_run_bot:
+        bot_thread = threading.Thread(target=run_bot, daemon=True, name="tg-bot-polling")
+        bot_thread.start()
+        print("✅ Bot polling thread started")
 
 
 @app.route("/")
@@ -544,6 +572,18 @@ def home():
         return render_template("index.html")
     except Exception:
         return "Apex Invest API", 200
+
+
+@app.route("/api/bot-status")
+def bot_status():
+    """Проверка: жив ли бот и есть ли токен."""
+    ok = bot is not None and bool(BOT_TOKEN)
+    return jsonify({
+        "bot_initialized": ok,
+        "bot_username": BOT_USERNAME,
+        "token_set": bool(BOT_TOKEN),
+        "hint": "Если бот не отвечает — в Procfile нужен 1 worker и переменная TELEGRAM_BOT_TOKEN",
+    })
 
 
 @app.route("/api/telegram/connect", methods=["POST"])
