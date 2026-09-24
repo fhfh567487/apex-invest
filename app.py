@@ -743,8 +743,52 @@ def bot_status():
         "bot_initialized": ok,
         "bot_username": BOT_USERNAME,
         "token_set": bool(BOT_TOKEN),
-        "hint": "Если бот не отвечает — в Procfile нужен 1 worker и переменная TELEGRAM_BOT_TOKEN",
+        "admin_chat_id_set": ADMIN_CHAT_ID is not None,
+        "admin_chat_id": ADMIN_CHAT_ID,
+        "hint": "На Web Service нужны TELEGRAM_BOT_TOKEN и ADMIN_CHAT_ID. Бот должен быть в группе.",
     })
+
+
+
+def notify_admin_telegram(session_id, message, has_image=False):
+    """Отправка уведомления о сообщении с сайта в ADMIN_CHAT_ID.
+    Возвращает (ok: bool, error: str|None).
+    """
+    if not BOT_TOKEN:
+        return False, "TELEGRAM_BOT_TOKEN not set on web service"
+    if not ADMIN_CHAT_ID:
+        return False, "ADMIN_CHAT_ID not set on web service"
+
+    preview = (message or "").strip()
+    if not preview and has_image:
+        preview = "(фото / image)"
+    if not preview:
+        preview = "(пустое сообщение)"
+    preview = preview[:800]
+
+    text = (
+        "💬 Support (сайт)\n\n"
+        f"session: {session_id}\n\n"
+        f"{preview}"
+    )
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    try:
+        # Без Markdown — меньше ошибок из-за спецсимволов в тексте пользователя
+        r = requests.post(
+            url,
+            json={"chat_id": ADMIN_CHAT_ID, "text": text},
+            timeout=15,
+        )
+        data = r.json() if r.content else {}
+        if r.status_code == 200 and data.get("ok"):
+            return True, None
+        desc = (data.get("description") or r.text or f"http {r.status_code}")[:300]
+        print(f"Telegram API error: {desc}")
+        return False, desc
+    except Exception as e:
+        print(f"Telegram request exception: {e}")
+        return False, str(e)
 
 
 @app.route("/api/chat/send", methods=["POST", "OPTIONS"])
@@ -783,19 +827,15 @@ def chat_send():
         return jsonify({"success": False, "error": "db"}), 500
 
     # Уведомление админу в Telegram (группа или личка)
-    if ADMIN_CHAT_ID and bot:
-        try:
-            preview = message[:500] if message else "(фото)"
-            admin_msg = (
-                f"💬 *Support (сайт)*\n\n"
-                f"session: `{session_id}`\n\n"
-                f"{preview}"
-            )
-            bot.send_message(ADMIN_CHAT_ID, admin_msg, parse_mode="Markdown")
-        except Exception as e:
-            print(f"chat_send telegram notify: {e}")
+    tg_ok, tg_err = notify_admin_telegram(session_id, message, has_image=bool(image))
+    if not tg_ok:
+        print(f"chat_send telegram notify failed: {tg_err}")
 
-    return jsonify({"success": True})
+    return jsonify({
+        "success": True,
+        "telegram_notified": tg_ok,
+        "telegram_error": tg_err if not tg_ok else None,
+    })
 
 
 @app.route("/api/chat/get", methods=["GET", "OPTIONS"])
