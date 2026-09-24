@@ -15,6 +15,12 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "Appexinvestet_bot")
+# Куда слать сообщения поддержки (твой Telegram chat_id). Узнать: напиши боту @userinfobot
+_admin_raw = (os.getenv("ADMIN_CHAT_ID") or "").strip()
+try:
+    ADMIN_CHAT_ID = int(_admin_raw) if _admin_raw else None
+except ValueError:
+    ADMIN_CHAT_ID = None
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://bycfzzqpnnsqgwtzccdc.supabase.co")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2")
@@ -282,6 +288,7 @@ def main_keyboard():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row("💰 Баланс", "📈 Заработок")
     kb.row("🔗 Привязать аккаунт", "🚪 Отвязать")
+    kb.row("💬 Поддержка", "📖 Помощь")
     return kb
 
 
@@ -382,6 +389,7 @@ if bot:
         )
 
     @bot.message_handler(commands=["help", "info"])
+    @bot.message_handler(func=lambda m: m.text in ("📖 Помощь", "Помощь"))
     def handle_help(message):
         chat_id = message.chat.id
         if get_link_state(chat_id):
@@ -389,22 +397,32 @@ if bot:
         text = (
             "📖 *Справка — Apex Invest Bot*\n\n"
             "Этот бот показывает баланс и заработок с сайта Apex Invest.\n\n"
-            "*Команды и кнопки:*\n"
-            "💰 *Баланс* — текущий баланс, вложено, активные депозиты\n"
+            "*Кнопки:*\n"
+            "💰 *Баланс* — баланс, вложено, депозиты\n"
             "📈 *Заработок* — прибыль за сегодня и всего\n"
-            "🔗 *Привязать аккаунт* — связать Telegram с email на сайте\n"
-            "🚪 *Отвязать* — отключить Telegram от аккаунта\n\n"
-            "*Команды:*\n"
-            "/start — главное меню\n"
-            "/help — эта справка\n"
-            "/balance — баланс\n"
-            "/earn — заработок\n"
-            "/link — привязать аккаунт\n"
-            "/unlink — отвязать\n\n"
-            "После привязки повторный вход с сайта или /start "
-            "не требует email и пароль снова."
+            "🔗 *Привязать аккаунт* — связать Telegram с сайтом\n"
+            "🚪 *Отвязать* — отключить Telegram\n"
+            "💬 *Поддержка* — написать в поддержку\n"
+            "📖 *Помощь* — эта справка\n\n"
+            "*Команды:* /start /help /balance /earn /link /unlink /support\n\n"
+            "После привязки повторный /start не просит пароль."
         )
         bot.reply_to(message, text, parse_mode="Markdown", reply_markup=main_keyboard())
+
+    @bot.message_handler(commands=["support", "sopport", "sup"])
+    @bot.message_handler(func=lambda m: m.text in ("💬 Поддержка", "Поддержка"))
+    def handle_support_start(message):
+        chat_id = message.chat.id
+        set_link_state(chat_id, "support")
+        bot.reply_to(
+            message,
+            "💬 *Поддержка*\n\n"
+            "Напишите ваш вопрос одним сообщением.\n"
+            "Мы передадим его оператору.\n\n"
+            "Чтобы отменить — нажмите *«❌ Отмена»*.",
+            parse_mode="Markdown",
+            reply_markup=cancel_keyboard(),
+        )
 
     @bot.message_handler(commands=["link", "login"])
     @bot.message_handler(func=lambda m: m.text in ("🔗 Привязать аккаунт", "Привязать аккаунт"))
@@ -521,6 +539,47 @@ if bot:
 
         text = (message.text or "").strip()
 
+        # Режим поддержки: пересылаем текст админу
+        if state["step"] == "support":
+            if text in ("❌ Отмена", "Отмена", "/cancel"):
+                clear_link_state(chat_id)
+                bot.reply_to(message, "Отменено.", reply_markup=main_keyboard())
+                return
+            clear_link_state(chat_id)
+            user = get_user_by_chat_id(chat_id)
+            email = user[1] if user else "не привязан"
+            uname = message.from_user.username or "—"
+            fname = message.from_user.first_name or ""
+            admin_text = (
+                f"💬 *Сообщение в поддержку*\n\n"
+                f"От: {fname} (@{uname})\n"
+                f"chat_id: `{chat_id}`\n"
+                f"email: `{email}`\n\n"
+                f"Текст:\n{text}"
+            )
+            sent = False
+            if ADMIN_CHAT_ID and bot:
+                try:
+                    bot.send_message(ADMIN_CHAT_ID, admin_text, parse_mode="Markdown")
+                    sent = True
+                except Exception as e:
+                    print(f"support forward error: {e}")
+            if sent:
+                bot.reply_to(
+                    message,
+                    "✅ Сообщение отправлено в поддержку.\nОжидайте ответа.",
+                    reply_markup=main_keyboard(),
+                )
+            else:
+                bot.reply_to(
+                    message,
+                    "✅ Сообщение принято.\n"
+                    "Если ответ не придёт — напишите на сайт Apex Invest "
+                    "или укажите ADMIN_CHAT_ID в настройках сервера.",
+                    reply_markup=main_keyboard(),
+                )
+            return
+
         if state["step"] == "email":
             if "@" not in text or "." not in text:
                 bot.reply_to(
@@ -600,14 +659,15 @@ if bot:
 
     @bot.message_handler(func=lambda m: True, content_types=["text"])
     def handle_unknown(message):
-        """Любой неизвестный текст → подсказка."""
+        """Неизвестная команда — мягкая подсказка, без «ошибки»."""
         chat_id = message.chat.id
         if get_link_state(chat_id):
             return
         bot.reply_to(
             message,
-            "Не понял сообщение.\n"
-            "Нажмите *Баланс* или *Заработок*, либо /help для справки.",
+            "Выберите действие на клавиатуре ниже 👇\n"
+            "Или нажмите *💬 Поддержка*, если нужен оператор.\n"
+            "/help — справка.",
             parse_mode="Markdown",
             reply_markup=main_keyboard(),
         )
