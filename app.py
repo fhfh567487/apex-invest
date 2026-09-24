@@ -30,10 +30,6 @@ PLAN_CONFIGS = {
     "Master": {"days": 30, "daily_pct": 0.15},
 }
 
-# Состояния диалога: chat_id -> {"step": "email"|"password", "email": "..."}
-user_states = {}
-
-
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -43,6 +39,15 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             telegram_chat_id INTEGER,
             auth_token TEXT
+        )
+    """)
+    # Состояния привязки (email/password) — в БД, не в RAM (переживают рестарт worker)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS link_states (
+            chat_id INTEGER PRIMARY KEY,
+            step TEXT NOT NULL,
+            email TEXT,
+            updated_at TEXT
         )
     """)
     # Миграция: добавить колонки, если таблица была старой
@@ -57,6 +62,45 @@ def init_db():
     if "username" not in cols:
         cursor.execute("ALTER TABLE users ADD COLUMN username TEXT")
         print("DB migration: added username")
+    conn.commit()
+    conn.close()
+
+
+def get_link_state(chat_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT step, email FROM link_states WHERE chat_id = ?", (chat_id,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {"step": row[0], "email": row[1] or ""}
+
+
+def set_link_state(chat_id, step, email=None):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO link_states (chat_id, step, email, updated_at)
+        VALUES (?, ?, ?, datetime('now'))
+        ON CONFLICT(chat_id) DO UPDATE SET
+            step = excluded.step,
+            email = excluded.email,
+            updated_at = excluded.updated_at
+        """,
+        (chat_id, step, email),
+    )
+    conn.commit()
+    conn.close()
+
+
+def clear_link_state(chat_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM link_states WHERE chat_id = ?", (chat_id,))
     conn.commit()
     conn.close()
 
@@ -260,7 +304,7 @@ if bot:
     @bot.message_handler(commands=["start"])
     def handle_start(message):
         chat_id = message.chat.id
-        user_states.pop(chat_id, None)
+        clear_link_state(chat_id)
 
         # Уже привязан — никогда не просим email/пароль повторно
         linked = get_user_by_chat_id(chat_id)
@@ -296,7 +340,7 @@ if bot:
 
             # 2) С сайта: ?start=link — просим email только если ещё не привязан
             if payload_lower == "link":
-                user_states[chat_id] = {"step": "email"}
+                set_link_state(chat_id, "email")
                 bot.reply_to(
                     message,
                     "📧 Введите *email* от аккаунта на сайте Apex Invest:",
@@ -317,7 +361,7 @@ if bot:
             if email:
                 # Уже привязан к этому же email с другого chat? всё равно спросим пароль
                 # только если этот chat ещё не привязан (мы уже вышли выше, если был).
-                user_states[chat_id] = {"step": "password", "email": email}
+                set_link_state(chat_id, "password", email)
                 bot.reply_to(
                     message,
                     f"👋 Email: `{email}`\n\n"
@@ -340,7 +384,7 @@ if bot:
     @bot.message_handler(commands=["help", "info"])
     def handle_help(message):
         chat_id = message.chat.id
-        if chat_id in user_states:
+        if get_link_state(chat_id):
             return
         text = (
             "📖 *Справка — Apex Invest Bot*\n\n"
@@ -366,7 +410,7 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("🔗 Привязать аккаунт", "Привязать аккаунт"))
     def start_link(message):
         chat_id = message.chat.id
-        user_states[chat_id] = {"step": "email"}
+        set_link_state(chat_id, "email")
         bot.reply_to(
             message,
             "📧 Введите *email* от аккаунта на сайте Apex Invest:",
@@ -377,7 +421,7 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("❌ Отмена", "Отмена"))
     def cancel_link(message):
         chat_id = message.chat.id
-        user_states.pop(chat_id, None)
+        clear_link_state(chat_id)
         bot.reply_to(
             message,
             "Отменено.",
@@ -388,7 +432,7 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("🚪 Отвязать", "Отвязать"))
     def unlink_account(message):
         chat_id = message.chat.id
-        user_states.pop(chat_id, None)
+        clear_link_state(chat_id)
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute(
@@ -407,7 +451,7 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("💰 Баланс", "Баланс"))
     def handle_balance(message):
         chat_id = message.chat.id
-        if chat_id in user_states:
+        if get_link_state(chat_id):
             return  # идёт процесс входа — не перехватываем
 
         user = get_user_by_chat_id(chat_id)
@@ -437,7 +481,7 @@ if bot:
     @bot.message_handler(func=lambda m: m.text in ("📈 Заработок", "Заработок"))
     def handle_earnings(message):
         chat_id = message.chat.id
-        if chat_id in user_states:
+        if get_link_state(chat_id):
             return
 
         user = get_user_by_chat_id(chat_id)
@@ -468,10 +512,10 @@ if bot:
         )
         bot.reply_to(message, text, reply_markup=main_keyboard())
 
-    @bot.message_handler(func=lambda m: m.chat.id in user_states)
+    @bot.message_handler(func=lambda m: get_link_state(m.chat.id) is not None)
     def handle_login_flow(message):
         chat_id = message.chat.id
-        state = user_states.get(chat_id)
+        state = get_link_state(chat_id)
         if not state:
             return
 
@@ -485,11 +529,11 @@ if bot:
                     reply_markup=cancel_keyboard(),
                 )
                 return
-            state["email"] = text.lower()
-            state["step"] = "password"
+            email_norm = text.lower()
+            set_link_state(chat_id, "password", email_norm)
             bot.reply_to(
                 message,
-                f"📧 Email: `{state['email']}`\n\n"
+                f"📧 Email: `{email_norm}`\n\n"
                 "🔐 Теперь введите *пароль* от аккаунта на сайте:",
                 parse_mode="Markdown",
                 reply_markup=cancel_keyboard(),
@@ -499,7 +543,7 @@ if bot:
         if state["step"] == "password":
             email = state.get("email", "")
             password = text
-            user_states.pop(chat_id, None)
+            clear_link_state(chat_id)
 
             try:
                 bot.send_message(chat_id, "⏳ Проверяю данные...")
@@ -558,7 +602,7 @@ if bot:
     def handle_unknown(message):
         """Любой неизвестный текст → подсказка."""
         chat_id = message.chat.id
-        if chat_id in user_states:
+        if get_link_state(chat_id):
             return
         bot.reply_to(
             message,
