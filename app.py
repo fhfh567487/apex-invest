@@ -337,6 +337,31 @@ if bot:
             reply_markup=main_keyboard(),
         )
 
+    @bot.message_handler(commands=["help", "info"])
+    def handle_help(message):
+        chat_id = message.chat.id
+        if chat_id in user_states:
+            return
+        text = (
+            "📖 *Справка — Apex Invest Bot*\n\n"
+            "Этот бот показывает баланс и заработок с сайта Apex Invest.\n\n"
+            "*Команды и кнопки:*\n"
+            "💰 *Баланс* — текущий баланс, вложено, активные депозиты\n"
+            "📈 *Заработок* — прибыль за сегодня и всего\n"
+            "🔗 *Привязать аккаунт* — связать Telegram с email на сайте\n"
+            "🚪 *Отвязать* — отключить Telegram от аккаунта\n\n"
+            "*Команды:*\n"
+            "/start — главное меню\n"
+            "/help — эта справка\n"
+            "/balance — баланс\n"
+            "/earn — заработок\n"
+            "/link — привязать аккаунт\n"
+            "/unlink — отвязать\n\n"
+            "После привязки повторный вход с сайта или /start "
+            "не требует email и пароль снова."
+        )
+        bot.reply_to(message, text, parse_mode="Markdown", reply_markup=main_keyboard())
+
     @bot.message_handler(commands=["link", "login"])
     @bot.message_handler(func=lambda m: m.text in ("🔗 Привязать аккаунт", "Привязать аккаунт"))
     def start_link(message):
@@ -529,6 +554,19 @@ if bot:
                     pass
             return
 
+    @bot.message_handler(func=lambda m: True, content_types=["text"])
+    def handle_unknown(message):
+        """Любой неизвестный текст → подсказка."""
+        chat_id = message.chat.id
+        if chat_id in user_states:
+            return
+        bot.reply_to(
+            message,
+            "Не понял сообщение.\n"
+            "Нажмите *Баланс* или *Заработок*, либо /help для справки.",
+            parse_mode="Markdown",
+            reply_markup=main_keyboard(),
+        )
 
     def run_bot():
         """Надёжный polling: снимаем webhook, перезапускаем при ошибках."""
