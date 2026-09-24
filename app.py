@@ -568,40 +568,44 @@ if bot:
             reply_markup=main_keyboard(),
         )
 
-    def run_bot():
-        """Надёжный polling: снимаем webhook, перезапускаем при ошибках."""
-        import time
 
-        # Снимаем webhook — иначе getUpdates молчит
+def run_bot_polling():
+    """Надёжный polling в отдельном процессе (bot_worker.py). Не daemon-поток gunicorn."""
+    import time
+    if not bot:
+        print("❌ Bot is None — нет TELEGRAM_BOT_TOKEN")
+        return
+    try:
+        bot.delete_webhook(drop_pending_updates=False)
+        print("✅ Webhook cleared, switching to polling")
+    except Exception as e:
+        print(f"⚠️ delete_webhook: {e}")
+    while True:
         try:
-            bot.delete_webhook(drop_pending_updates=False)
-            print("✅ Webhook cleared, switching to polling")
+            print("🚀 Telegram bot polling started...")
+            bot.infinity_polling(
+                skip_pending=False,
+                timeout=25,
+                long_polling_timeout=25,
+                allowed_updates=["message"],
+            )
         except Exception as e:
-            print(f"⚠️ delete_webhook: {e}")
+            print(f"❌ Bot polling error: {type(e).__name__}: {e}")
+            print("⏳ Restart polling in 3 sec...")
+            time.sleep(3)
 
-        while True:
-            try:
-                print("🚀 Telegram bot polling started...")
-                # long_polling_timeout — реже обрывы на PaaS
-                bot.infinity_polling(
-                    skip_pending=False,  # обработаем висящие /start
-                    timeout=20,
-                    long_polling_timeout=20,
-                    allowed_updates=["message"],
-                )
-            except Exception as e:
-                print(f"❌ Bot polling error: {type(e).__name__}: {e}")
-                print("⏳ Restart polling in 5 sec...")
-                time.sleep(5)
 
-    # Запускаем только в одном процессе (gunicorn worker 0 или локально)
-    # GUNICORN_WORKER_ID / RUN_BOT: на части хостов worker id нет — тогда стартуем всегда,
-    # но Procfile должен быть с -w 1, иначе Conflict getUpdates.
-    _should_run_bot = os.environ.get("RUN_BOT", "1") != "0"
-    if _should_run_bot:
-        bot_thread = threading.Thread(target=run_bot, daemon=True, name="tg-bot-polling")
-        bot_thread.start()
-        print("✅ Bot polling thread started")
+# По умолчанию бот НЕ стартует внутри gunicorn (поток там часто умирает).
+# Запуск только через bot_worker.py (процесс worker в Procfile)
+# или явно: RUN_BOT=1 python app.py
+_should_run_bot = os.environ.get("RUN_BOT", "0") == "1"
+if bot and _should_run_bot:
+    def _run_bot_thread():
+        run_bot_polling()
+
+    bot_thread = threading.Thread(target=_run_bot_thread, daemon=True, name="tg-bot-polling")
+    bot_thread.start()
+    print("✅ Bot polling thread started (RUN_BOT=1)")
 
 
 @app.route("/")
