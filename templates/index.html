@@ -1323,8 +1323,23 @@
         }
 
         function openTelegramBot() {
-            // Открываем бота — привязка по email + пароль внутри Telegram
-            const botUrl = 'https://t.me/Appexinvestet_bot?start=link';
+            // Если пользователь уже залогинен на сайте — передаём email в deep-link,
+            // чтобы бот не просил почту повторно. Если Telegram уже привязан —
+            // бот сразу покажет баланс без пароля.
+            const email = (localStorage.getItem('apex_logged_user') || '').trim().toLowerCase();
+            let startPayload = 'link';
+            if (email && email.indexOf('@') !== -1) {
+                try {
+                    // hex(email) — бот узнает email; если chat уже привязан — сразу баланс
+                    const hex = Array.from(new TextEncoder().encode(email))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+                    startPayload = hex;
+                } catch (e) {
+                    startPayload = 'link';
+                }
+            }
+            const botUrl = 'https://t.me/Appexinvestet_bot?start=' + startPayload;
             window.open(botUrl, '_blank');
         }
 
