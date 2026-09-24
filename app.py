@@ -75,6 +75,20 @@ def get_user_by_chat_id(chat_id):
     return row
 
 
+def get_user_by_auth_token(token):
+    """Найти пользователя по одноразовому auth_token со сайта."""
+    if not token:
+        return None
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, username FROM users WHERE auth_token = ?", (token,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row
+
+
 def link_user_by_email(email, chat_id):
     email = email.strip().lower()
     conn = sqlite3.connect(DB_NAME)
@@ -99,6 +113,23 @@ def link_user_by_email(email, chat_id):
     conn.commit()
     conn.close()
     return email
+
+
+def send_already_linked(chat_id, email):
+    """Приветствие, если Telegram уже привязан — без повторного ввода пароля."""
+    user_data = fetch_user_data_from_supabase(email) or {}
+    bot.send_message(
+        chat_id,
+        f"👋 Снова здравствуйте!\n\nАккаунт: `{email}`\n\n"
+        "Выберите действие:",
+        parse_mode="Markdown",
+        reply_markup=main_keyboard(),
+    )
+    bot.send_message(
+        chat_id,
+        format_balance_message(email, user_data),
+        reply_markup=main_keyboard(),
+    )
 
 
 def verify_login_supabase(email, password):
@@ -231,11 +262,40 @@ if bot:
         chat_id = message.chat.id
         user_states.pop(chat_id, None)
 
+        # Уже привязан — никогда не просим email/пароль повторно
+        linked = get_user_by_chat_id(chat_id)
+        if linked:
+            send_already_linked(chat_id, linked[1])
+            return
+
         args = message.text.split(maxsplit=1)
-        if len(args) > 1:
-            payload = args[1].strip().lower()
-            # С сайта: ?start=link — сразу просим email
-            if payload == "link":
+        payload = args[1].strip() if len(args) > 1 else ""
+
+        if payload:
+            payload_lower = payload.lower()
+
+            # 1) Одноразовый auth_token со сайта (/api/telegram/connect)
+            token_user = get_user_by_auth_token(payload)
+            if token_user:
+                email = token_user[1]
+                link_user_by_email(email, chat_id)
+                user_data = fetch_user_data_from_supabase(email) or {}
+                bot.send_message(
+                    chat_id,
+                    f"✅ Аккаунт успешно привязан!\n\nEmail: `{email}`\n\n"
+                    "Теперь доступны баланс и заработок.",
+                    parse_mode="Markdown",
+                    reply_markup=main_keyboard(),
+                )
+                bot.send_message(
+                    chat_id,
+                    format_balance_message(email, user_data),
+                    reply_markup=main_keyboard(),
+                )
+                return
+
+            # 2) С сайта: ?start=link — просим email только если ещё не привязан
+            if payload_lower == "link":
                 user_states[chat_id] = {"step": "email"}
                 bot.reply_to(
                     message,
@@ -244,16 +304,19 @@ if bot:
                     reply_markup=cancel_keyboard(),
                 )
                 return
-            # Опционально: hex(email)
+
+            # 3) hex(email) — сайт передаёт email залогиненного пользователя
             email = None
             try:
-                if all(c in "0123456789abcdef" for c in payload) and len(payload) % 2 == 0:
-                    decoded = bytes.fromhex(payload).decode("utf-8")
+                if all(c in "0123456789abcdef" for c in payload_lower) and len(payload_lower) % 2 == 0:
+                    decoded = bytes.fromhex(payload_lower).decode("utf-8")
                     if "@" in decoded:
                         email = decoded.strip().lower()
             except Exception:
                 pass
             if email:
+                # Уже привязан к этому же email с другого chat? всё равно спросим пароль
+                # только если этот chat ещё не привязан (мы уже вышли выше, если был).
                 user_states[chat_id] = {"step": "password", "email": email}
                 bot.reply_to(
                     message,
@@ -264,24 +327,15 @@ if bot:
                 )
                 return
 
-        linked = get_user_by_chat_id(chat_id)
-        if linked:
-            bot.reply_to(
-                message,
-                f"👋 Снова здравствуйте!\n\nАккаунт: `{linked[1]}`\n\n"
-                "Выберите действие:",
-                parse_mode="Markdown",
-                reply_markup=main_keyboard(),
-            )
-        else:
-            bot.reply_to(
-                message,
-                "👋 *Добро пожаловать в Apex Invest Bot!*\n\n"
-                "Чтобы смотреть баланс и заработок — привяжите аккаунт.\n\n"
-                "Нажмите *«🔗 Привязать аккаунт»* и введите email и пароль с сайта.",
-                parse_mode="Markdown",
-                reply_markup=main_keyboard(),
-            )
+        # Нет payload и не привязан
+        bot.reply_to(
+            message,
+            "👋 *Добро пожаловать в Apex Invest Bot!*\n\n"
+            "Чтобы смотреть баланс и заработок — привяжите аккаунт.\n\n"
+            "Нажмите *«🔗 Привязать аккаунт»* и введите email и пароль с сайта.",
+            parse_mode="Markdown",
+            reply_markup=main_keyboard(),
+        )
 
     @bot.message_handler(commands=["link", "login"])
     @bot.message_handler(func=lambda m: m.text in ("🔗 Привязать аккаунт", "Привязать аккаунт"))
