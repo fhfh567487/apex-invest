@@ -6,6 +6,7 @@ import json
 import base64
 from datetime import datetime, timezone
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import telebot
 from telebot import types
 from dotenv import load_dotenv
@@ -26,6 +27,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://bycfzzqpnnsqgwtzccdc.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2")
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "apex_secret_key_123")
 
 DB_NAME = "database.db"
@@ -56,6 +58,19 @@ def init_db():
             updated_at TEXT
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS support_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            sender TEXT NOT NULL,
+            text TEXT,
+            image TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_support_session ON support_messages(session_id)"
+    )
     # Миграция: добавить колонки, если таблица была старой
     cursor.execute("PRAGMA table_info(users)")
     cols = {row[1] for row in cursor.fetchall()}
@@ -730,6 +745,129 @@ def bot_status():
         "token_set": bool(BOT_TOKEN),
         "hint": "Если бот не отвечает — в Procfile нужен 1 worker и переменная TELEGRAM_BOT_TOKEN",
     })
+
+
+@app.route("/api/chat/send", methods=["POST", "OPTIONS"])
+def chat_send():
+    """Виджет поддержки на сайте → сохраняем сообщение + уведомление в Telegram."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    data = request.get_json(silent=True) or {}
+    session_id = (data.get("session_id") or "").strip()
+    message = (data.get("message") or "").strip()
+    image = data.get("image")
+
+    if not session_id:
+        return jsonify({"success": False, "error": "session_id required"}), 400
+    if not message and not image:
+        return jsonify({"success": False, "error": "empty message"}), 400
+
+    # Ограничим размер картинки в БД (base64)
+    if image and isinstance(image, str) and len(image) > 2_000_000:
+        return jsonify({"success": False, "error": "image too large"}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO support_messages (session_id, sender, text, image)
+            VALUES (?, 'user', ?, ?)
+            """,
+            (session_id, message or None, image if image else None),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"chat_send db error: {e}")
+        return jsonify({"success": False, "error": "db"}), 500
+
+    # Уведомление админу в Telegram (группа или личка)
+    if ADMIN_CHAT_ID and bot:
+        try:
+            preview = message[:500] if message else "(фото)"
+            admin_msg = (
+                f"💬 *Support (сайт)*\n\n"
+                f"session: `{session_id}`\n\n"
+                f"{preview}"
+            )
+            bot.send_message(ADMIN_CHAT_ID, admin_msg, parse_mode="Markdown")
+        except Exception as e:
+            print(f"chat_send telegram notify: {e}")
+
+    return jsonify({"success": True})
+
+
+@app.route("/api/chat/get", methods=["GET", "OPTIONS"])
+def chat_get():
+    """История чата поддержки для виджета на сайте."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    session_id = (request.args.get("session_id") or "").strip()
+    if not session_id:
+        return jsonify({"messages": []})
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT sender, text, image, created_at
+            FROM support_messages
+            WHERE session_id = ?
+            ORDER BY id ASC
+            LIMIT 200
+            """,
+            (session_id,),
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        messages = []
+        for sender, text, image, created_at in rows:
+            item = {"sender": sender or "user"}
+            if text:
+                item["text"] = text
+            if image:
+                item["image"] = image
+            if created_at:
+                item["created_at"] = created_at
+            messages.append(item)
+        return jsonify({"messages": messages})
+    except Exception as e:
+        print(f"chat_get error: {e}")
+        return jsonify({"messages": []})
+
+
+@app.route("/api/chat/reply", methods=["POST"])
+def chat_reply():
+    """Ответ поддержки (admin) в чат пользователя на сайте."""
+    data = request.get_json(silent=True) or {}
+    session_id = (data.get("session_id") or "").strip()
+    message = (data.get("message") or "").strip()
+    secret = data.get("secret") or request.headers.get("X-Admin-Secret")
+    admin_secret = os.getenv("ADMIN_SECRET", "apex_admin")
+
+    if secret != admin_secret:
+        return jsonify({"success": False, "error": "forbidden"}), 403
+    if not session_id or not message:
+        return jsonify({"success": False, "error": "session_id and message required"}), 400
+
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO support_messages (session_id, sender, text)
+            VALUES (?, 'admin', ?)
+            """,
+            (session_id, message),
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"chat_reply error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/telegram/connect", methods=["POST"])
