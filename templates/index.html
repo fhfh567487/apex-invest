@@ -161,7 +161,7 @@
         .admin-section h2 { color: var(--warning); margin-bottom: 15px; font-size: 22px; }
         .tx-timer { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; margin-left: 6px; }
 
-        /* SUPPORT WIDGET (BOTTOM RIGHT) */
+        /* SUPPORT WIDGET (DARK THEME) */
         #chat-button {
             position: fixed;
             bottom: 24px;
@@ -176,7 +176,7 @@
             justify-content: center;
             font-size: 26px;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.35);
             z-index: 9999;
             transition: transform 0.2s, box-shadow 0.2s;
         }
@@ -202,12 +202,12 @@
             position: fixed;
             bottom: 96px;
             right: 24px;
-            width: 340px;
-            height: 500px;
+            width: 350px;
+            height: 490px;
             background: var(--card-bg);
             border: 1px solid rgba(0, 255, 136, 0.3);
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
             z-index: 9999;
             display: none;
             flex-direction: column;
@@ -215,13 +215,13 @@
         }
 
         .chat-header {
-            background: rgba(0, 255, 136, 0.15);
-            padding: 12px 16px;
+            background: rgba(0, 255, 136, 0.12);
+            padding: 14px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .chat-header button {
@@ -251,14 +251,14 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             padding-right: 4px;
         }
 
         .chat-msg {
             max-width: 82%;
             padding: 10px 14px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 13px;
             line-height: 1.4;
             word-wrap: break-word;
@@ -273,63 +273,45 @@
         }
 
         .chat-msg.bot {
-            background: #1e293b;
+            background: #1a233a;
             color: #fff;
             align-self: flex-start;
             border-bottom-left-radius: 2px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .chat-msg.agent {
-            background: #29b6f6;
-            color: #000;
+            background: #2563eb;
+            color: #fff;
             align-self: flex-start;
             border-bottom-left-radius: 2px;
-            font-weight: 600;
-        }
-
-        .chat-msg img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 6px;
-            cursor: pointer;
-        }
-
-        .file-upload-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0 6px;
-            transition: color 0.2s;
-        }
-        .file-upload-btn:hover {
-            color: var(--accent);
+            font-weight: 500;
         }
 
         .agent-call-bar {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
             border-top: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            text-align: center;
         }
 
         .btn-call-agent {
             width: 100%;
-            padding: 8px;
-            background: rgba(255, 170, 0, 0.15);
-            border: 1px solid var(--warning);
-            color: var(--warning);
-            border-radius: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 170, 0, 0.12);
+            border: 1px solid rgba(255, 170, 0, 0.4);
+            color: #ffb74d;
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .btn-call-agent:hover {
-            background: rgba(255, 170, 0, 0.3);
+            background: rgba(255, 170, 0, 0.25);
+            border-color: #ffb74d;
         }
 
         .chat-controls {
@@ -565,7 +547,7 @@
 
         <section class="vision-section">
             <div class="vision-header">
-                <h2>Architects of a New <span class="accent-text">World</span></h2>
+                2Architects of a New <span class="accent-text">World</span></h2>
                 <p>We created Apex Invest for those who see beyond tomorrow. We don't just grow your capital — we make you co-owners of technologies that are reshaping the face of our civilization right now.</p>
             </div>
             
@@ -815,7 +797,7 @@
         </div>
     </div>
 
-    <!-- SUPPORT CHAT WIDGET -->
+    <!-- SUPPORT CHAT WIDGET (DARK THEME & FULL WORKING LOGIC) -->
     <div id="chat-button" onclick="toggleSupportChat()">💬</div>
 
     <div id="chat-window">
@@ -834,8 +816,6 @@
             </div>
 
             <div class="chat-controls">
-                <input type="file" id="chat-file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
-                <button type="button" class="file-upload-btn" onclick="document.getElementById('chat-file-input').click()" title="Прикрепить скриншот">📎</button>
                 <input type="text" id="chat-message" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendSupportMessage()">
                 <button id="chat-send-btn" onclick="sendSupportMessage()">Send</button>
             </div>
@@ -911,9 +891,8 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* SUPPORT CHAT WIDGET SYSTEM (AI + AGENT REALTIME + BACKEND INTEGRATION) */
+        /* SUPPORT CHAT WIDGET SYSTEM */
         let currentChatId = null;
-        let selectedImageBase64 = null;
         let isChatOpen = false;
         let originalPageTitle = document.title;
 
@@ -934,7 +913,7 @@
                     subscribeRealtimeSupport();
                 }
             } catch (err) {
-                console.warn('Support init fallback:', err);
+                console.warn('Support init error:', err);
             }
         }
 
@@ -954,34 +933,6 @@
                 } else {
                     fetchSupportMessages();
                 }
-            }
-        }
-
-        function playNotificationSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.3);
-            } catch (e) {}
-        }
-
-        function handleImageSelect(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedImageBase64 = e.target.result;
-                    document.querySelector('.file-upload-btn').style.color = 'var(--accent)';
-                };
-                reader.readAsDataURL(input.files[0]);
             }
         }
 
@@ -1025,7 +976,6 @@
                         appendSupportMessageUI(newMsg.sender_type, newMsg.message);
                         if (!isChatOpen) {
                             document.getElementById('chat-button').classList.add('unread');
-                            playNotificationSound();
                             document.title = "💬 Вам ответила поддержка! | Apex Invest";
                         }
                     }
@@ -1038,18 +988,12 @@
             const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value.trim();
 
-            if (!text && !selectedImageBase64) return;
-            if (!currentChatId) return;
-
-            let finalMessage = text;
-            if (selectedImageBase64) {
-                finalMessage += `\n[Image Attached]`;
-            }
+            if (!text || !currentChatId) return;
 
             input.value = '';
             sendBtn.disabled = true;
 
-            appendSupportMessageUI('user', finalMessage);
+            appendSupportMessageUI('user', text);
 
             try {
                 const res = await fetch('/api/support/send', {
@@ -1057,7 +1001,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chat_id: currentChatId,
-                        message: finalMessage
+                        message: text
                     })
                 });
                 const data = await res.json();
@@ -1065,10 +1009,6 @@
                 if (data.bot_reply) {
                     appendSupportMessageUI('bot', data.bot_reply.message);
                 }
-                
-                selectedImageBase64 = null;
-                document.getElementById('chat-file-input').value = '';
-                document.querySelector('.file-upload-btn').style.color = '';
             } catch (err) {
                 showCustomAlert('Server connection error', 'Error');
             } finally {
@@ -1106,7 +1046,7 @@
                 el.style.color = 'var(--warning)';
             } else if (status === 'active_agent') {
                 el.innerText = '● Agent Connected';
-                el.style.color = '#29b6f6';
+                el.style.color = '#2563eb';
             }
         }
 
@@ -1948,9 +1888,7 @@
         }, 1000);
     </script>
     <script>
-
-        /* ===== Live fake transactions feed (social proof) ===== */
-
+        /* ===== Live fake transactions feed ===== */
         function maskPublicName(raw) {
             if (!raw) return 'user***00';
             let s = String(raw).replace(/@.*/, '').replace(/[^a-zA-Z0-9]/g, '');
