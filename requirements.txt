@@ -5,3 +5,4 @@ gunicorn
 pyTelegramBotAPI
 python-dotenv
 resend
+supabase
