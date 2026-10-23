@@ -1,52 +1,50 @@
-from flask import Flask, render_template, request, jsonify
-from supabase import create_client, Client
 import os
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
+from supabase import create_client, Client
 
 app = Flask(__name__)
+CORS(app)  # Разрешаем cross-origin запросы с GitHub Pages
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "ТВОЙ_SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "ТВОЙ_SUPABASE_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://bycfzzqpnnsqgwtzccdc.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ------------------------------------
-# ЧАТ ПОДДЕРЖКИ API
-# ------------------------------------
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-# 1. Получение или создание чата
+# 1. Инициализация чата
 @app.route('/api/support/init', methods=['POST'])
 def init_chat():
-    data = request.json
+    data = request.json or {}
     email = data.get('email', 'guest@apexinvest.com')
     
-    # Ищем активный чат пользователя
     res = supabase.table('support_chats').select('*').eq('user_email', email).neq('status', 'closed').execute()
     
     if res.data:
         chat = res.data[0]
     else:
-        # Создаем новый
         chat_res = supabase.table('support_chats').insert({'user_email': email, 'status': 'bot'}).execute()
         chat = chat_res.data[0]
         
-        # Начальное приветствие от бота
         supabase.table('support_messages').insert({
             'chat_id': chat['id'],
             'sender_type': 'bot',
-            'message': 'Здравствуйте! Я ИИ-ассистент Apex Invest. Чем я могу вам помочь?'
+            'message': 'Здравствуйте! Я ИИ-ассистент Apex Invest. Чем могу вам помочь?'
         }).execute()
 
     return jsonify({'success': True, 'chat': chat})
 
-# 2. Вызов специалиста (переключение режима)
+# 2. Вызов специалиста
 @app.route('/api/support/call-agent', methods=['POST'])
 def call_agent():
-    data = request.json
+    data = request.json or {}
     chat_id = data.get('chat_id')
     
-    # Обновляем статус чата
     supabase.table('support_chats').update({'status': 'waiting_for_agent'}).eq('id', chat_id).execute()
     
-    # Отправляем сообщение от бота
     msg_res = supabase.table('support_messages').insert({
         'chat_id': chat_id,
         'sender_type': 'bot',
@@ -55,27 +53,24 @@ def call_agent():
     
     return jsonify({'success': True, 'message': msg_res.data[0]})
 
-# 3. Обработка сообщения от пользователя
+# 3. Отправка сообщений
 @app.route('/api/support/send', methods=['POST'])
 def send_message():
-    data = request.json
+    data = request.json or {}
     chat_id = data.get('chat_id')
-    text = data.get('message')
+    text = data.get('message', '')
     
-    # Сохраняем сообщение пользователя
-    user_msg = supabase.table('support_messages').insert({
+    supabase.table('support_messages').insert({
         'chat_id': chat_id,
         'sender_type': 'user',
         'message': text
     }).execute()
     
-    # Проверяем статус чата
     chat_res = supabase.table('support_chats').select('status').eq('id', chat_id).execute()
     status = chat_res.data[0]['status'] if chat_res.data else 'bot'
     
-    # Если чат с ботом — генерируем ответ ИИ
     if status == 'bot':
-        ai_reply = f"Я ИИ-ассистент Apex Invest. Насчет '{text}': вы можете изучить наши тарифы или вызвать специалиста для личной консультации."
+        ai_reply = f"Спасибо за вопрос по теме '{text}'. Пожалуйста, выберите нужный инвестиционный план на сайте или нажмите кнопку вызова специалиста!"
         
         bot_msg = supabase.table('support_messages').insert({
             'chat_id': chat_id,
@@ -85,13 +80,12 @@ def send_message():
         
         return jsonify({'success': True, 'bot_reply': bot_msg.data[0]})
     
-    # Если статус 'waiting_for_agent' или 'active_agent' — бот молчит, сообщение ждет ответа админа
     return jsonify({'success': True, 'status': status})
 
-# Страница Админки чатов
+# Страница оператора (для тебя)
 @app.route('/admin/support')
 def admin_support():
     return render_template('admin_support.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
