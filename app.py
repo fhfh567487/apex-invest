@@ -11,7 +11,6 @@ import os
   CORS(app)
   app.secret_key = os.getenv("SECRET_KEY", "apex_secret_key_123")
 
-  # Конфигурация
   SUPABASE_URL = os.getenv("SUPABASE_URL")
   SUPABASE_KEY = os.getenv("SUPABASE_KEY")
   ADMIN_EMAIL = "binarpok@gmail.com"
@@ -37,7 +36,6 @@ import os
           filter_str = "&".join([f"{k}=eq.{v}" for k, v in params.items()])
           url += f"?{filter_str}"
           r = requests.patch(url, headers=headers, json=data, timeout=10)
-
       return r.json() if r.status_code < 400 else None
 
   @app.route("/")
@@ -67,12 +65,12 @@ import os
       if user and len(user) > 0 and user[0].get("password") == password:
           session['user'] = email
           return jsonify({"success": True, "user": email})
-      return jsonify({"success": False, "error": "Invalid email or password"}), 401
+      return jsonify({"//success": False, "error": "Invalid email or password"}), 401
 
   @app.route("/api/auth/logout")
   def logout():
       session.pop('user', None)
-      return jsonify({"//success": True})
+      return jsonify({"success": True})
 
   @app.route("/api/invest", methods=["POST"])
   def invest():
@@ -85,9 +83,9 @@ import os
   def get_stats():
       email = session.get('user')
       if not email: return jsonify({"error": "Unauthorized"}), 401
-      user_data = supabase_api("tradepiramid", "GET", {"username": email})
+      user_data = supabase_//api("tradepiramid", "GET", {"username": email})
       if user_data:
-          return jsonify(user_data[0].get("user_//data", {}))
+          return jsonify(user_data[0].get("user_data", {}))
       return jsonify({"error": "No data found"}), 404
 
   if __name__ == "__main__":
