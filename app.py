@@ -1,139 +1,97 @@
+from flask import Flask, render_template, request, jsonify
+from supabase import create_client, Client
 import os
-  import threading
-  from flask import Flask, render_template, request, jsonify
-  from flask_cors import CORS
-  from dotenv import load_dotenv
-  import database as db
-  import requests
-  import bot_worker  # Импортируем логику бота
 
-  load_dotenv()
+app = Flask(__name__)
 
-  app = Flask(__name__)
-  CORS(app)
-  app.secret_key = os.getenv("SECRET_KEY", "apex_secret_key_123")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "ТВОЙ_SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "ТВОЙ_SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-  BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-  ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
-  BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "Appexinvestet_bot")
+# ------------------------------------
+# ЧАТ ПОДДЕРЖКИ API
+# ------------------------------------
 
-  @app.route("/")
-  def home():
-      try:
-          return render_template("index.html")
-      except Exception:
-          return "Apex Invest API", 200
+# 1. Получение или создание чата
+@app.route('/api/support/init', methods=['POST'])
+def init_chat():
+    data = request.json
+    email = data.get('email', 'guest@apexinvest.com')
+    
+    # Ищем активный чат пользователя
+    res = supabase.table('support_chats').select('*').eq('user_email', email).neq('status', 'closed').execute()
+    
+    if res.data:
+        chat = res.data[0]
+    else:
+        # Создаем новый
+        chat_res = supabase.table('support_chats').insert({'user_email': email, 'status': 'bot'}).execute()
+        chat = chat_res.data[0]
+        
+        # Начальное приветствие от бота
+        supabase.table('support_messages').insert({
+            'chat_id': chat['id'],
+            'sender_type': 'bot',
+            'message': 'Здравствуйте! Я ИИ-ассистент Apex Invest. Чем я могу вам помочь?'
+        }).execute()
 
-  @app.route("/api/bot-status")
-  def bot_status():
-      return jsonify({
-          "bot_initialized": bool(BOT_TOKEN),
-          "bot_username": BOT_USERNAME,
-          "token_set": bool(BOT_TOKEN),
-          "admin_chat_id_set": ADMIN_CHAT_ID is not None,
-          "admin_chat_id": ADMIN_CHAT_ID,
-      })
+    return jsonify({'success': True, 'chat': chat})
 
-  def notify_admin_telegram(session_id, message, has_image=False):
-      if not BOT_TOKEN or not ADMIN_CHAT_ID:
-          return False, "Config missing"
+# 2. Вызов специалиста (переключение режима)
+@app.route('/api/support/call-agent', methods=['POST'])
+def call_agent():
+    data = request.json
+    chat_id = data.get('chat_id')
+    
+    # Обновляем статус чата
+    supabase.table('support_chats').update({'status': 'waiting_for_agent'}).eq('id', chat_id).execute()
+    
+    # Отправляем сообщение от бота
+    msg_res = supabase.table('support_messages').insert({
+        'chat_id': chat_id,
+        'sender_type': 'bot',
+        'message': 'Специалист вызван, ожидайте подключения...'
+    }).execute()
+    
+    return jsonify({'success': True, 'message': msg_res.data[0]})
 
-      preview = (message or "").strip() or ("(фото)" if has_image else "(пусто)")
-      text = f"💬 Support (сайт)\n\nsession: {session_id}\n\n{preview[:800]}"
+# 3. Обработка сообщения от пользователя
+@app.route('/api/support/send', methods=['POST'])
+def send_message():
+    data = request.json
+    chat_id = data.get('chat_id')
+    text = data.get('message')
+    
+    # Сохраняем сообщение пользователя
+    user_msg = supabase.table('support_messages').insert({
+        'chat_id': chat_id,
+        'sender_type': 'user',
+        'message': text
+    }).execute()
+    
+    # Проверяем статус чата
+    chat_res = supabase.table('support_chats').select('status').eq('id', chat_id).execute()
+    status = chat_res.data[0]['status'] if chat_res.data else 'bot'
+    
+    # Если чат с ботом — генерируем ответ ИИ
+    if status == 'bot':
+        ai_reply = f"Я ИИ-ассистент Apex Invest. Насчет '{text}': вы можете изучить наши тарифы или вызвать специалиста для личной консультации."
+        
+        bot_msg = supabase.table('support_messages').insert({
+            'chat_id': chat_id,
+            'sender_type': 'bot',
+            'message': ai_reply
+        }).execute()
+        
+        return jsonify({'success': True, 'bot_reply': bot_msg.data[0]})
+    
+    # Если статус 'waiting_for_agent' или 'active_agent' — бот молчит, сообщение ждет ответа админа
+    return jsonify({'success': True, 'status': status})
 
-      url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-      try:
-          r = requests.post(url, json={"chat_id": ADMIN_CHAT_ID, "text": text}, timeout=15)
-          return r.ok, r.text if not r.ok else None
-      except Exception as e:
-          return False, str(e)
+# Страница Админки чатов
+@app.route('/admin/support')
+def admin_support():
+    return render_template('admin_support.html')
 
-  @app.route("/api/chat/send", methods=["POST", "OPTIONS"])
-  def chat_send():
-      if request.method == "OPTIONS": return ("", 204)
-      data = request.get_json(silent=True) or {}
-      session_id = (data.get("session_id") or "").strip()
-      message = (data.get("message") or "").strip()
-      image = data.get("image")
-
-      if not session_id or (not message and not image):
-          return jsonify({"success": False, "error": "invalid data"}), 400
-
-      db.save_support_message(session_id, 'user', text=message, image=image)
-      tg_ok, tg_err = notify_admin_telegram(session_id, message, bool(image))
-      return jsonify({"success": True, "telegram_notified": tg_ok})
-
-  @app.route("/api/chat/get", methods=["GET", "OPTIONS"])
-  def chat_get():
-      if request.method == "OPTIONS": return ("", 204)
-      session_id = (request.args.get("session_id") or "").strip()
-      if not session_id: return jsonify({"messages": []})
-      messages = db.get_support_history(session_id) or []
-      return jsonify({"messages": messages})
-
-  @app.route("/api/chat/reply", methods=["POST"])
-  def chat_reply():
-      data = request.get_json(silent=True) or {}
-      session_id = (data.get("session_id") or "").strip()
-      message = (data.get("message") or "").strip()
-      secret = data.get("secret") or request.headers.get("X-Admin-Secret")
-
-      if secret != os.getenv("ADMIN_SECRET", "apex_admin"):
-          return jsonify({"success": False, "error": "forbidden"}), 403
-
-      db.save_support_message(session_id, 'admin', text=message)
-      return jsonify({"success": True})
-
-  @app.route("/api/telegram/connect", methods=["POST"])
-  def connect_telegram():
-      data = request.json or {}
-      email = (data.get("email") or "").strip().lower()
-      import secrets
-      auth_token = secrets.token_hex(8)
-
-      # Сохраняем токен в Supabase
-      db.supabase_request("telegram_users", method="POST", data={"username": email, "auth_token": auth_token})
-
-      deep_link = f"https://t.me/{BOT_USERNAME}?start={auth_token}"
-      return jsonify({"success": True, "link": deep_link})
-
-  @app.route("/api/notify", methods=["POST"])
-  def notify_user():
-      data = request.json or {}
-      user_id = data.get("user_id")
-      text = data.get("message")
-      if not user_id or not text:
-          return jsonify({"success": False, "error": "missing data"}), 400
-      user = db.get_user_by_chat_id(user_id)
-      if not user or not user.get("telegram_chat_id"):
-          return jsonify({"success": False, "error": "Telegram not linked"}), 404
-      url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-      try:
-          r = requests.post(url, json={"chat_id": user["telegram_chat_id"], "text": text}, timeout=15)
-          return jsonify({"success": r.ok})
-      except Exception:
-          return jsonify({"success": False}), 500
-
-  # --- ЗАПУСК БОТА В ОТДЕЛЬНОМ ПОТОКЕ ---
-  def run_bot():
-      print("🚀 Starting Telegram Bot thread...")
-      try:
-          # Вызываем функцию запуска из bot_worker.py
-          # В bot_worker.py функция должна называться run_bot_polling или аналогично
-          # Для этого в bot_worker.py в конце мы используем bot.infinity_polling()
-          import bot_worker
-          # Поскольку в bot_worker.py код запуска в if __name__ == "__main__",
-          # нам нужно вызвать функцию запуска вручную.
-          # Мы добавим в bot_worker.py функцию start_bot() для этого.
-          if hasattr(bot_worker, 'bot'):
-              bot_worker.bot.infinity_polling()
-      except Exception as e:
-          print(f"❌ Bot thread error: {e}")
-
-  if __name__ == "__main__":
-      # Запускаем бота в фоновом режиме
-      bot_thread = threading.Thread(target=run_bot, daemon=True)
-      bot_thread.start()
-
-      port = int(os.environ.get("PORT", 3000))
-      app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(debug=True)
