@@ -1,48 +1,126 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель администратора</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        .warning { color: red; font-size: 0.9em; }
-    </style>
-</head>
-<body>
+ <!DOCTYPE html>
+  <html lang="ru">
+  <head>
+      <meta charset="UTF-8">
+      <title>Apex Admin | Support Center</title>
+      <style>
+          body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: #1a1a1a; color: white; overflow: hidden; }
+          #sidebar { width: 350px; background: #252525; border-right: 1px solid #333; display: flex; flex-direction: column; }
+          .sidebar-header { padding: 20px; background: #333; font-weight: bold; text-align: center; font-size: 1.2em; border-bottom: 1px solid #444; }
+          .chat-list { overflow-y: auto; flex-grow: 1; }
+          .chat-item { padding: 15px; cursor: pointer; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+          .chat-item:hover { background: #3d3d3d; }
+          .chat-item.active { background: #4a4a4a; border-left: 4px solid #007bff; }
+          .user-info { display: flex; flex-direction: column; overflow: hidden; }
+          .user-email { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .last-msg { font-size: 0.85em; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .notification-dot { width: 12px; height: 12px; background: #ff4d4d; border-radius: 50%; flex-shrink: 0; margin-left: 10px; }
+          .has-new .notification-dot { display: block; }
+          .no-new .notification-dot { display: none; }
 
-    <h1>Панель управления пользователями</h1>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Email / Логин</th>
-                <th>Пароль (Хэш)</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Запускаем цикл Flask для вывода каждого пользователя -->
-            {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.email }}</td>
-                <td class="warning">{{ user.password }}</td>
-                <td>
-                    <button onclick="alert('Тут можно добавить функцию удаления или блокировки')">Удалить</button>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="4">В базе данных пока нет пользователей.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+          #chat-window { flex-grow: 1; display: flex; flex-direction: column; background: #121212; }
+          #chat-header { padding: 15px 20px; background: #252525; font-weight: bold; border-bottom: 1px solid #333; }
+          #messages-area { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+          .msg { max-width: 70%; padding: 10px 15px; border-radius: 15px; line-height: 1.4; font-size: 0.95em; }
+          .msg.user { align-self: flex-start; background: #333; color: #ddd; border-bottom-left-radius: 2px; }
+          .msg.admin { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 2px; }
 
-</body>
-</html>
+          #input-area { padding: 20px; background: #252525; display: flex; gap: 10px; border-top: 1px solid #333; }
+          #message-input { flex-grow: 1; padding: 12px; border-radius: 5px; border: 1px solid #444; background: #121212; color: white; outline: none; }
+          #send-btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+          #send-btn:hover { background: #0056b3; }
+      </style>
+  </head>
+  <body>
+
+  <div id="sidebar">
+      <div class="sidebar-header">Apex Invest Admin</div>
+      <div id="chat-list" class="chat-list"></div>
+  </div>
+
+  <div id="chat-window">
+      <div id="chat-header">Выберите чат</div>
+      <div id="messages-area">
+          <div style="text-align: center; margin-top: 100px; color: #666;">Выберите пользователя слева, чтобы начать переписку</div>
+      </div>
+      <div id="input-area">
+          <input type="text" id="message-input" placeholder="Введите сообщение..." disabled>
+          <button id="send-btn" disabled>Отправить</button>
+      </div>
+  </div>
+
+  <script>
+      // ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШУ ССЫЛКУ CLOUDFLARE WORKER
+      const WORKER_URL = "https://icy-wind-157c.binarpok.workers.dev";
+      let currentSessionId = null;
+
+      async function loadChats() {
+          try {
+              const res = await fetch(`${WORKER_URL}/api/chat/list`);
+              const chats = await res.json();
+              const list = document.getElementById('chat-list');
+              list.innerHTML = '';
+
+              chats.forEach(chat => {
+                  const div = document.createElement('div');
+                  div.className = `chat-item ${chat.has_new ? 'has-new' : 'no-new'}`;
+                  div.innerHTML = `
+                      <div class="user-info">
+                          <div class="user-email">${chat.session_id}</div>
+                          <div class="last-msg">${chat.last_msg}</div>
+                      </div>
+                      <div class="notification-dot"></div>`;
+                  div.onclick = () => selectChat(chat.session_//id);
+                  list.appendChild(div);
+              });
+          } catch (e) { console.error("Ошибка загрузки списка чатов:", e); }
+      }
+
+      async function selectChat(sessionId) {
+          currentSessionId = sessionId;
+          document.getElementById('chat-header').innerText = `Чат с: ${sessionId}`;
+          document.getElementById('message-input').disabled = false;
+          document.getElementById('send-btn').disabled = false;
+
+          document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+
+          const res = await fetch(`${WORKER_URL}/api/chat/get?session_id=${sessionId}`);
+          const messages = await res.json();
+          const area = document.getElementById('messages-area');
+          area.innerHTML = '';
+
+          messages.forEach(m => {
+              const div = document.createElement('div');
+              div.className = `msg ${m.sender === 'admin' ? 'admin' : 'user'}`;
+              div.innerText = m.text || "[Медиа/Фото]";
+              area.appendChild(div);
+          });
+          area.scrollTop = area.scrollHeight;
+
+          // После открытия чата помечаем сообщения как прочитанные (опционально, через API)
+      }
+
+      async function sendMessage() {
+          const input = document.getElementById('message-input');
+          const text = input.value.trim();
+          if (!text || !currentSessionId) return;
+
+          try {
+              await fetch(`${WORKER_URL}/api/chat/send`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ session_id: currentSessionId, text: text })
+              });
+              input.value = '';
+              selectChat(currentSessionId);
+          } catch (e) { alert("Ошибка при отправке"); }
+      }
+
+      document.getElementById('send-btn').onclick = sendMessage;
+      document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+
+      setInterval(loadChats, 5000);
+      loadChats();
+  </script>
+  </body>
+  </html>
