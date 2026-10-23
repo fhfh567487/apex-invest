@@ -4,10 +4,11 @@ from flask_cors import CORS
 from supabase import create_client, Client
 
 app = Flask(__name__)
-CORS(app)  # Разрешаем cross-origin запросы с GitHub Pages
+CORS(app)  # Разрешаем запросы с фронтенда на GitHub Pages
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://bycfzzqpnnsqgwtzccdc.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2")
+# Прямые ссылки и ключи на Supabase для исключения ошибки Invalid URL
+SUPABASE_URL = "https://bycfzzqpnnsqgwtzccdc.supabase.co"
+SUPABASE_KEY = "sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -81,11 +82,6 @@ def send_message():
         return jsonify({'success': True, 'bot_reply': bot_msg.data[0]})
     
     return jsonify({'success': True, 'status': status})
-
-# Страница оператора (для тебя)
-@app.route('/admin/support')
-def admin_support():
-    return render_template('admin_support.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
