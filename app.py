@@ -23,15 +23,15 @@ def home():
 def init_chat():
     data = request.json or {}
     email = data.get('email', 'guest@apexinvest.com')
-    
+
     res = supabase.table('support_chats').select('*').eq('user_email', email).neq('status', 'closed').execute()
-    
+
     if res.data:
         chat = res.data[0]
     else:
         chat_res = supabase.table('support_chats').insert({'user_email': email, 'status': 'bot'}).execute()
         chat = chat_res.data[0]
-        
+
         supabase.table('support_messages').insert({
             'chat_id': chat['id'],
             'sender_type': 'bot',
@@ -39,6 +39,27 @@ def init_chat():
         }).execute()
 
     return jsonify({'success': True, 'chat': chat})
+
+# Добавляем недостающий эндпоинт для получения сообщений (исправление ошибки 404)
+@app.route('/api/chat/get', methods=['GET'])
+@app.route('/api/support/get', methods=['GET'])
+def get_messages():
+    session_id = request.args.get('session_id') or request.args.get('session')
+    if not session_id:
+        return jsonify({'success': False, 'error': 'Session ID is required'}), 400
+
+    # Ищем чат по email или id (в зависимости от того, что прилетает в session_id)
+    chat_res = supabase.table('support_chats').select('id').or_(f"user_email.eq.{session_id},id.eq.{session_id}").execute()
+
+    if not chat_res.data:
+        return jsonify({'success': False, 'error': 'Chat not found'}), 404
+
+    chat_id = chat_res.data[0]['id']
+
+    # Получаем все сообщения этого чата, отсортированные по времени
+    messages_res = supabase.table('support_messages').select('*').eq('chat_id', chat_id).order('created_at').execute()
+
+    return jsonify({'success': True, 'messages': messages_res.data})
 
 # 2. Вызов специалиста
 @app.route('/api/support/call-agent', methods=['POST'])
