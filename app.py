@@ -61,29 +61,76 @@ def call_agent():
 def send_message():
     data = request.json or {}
     chat_id = data.get('chat_id')
-    text = data.get('message', '')
-    
+    text = data.get('message', '').strip().lower()
+
     supabase.table('support_messages').insert({
         'chat_id': chat_id,
         'sender_type': 'user',
         'message': text
     }).execute()
-    
+
     chat_res = supabase.table('support_chats').select('status').eq('id', chat_id).execute()
     status = chat_res.data[0]['status'] if chat_res.data else 'bot'
-    
+
     if status == 'bot':
-        ai_reply = f"Thank you for reaching out regarding '{text}'. Please select an investment plan on our website or click 'Call Specialist' for human assistance!"
-        
+        # Логика обработки ответов "да/нет" на вопрос "Проблема решена?"
+        if text in ['да', 'yes', 'решена', 'solved']:
+            ai_reply = "Отлично! Рад был помочь. Хорошего дня!"
+            supabase.table('support_chats').update({'status': 'closed'}).eq('id', chat_id).execute()
+        elif text in ['нет', 'no', 'не решена', 'not solved']:
+            ai_reply = "Мне жаль, что я не смог помочь. Хотите позвать специалиста для решения вашего вопроса?"
+            # Мы не меняем статус сразу, ждем подтверждения "Да, позови"
+        else:
+            # Обычный ответ бота
+            ai_reply = f"Спасибо за ваше сообщение: '{text}'. Я постарался найти ответ, но если вам нужна детальная консультация, пожалуйста, напишите 'Нет', если ваша проблема не решена, или нажмите 'Позвать специалиста'."
+            ai_reply += "\n\nВаша проблема решена?"
+
         bot_msg = supabase.table('support_messages').insert({
             'chat_id': chat_id,
             'sender_type': 'bot',
             'message': ai_reply
         }).execute()
-        
+
         return jsonify({'success': True, 'bot_reply': bot_msg.data[0]})
-    
+
     return jsonify({'success': True, 'status': status})
 
+# 4. Панель Администратора: Список ожидающих чатов
+@app.route('/api/admin/pending_chats', methods=['GET'])
+def get_pending_chats():
+    # Получаем все чаты со статусом 'waiting_for_agent'
+    res = supabase.table('support_chats').select('*, support_messages(message, sender_type)').eq('status', 'waiting_for_agent').execute()
+
+    pending_chats = []
+    for chat in res.data:
+        # Берем последнее сообщение пользователя для предпросмотра
+        messages = chat.get('support_messages', [])
+        last_msg = next((m['message'] for m in reversed(messages) if m['sender_type'] == 'user'), "Нет сообщений")
+
+        pending_chats.append({
+            'chat_id': chat['id'],
+            'email': chat['user_email'],
+            'last_message': last_msg
+        })
+
+    return jsonify({'success': True, 'chats': pending_chats})
+
+# 5. Панель Администратора: Подключение к чату
+@app.route('/api/admin/connect', methods=['POST'])
+def connect_to_chat():
+    data = request.json or {}
+    chat_id = data.get('chat_id')
+
+    # Меняем статус на 'agent_connected'
+    supabase.table('support_chats').update({'status': 'agent_connected'}).eq('id', chat_id).execute()
+
+    # Уведомляем пользователя
+    supabase.table('support_messages').insert({
+        'chat_id': chat_id,
+        'sender_type': 'bot',
+        'message': 'Специалист подключился к чату и готов вам помочь!'
+    }).execute()
+
+    return jsonify({'success': True, 'message': 'Connected to chat successfully'})
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
