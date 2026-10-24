@@ -904,6 +904,7 @@
         let isBinarpokAdmin = false;
         let selectedImageBase64 = null;
         let isChatOpen = false;
+        let chatPollingInterval = null;
 
         function initChatSession() {
             let loggedEmail = localStorage.getItem('apex_logged_user');
@@ -931,6 +932,20 @@
                 }
                 loadChatHistory(currentActiveUserSession);
             }
+
+            // Автоматическое обновление каждые 2 секунды без перезагрузки страницы
+            if (!chatPollingInterval) {
+                chatPollingInterval = setInterval(() => {
+                    if (isChatOpen) {
+                        if (isBinarpokAdmin) {
+                            loadAllUserChatsForAdmin();
+                        }
+                        if (currentActiveUserSession) {
+                            loadChatHistory(currentActiveUserSession, true);
+                        }
+                    }
+                }, 2000);
+            }
         }
 
         async function loadAllUserChatsForAdmin() {
@@ -942,12 +957,13 @@
                 let result = await response.json();
                 
                 if (result.status === 'success') {
+                    let currentSelection = dropdown.value;
                     dropdown.innerHTML = '<option value="">-- Выберите чат пользователя --</option>';
                     result.sessions.forEach(sessionId => {
                         let option = document.createElement('option');
                         option.value = sessionId;
                         option.innerText = '💬 Чат: ' + sessionId;
-                        if (sessionId === currentActiveUserSession) {
+                        if (sessionId === currentSelection || sessionId === currentActiveUserSession) {
                             option.selected = true;
                         }
                         dropdown.appendChild(option);
@@ -989,22 +1005,31 @@
             }
         }
 
-        async function loadChatHistory(sessionId) {
+        async function loadChatHistory(sessionId, isBackgroundRefresh = false) {
             if (!sessionId) return;
             try {
                 let response = await fetch(`/api/chat/get?session_id=${sessionId}`);
                 let result = await response.json();
                 if (result.status === 'success') {
-                    renderChatMessages(result.messages);
+                    renderChatMessages(result.messages, isBackgroundRefresh);
                 }
             } catch (e) {
                 console.error('Error loading chat history:', e);
             }
         }
 
-        function renderChatMessages(messages) {
+        let lastMessageCount = 0;
+
+        function renderChatMessages(messages, isBackgroundRefresh = false) {
             const container = document.getElementById('chatLogs');
             if (!container) return;
+
+            // Если фоновое обновление и сообщений не прибавилось, не дергаем DOM
+            if (isBackgroundRefresh && messages.length === lastMessageCount) {
+                return;
+            }
+            lastMessageCount = messages.length;
+
             container.innerHTML = '';
 
             if (messages.length === 0 && !isBinarpokAdmin) {
@@ -1050,8 +1075,9 @@
             const isFlex = win.style.display === 'flex';
             win.style.display = isFlex ? 'none' : 'flex';
             isChatOpen = !isFlex;
-            if (isChatOpen && isBinarpokAdmin) {
-                loadAllUserChatsForAdmin();
+            if (isChatOpen) {
+                if (isBinarpokAdmin) loadAllUserChatsForAdmin();
+                if (currentActiveUserSession) loadChatHistory(currentActiveUserSession);
             }
         }
 
