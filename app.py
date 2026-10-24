@@ -17,9 +17,9 @@ def send_telegram_notification(session_id, message_text, image_data=None):
         return
 
     text = (
-        f"🔔 *Вас вызвали!*\n\n"
+        f"🔔 *Новое сообщение в поддержке!*\n\n"
         f"👤 *Пользователь:* `{session_id}`\n"
-        f"💬 *Сообщение:* {message_text or '[Запрос помощи]'}"
+        f"💬 *Сообщение:* {message_text or '[Изображение/Файл]'}"
     )
 
     if image_data and image_data.startswith("data:image"):
@@ -100,11 +100,13 @@ def send_chat_message():
             if m.get("sender") == "user" and m.get("text") != "Позвать человека":
                 last_user_msg = m.get("text") or "[Скриншот]"
                 break
-        send_telegram_notification(session_id, last_user_msg, image_data)
+        send_telegram_notification(session_id, f"🚨 ВЫЗОВ ОПЕРАТОРА!\nПоследнее сообщение: {last_user_msg}", image_data)
         return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
 
-    if message_text:
+    if message_text or image_data:
         chat_messages_memory[session_id].append({"sender": "user", "text": message_text, "image": image_data})
+        send_telegram_notification(session_id, message_text, image_data)
+
         if current_state["status"] not in ["human", "waiting_human"]:
             text_lower = message_text.lower()
             if any(word in text_lower for word in ["вывести", "вывод", "деньги", "снять"]):
