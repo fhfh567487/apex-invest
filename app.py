@@ -41,6 +41,7 @@ def init_chat():
     return jsonify({'success': True, 'chat': chat})
 
 # Добавляем недостающий эндпоинт для получения сообщений (исправление ошибки 500)
+@app.route('/get', methods=['GET'])
 @app.route('/api/chat/get', methods=['GET'])
 @app.route('/api/support/get', methods=['GET'])
 def get_messages():
