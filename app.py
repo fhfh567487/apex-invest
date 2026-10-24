@@ -1,7 +1,7 @@
-  import os
-  import base64
-  import requests
-  from flask import Flask, render_template, request, jsonify
+import os
+import base64
+import requests
+from flask import Flask, render_template, request, jsonify
 
   app = Flask(__name__)
 
