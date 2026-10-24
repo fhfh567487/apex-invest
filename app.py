@@ -53,6 +53,12 @@ def send_telegram_notification(session_id, message_text, image_data=None):
 def index():
     return render_template('index.html')
 
+@app.route('/api/chat/sessions', methods=['GET'])
+def get_chat_sessions():
+    """Эндпоинт для админа: получить список всех активных чатов"""
+    sessions = list(chat_messages_memory.keys())
+    return jsonify({"status": "success", "sessions": sessions}), 200
+
 @app.route('/api/chat/get', methods=['GET'])
 @app.route('/get', methods=['GET'])
 def get_chat_messages():
@@ -75,6 +81,7 @@ def send_chat_message():
     message_text = data.get('message', '').strip()
     image_data = data.get('image', None)
     action = data.get('action', None)
+    sender = data.get('sender', 'user')  # 'user' или 'admin'
 
     if not session_id:
         return jsonify({"status": "error", "message": "Missing session_id"}), 400
@@ -84,6 +91,13 @@ def send_chat_message():
         chat_states[session_id] = {"status": "ai"}
 
     current_state = chat_states[session_id]
+
+    # Если отвечает администратор (binarpok)
+    if sender == 'admin':
+        if message_text or image_data:
+            chat_messages_memory[session_id].append({"sender": "admin", "text": message_text, "image": image_data})
+            chat_states[session_id]["status"] = "human"
+        return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
 
     if action == 'solved_yes':
         chat_messages_memory[session_id].append({"sender": "user", "text": "Да, проблема решена"})
