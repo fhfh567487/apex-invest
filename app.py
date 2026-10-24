@@ -92,6 +92,15 @@ def send_chat_message():
 
     current_state = chat_states[session_id]
 
+    # Обработка действия "Закрыть обращение" от админа
+    if action == 'close_chat':
+        chat_messages_memory[session_id].append({
+            "sender": "support", 
+            "text": "🔒 **Обращение закрыто оператором.**\nЕсли у вас возникнут новые вопросы, напишите в чат."
+        })
+        chat_states[session_id]["status"] = "ai"
+        return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
+
     # Если сообщение отправляет администратор (binarpok)
     if sender == 'admin':
         if message_text or image_data:
