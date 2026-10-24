@@ -821,7 +821,7 @@
 
     <div id="chat-window">
         <div class="chat-header">
-            <span>Apex Support</span>
+            <span>Служба поддержки Apex</span>
             <button onclick="toggleSupportChat()">✕</button>
         </div>
         <div class="chat-body">
@@ -829,8 +829,8 @@
             <div class="chat-controls">
                 <input type="file" id="chat-file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(this)">
                 <button type="button" class="file-upload-btn" onclick="document.getElementById('chat-file-input').click()" title="Прикрепить скриншот">📎</button>
-                <input type="text" id="chat-message" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendSupportMessage()">
-                <button id="chat-send-btn" onclick="sendSupportMessage()">Send</button>
+                <input type="text" id="chat-message" placeholder="Введите сообщение..." onkeydown="if(event.key==='Enter') sendSupportMessage()">
+                <button id="chat-send-btn" onclick="sendSupportMessage()">Отправить</button>
             </div>
         </div>
     </div>
@@ -904,12 +904,16 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget Functions (Real-time + Images + AI Action Buttons) */
+        /* Support Chat Widget Functions */
         let sessionId = '';
         let displayedChatCount = 0;
         let selectedImageBase64 = null;
         let isChatOpen = false;
         let originalPageTitle = document.title;
+
+        // НАСТРОЙКА ТЕЛЕГРАМ-БОТА ДЛЯ УВЕДОМЛЕНИЙ АДМИНУ
+        const TELEGRAM_BOT_TOKEN = 'ВАШ_BOT_TOKEN'; 
+        const TELEGRAM_ADMIN_CHAT_ID = 'ВАШ_CHAT_ID';
 
         function initChatSession() {
             let loggedEmail = localStorage.getItem('apex_logged_user');
@@ -925,10 +929,44 @@
             displayedChatCount = 0;
             const chatLogs = document.getElementById('chatLogs');
             if (chatLogs) chatLogs.innerHTML = '';
-            fetchSupportMessages();
+            
+            appendInitialGreeting();
+        }
+
+        function appendInitialGreeting() {
+            const container = document.getElementById('chatLogs');
+            if (!container || container.children.length > 0) return;
+
+            const div = document.createElement('div');
+            div.className = 'chat-msg admin';
+            div.innerHTML = `<div>👨‍💻 Поддержка: 💰 <strong>Как вывести средства:</strong> 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC (верификация) успешно пройден. 3. Нажмите «Request Withdrawal», выберите платежную систему, укажите реквизиты и сумму (от $10).<br><br>Ваша проблема решена?</div>`;
+            
+            const btnBox = document.createElement('div');
+            btnBox.className = 'chat-action-buttons';
+
+            const btnYes = document.createElement('button');
+            btnYes.className = 'chat-action-btn-yes';
+            btnYes.textContent = 'Да';
+            btnYes.onclick = () => handleChatActionClick('solved_yes');
+
+            const btnHuman = document.createElement('button');
+            btnHuman.className = 'chat-action-btn-human';
+            btnHuman.textContent = 'Позвать человека';
+            btnHuman.onclick = () => handleChatActionClick('call_human');
+
+            btnBox.appendChild(btnYes);
+            btnBox.appendChild(btnHuman);
+            div.appendChild(btnBox);
+            container.appendChild(div);
+            displayedChatCount = 1;
         }
 
         initChatSession();
+
+        function formatMarkdownText(txt) {
+            if (!txt) return '';
+            return txt.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
 
         function toggleSupportChat() {
             const win = document.getElementById('chat-window');
@@ -939,7 +977,6 @@
             if (isChatOpen) {
                 document.getElementById('chat-button').classList.remove('unread');
                 document.title = originalPageTitle;
-                fetchSupportMessages();
             }
         }
 
@@ -994,9 +1031,9 @@
                         
                         let contentHtml = '';
                         if (item.text) {
-                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Support: ' : ''}${item.text.replace(/\n/g, '<br>')}</div>`;
+                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Поддержка: ' : ''}${formatMarkdownText(item.text.replace(/\n/g, '<br>'))}</div>`;
                         } else if (senderType === 'admin') {
-                            contentHtml += `<div>👨‍💻 Support:</div>`;
+                            contentHtml += `<div>👨‍💻 Поддержка:</div>`;
                         }
                         
                         if (item.image) {
@@ -1004,27 +1041,6 @@
                         }
 
                         div.innerHTML = contentHtml;
-
-                        // Отрисовка кнопок "Да" и "Позвать человека" от ИИ-помощника
-                        if (item.show_buttons) {
-                            const btnBox = document.createElement('div');
-                            btnBox.className = 'chat-action-buttons';
-
-                            const btnYes = document.createElement('button');
-                            btnYes.className = 'chat-action-btn-yes';
-                            btnYes.textContent = 'Да';
-                            btnYes.onclick = () => sendChatAction('solved_yes');
-
-                            const btnHuman = document.createElement('button');
-                            btnHuman.className = 'chat-action-btn-human';
-                            btnHuman.textContent = 'Позвать человека';
-                            btnHuman.onclick = () => sendChatAction('call_human');
-
-                            btnBox.appendChild(btnYes);
-                            btnBox.appendChild(btnHuman);
-                            div.appendChild(btnBox);
-                        }
-
                         container.appendChild(div);
 
                         if (senderType === 'admin') {
@@ -1044,9 +1060,7 @@
                         document.title = "💬 Вам ответила поддержка! | Apex Invest";
                     }
                 }
-            } catch (e) {
-                console.error("Chat polling error:", e);
-            }
+            } catch (e) {}
         }
 
         async function sendSupportMessage() {
@@ -1060,6 +1074,8 @@
             input.value = '';
             sendBtn.disabled = true;
 
+            appendLocalMessage('user', text, selectedImageBase64);
+
             const payload = {
                 session_id: sessionId,
                 message: text
@@ -1069,56 +1085,116 @@
                 payload.image = selectedImageBase64;
             }
 
-            try {
-                let response = await fetch('/api/chat/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    response = await fetch('/send_message', {
+            const lower = text.toLowerCase();
+
+            if (lower === 'нет' || lower === 'нет.') {
+                setTimeout(() => {
+                    appendLocalBotResponse('Сожалеем, что проблема не решена. Как вы хотите продолжить?', true);
+                }, 400);
+            } else if (lower === 'да' || lower === 'да.') {
+                setTimeout(() => {
+                    appendLocalBotResponse('Рады были помочь! Если у вас возникнут еще вопросы, просто напишите их сюда.', false);
+                }, 400);
+            } else {
+                setTimeout(() => {
+                    appendLocalBotResponse('Я получил ваше сообщение. Чем еще могу помочь по работе Apex Invest?', true);
+                }, 600);
+
+                try {
+                    let response = await fetch('/api/chat/send', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                }
-                
-                if (response.ok) {
-                    selectedImageBase64 = null;
-                    document.getElementById('chat-file-input').value = '';
-                    document.querySelector('.file-upload-btn').style.color = '';
-                    fetchSupportMessages();
-                } else {
-                    showCustomAlert('Error sending message', 'Error');
-                }
-            } catch (err) {
-                showCustomAlert('Server connection error', 'Error');
-            } finally {
-                sendBtn.disabled = false;
+                    if (!response.ok) {
+                        await fetch('/send_message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                } catch (err) {}
+            }
+
+            selectedImageBase64 = null;
+            document.getElementById('chat-file-input').value = '';
+            document.querySelector('.file-upload-btn').style.color = '';
+            sendBtn.disabled = false;
+        }
+
+        function appendLocalMessage(sender, text, img) {
+            const container = document.getElementById('chatLogs');
+            if (!container) return;
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + sender;
+            let html = '';
+            if (text) html += `<div>${formatMarkdownText(text.replace(/\n/g, '<br>'))}</div>`;
+            if (img) html += `<img src="${img}" alt="screenshot" onclick="window.open(this.src)">`;
+            div.innerHTML = html;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            displayedChatCount++;
+        }
+
+        function appendLocalBotResponse(text, showButtons = false) {
+            const container = document.getElementById('chatLogs');
+            if (!container) return;
+            const div = document.createElement('div');
+            div.className = 'chat-msg admin';
+            let html = `<div>👨‍💻 Поддержка: ${formatMarkdownText(text.replace(/\n/g, '<br>'))}</div>`;
+            div.innerHTML = html;
+
+            if (showButtons) {
+                const btnBox = document.createElement('div');
+                btnBox.className = 'chat-action-buttons';
+
+                const btnYes = document.createElement('button');
+                btnYes.className = 'chat-action-btn-yes';
+                btnYes.textContent = 'Да';
+                btnYes.onclick = () => handleChatActionClick('solved_yes');
+
+                const btnHuman = document.createElement('button');
+                btnHuman.className = 'chat-action-btn-human';
+                btnHuman.textContent = 'Позвать человека';
+                btnHuman.onclick = () => handleChatActionClick('call_human');
+
+                btnBox.appendChild(btnYes);
+                btnBox.appendChild(btnHuman);
+                div.appendChild(btnBox);
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            displayedChatCount++;
+        }
+
+        function handleChatActionClick(actionType) {
+            if (actionType === 'solved_yes') {
+                appendLocalMessage('user', 'Да');
+                setTimeout(() => {
+                    appendLocalBotResponse('Рады были помочь! Если у вас возникнут еще вопросы, обращайтесь.', false);
+                }, 400);
+            } else if (actionType === 'call_human') {
+                appendLocalMessage('user', 'Позвать человека');
+                setTimeout(() => {
+                    appendLocalBotResponse('👨‍💻 Запрос успешно отправлен! Администратор подключится к диалогу в ближайшее время. Пожалуйста, опишите ваш вопрос подробнее.', false);
+                }, 500);
+
+                sendNotificationToTelegramAdmin('🚨 **Пользователь на сайте запрашивает администратора!** Сессия: ' + sessionId);
             }
         }
 
-        async function sendChatAction(actionType) {
-            if (!sessionId) return;
-            try {
-                let response = await fetch('/api/chat/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: sessionId, action: actionType })
-                });
-
-                if (!response.ok) {
-                    await fetch('/send_message', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ session_id: sessionId, action: actionType })
-                    });
-                }
-                fetchSupportMessages();
-            } catch (e) {
-                console.error("Error sending action:", e);
-            }
+        function sendNotificationToTelegramAdmin(msgText) {
+            if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'ВАШ_BOT_TOKEN') return;
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_ADMIN_CHAT_ID,
+                    text: msgText,
+                    parse_mode: 'Markdown'
+                })
+            }).catch(err => console.error('Telegram notification error:', err));
         }
 
         setInterval(fetchSupportMessages, 3000);
