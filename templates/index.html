@@ -82,14 +82,6 @@
         .history-table tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
         .badge-deposit { color: var(--accent); background: rgba(0, 255, 136, 0.1); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
         .badge-payout { color: #38bdf8; background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-        .history-table tbody tr.tx-new {
-            animation: txSlideIn 0.6s ease-out;
-            background: rgba(0, 255, 136, 0.08);
-        }
-        @keyframes txSlideIn {
-            from { opacity: 0; transform: translateY(18px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         
         .container { max-width: 1200px; margin: 0 auto; padding: 0 15px 40px; }
         .plans-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; }
@@ -159,7 +151,6 @@
         
         .admin-section { display: none; max-width: 1200px; margin: 20px auto; padding: 20px; background: var(--card-bg); border: 1px solid var(--warning); border-radius: 16px; }
         .admin-section h2 { color: var(--warning); margin-bottom: 15px; font-size: 22px; }
-        .tx-timer { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; margin-left: 6px; }
 
         /* SUPPORT WIDGET (BOTTOM RIGHT) */
         #chat-button {
@@ -191,7 +182,7 @@
             bottom: 96px;
             right: 24px;
             width: 360px;
-            height: 500px;
+            height: 520px;
             background: var(--card-bg);
             border: 1px solid rgba(0, 255, 136, 0.3);
             border-radius: 16px;
@@ -240,8 +231,13 @@
             text-transform: uppercase;
         }
 
+        .admin-chat-selector-row {
+            display: flex;
+            gap: 6px;
+        }
+
         .admin-chat-selector select {
-            width: 100%;
+            flex: 1;
             padding: 6px 10px;
             background: #1f2937;
             color: #fff;
@@ -249,6 +245,21 @@
             border-radius: 6px;
             font-size: 12px;
             outline: none;
+        }
+
+        .close-ticket-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .close-ticket-btn:hover {
+            opacity: 0.85;
         }
 
         .chat-body {
@@ -317,7 +328,6 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 11px;
-            transition: opacity 0.2s;
         }
 
         .chat-action-btn-human {
@@ -328,7 +338,6 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 11px;
-            transition: background 0.2s;
         }
 
         .file-upload-btn {
@@ -338,11 +347,8 @@
             font-size: 18px;
             cursor: pointer;
             padding: 0 6px;
-            transition: color 0.2s;
         }
-        .file-upload-btn:hover {
-            color: var(--accent);
-        }
+        .file-upload-btn:hover { color: var(--accent); }
 
         .chat-controls {
             display: flex;
@@ -370,7 +376,6 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 13px;
-            transition: all 0.2s;
         }
 
         footer { text-align: center; padding: 30px 15px; color: var(--text-muted); font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 40px; }
@@ -807,9 +812,12 @@
 
         <div class="admin-chat-selector" id="adminChatSelector">
             <label>⚡ Панель Оператора (binarpok)</label>
-            <select id="userChatDropdown" onchange="switchAdminTargetChat(this.value)">
-                <option value="">-- Выберите чат пользователя --</option>
-            </select>
+            <div class="admin-chat-selector-row">
+                <select id="userChatDropdown" onchange="switchAdminTargetChat(this.value)">
+                    <option value="">-- Выберите чат пользователя --</option>
+                </select>
+                <button class="close-ticket-btn" onclick="closeActiveChatTicket()" title="Завершить и закрыть диалог">Закрыть</button>
+            </div>
         </div>
 
         <div class="chat-body">
@@ -954,6 +962,31 @@
             if (!targetUserSession) return;
             currentActiveUserSession = targetUserSession;
             loadChatHistory(targetUserSession);
+        }
+
+        async function closeActiveChatTicket() {
+            if (!currentActiveUserSession) {
+                showCustomAlert('Выберите чат из списка для закрытия.', 'Внимание');
+                return;
+            }
+
+            try {
+                let response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentActiveUserSession,
+                        action: 'close_chat'
+                    })
+                });
+                let result = await response.json();
+                if (result.status === 'success') {
+                    renderChatMessages(result.messages);
+                    showCustomAlert(`Обращение для ${currentActiveUserSession} успешно закрыто.`, 'Успешно');
+                }
+            } catch (e) {
+                console.error('Error closing ticket:', e);
+            }
         }
 
         async function loadChatHistory(sessionId) {
