@@ -1,61 +1,50 @@
 from flask import Flask, render_template, request, jsonify
-import uuid
 
 app = Flask(__name__)
 
-# Хранилище сообщений в памяти (в продакшене используйте БД)
-chat_sessions = {}
+# Хранилище сообщений чата в памяти (для продакшена можно подключить БД)
+chat_storage = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# 1. Маршрут получения сообщений и сессии (исправляет ошибку 404 на скриншоте)
+# Поддерживаем оба варианта путей (/api/chat/... и старые /get, /send_message),
+# чтобы виджет на сайте гарантированно не выдавал ошибку 404.
+@app.route('/api/chat/get', methods=['GET'])
 @app.route('/get', methods=['GET'])
-def get_messages():
+def get_chat_messages():
     session_id = request.args.get('session_id')
-    
     if not session_id:
-        session_id = str(uuid.uuid4())
+        return jsonify({"status": "error", "message": "Missing session_id"}), 400
     
-    if session_id not in chat_sessions:
-        chat_sessions[session_id] = [
-            {"sender": "support", "text": "Здравствуйте! Чем мы можем вам помочь?"}
-        ]
-    
-    return jsonify({
-        "status": "success",
-        "session_id": session_id,
-        "messages": chat_sessions[session_id]
-    }), 200
+    messages = chat_storage.get(session_id, [])
+    return jsonify({"status": "success", "messages": messages}), 200
 
-# 2. Маршрут для отправки сообщений чата
+@app.route('/api/chat/send', methods=['POST'])
 @app.route('/send_message', methods=['POST'])
-def send_message():
+def send_chat_message():
     data = request.get_json() or {}
     session_id = data.get('session_id')
-    message_text = data.get('message')
+    message_text = data.get('message', '')
+    image_data = data.get('image', None)
 
-    if not message_text:
-        return jsonify({"status": "error", "message": "Message text is required"}), 400
+    if not session_id:
+        return jsonify({"status": "error", "message": "Missing session_id"}), 400
 
-    if not session_id or session_id not in chat_sessions:
-        session_id = str(uuid.uuid4())
-        chat_sessions[session_id] = []
+    if session_id not in chat_storage:
+        chat_storage[session_id] = []
 
-    # Сохраняем сообщение пользователя
-    chat_sessions[session_id].append({"sender": "user", "text": message_text})
-
-    # Авто-ответ (при необходимости)
-    chat_sessions[session_id].append({
-        "sender": "support", 
-        "text": "Спасибо за обращение! Оператор ответит вам в ближайшее время."
+    # Сохраняем сообщение пользователя в историю
+    chat_storage[session_id].append({
+        "sender": "user",
+        "text": message_text,
+        "image": image_data
     })
 
     return jsonify({
         "status": "success",
-        "session_id": session_id,
-        "messages": chat_sessions[session_id]
+        "messages": chat_storage[session_id]
     }), 200
 
 if __name__ == '__main__':
