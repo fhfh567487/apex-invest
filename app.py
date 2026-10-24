@@ -103,19 +103,18 @@ def send_chat_message():
         send_telegram_notification(session_id, last_user_msg, image_data)
         return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
 
-    chat_messages_memory[session_id].append({"sender": "user", "text": message_text, "image": image_data})
-    if current_state["status"] in ["human", "waiting_human"]:
-        return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
+    if message_text:
+        chat_messages_memory[session_id].append({"sender": "user", "text": message_text, "image": image_data})
+        if current_state["status"] not in ["human", "waiting_human"]:
+            text_lower = message_text.lower()
+            if any(word in text_lower for word in ["вывести", "вывод", "деньги", "снять"]):
+                ai_reply = "💰 **Как вывести средства:**\n1. Dashboard\n2. KYC\n3. Request Withdrawal\n\nВаша проблема решена?"
+            elif any(word in text_lower for word in ["пополнить", "депозит", "инвестировать", "внести"]):
+                ai_reply = "🚀 **Как открыть депозит:**\n1. Выберите тариф\n2. Укажите сумму\n3. Переведите средства\n\nВаша проблема решена?"
+            else:
+                ai_reply = "Я виртуальный помощник Apex Invest. Чем могу помочь?\n\nВаша проблема решена?"
+            chat_messages_memory[session_id].append({"sender": "support", "text": ai_reply, "show_buttons": True})
 
-    text_lower = message_text.lower()
-    if any(word in text_lower for word in ["вывести", "вывод", "деньги", "снять"]):
-        ai_reply = "💰 **Как вывести средства:**\n1. Dashboard\n2. KYC\n3. Request Withdrawal\n\nВаша проблема решена?"
-    elif any(word in text_lower for word in ["пополнить", "депозит", "инвестировать", "внести"]):
-        ai_reply = "🚀 **Как открыть депозит:**\n1. Выберите тариф\n2. Укажите сумму\n3. Переведите средства\n\nВаша проблема решена?"
-    else:
-        ai_reply = "Я виртуальный помощник Apex Invest. Чем могу помочь?\n\nВаша проблема решена?"
-
-    chat_messages_memory[session_id].append({"sender": "support", "text": ai_reply, "show_buttons": True})
     return jsonify({"status": "success", "messages": chat_messages_memory[session_id]}), 200
 
 if __name__ == '__main__':
