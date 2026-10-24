@@ -202,8 +202,8 @@
             position: fixed;
             bottom: 96px;
             right: 24px;
-            width: 340px;
-            height: 480px;
+            width: 360px;
+            height: 500px;
             background: var(--card-bg);
             border: 1px solid rgba(0, 255, 136, 0.3);
             border-radius: 16px;
@@ -216,7 +216,7 @@
 
         .chat-header {
             background: rgba(0, 255, 136, 0.15);
-            padding: 14px 16px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -234,6 +234,34 @@
 
         .chat-header button:hover {
             color: #ffffff;
+        }
+
+        /* Панель выбора чатов для binarpok@gmail.com */
+        .admin-chat-selector {
+            background: #111827;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .admin-chat-selector label {
+            font-size: 11px;
+            color: var(--warning);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .admin-chat-selector select {
+            width: 100%;
+            padding: 6px 10px;
+            background: #1f2937;
+            color: #fff;
+            border: 1px solid var(--warning);
+            border-radius: 6px;
+            font-size: 12px;
+            outline: none;
         }
 
         .chat-body {
@@ -821,9 +849,18 @@
 
     <div id="chat-window">
         <div class="chat-header">
-            <span>Служба поддержки Apex</span>
+            <span id="chatTitleText">Служба поддержки Apex</span>
             <button onclick="toggleSupportChat()">✕</button>
         </div>
+
+        <!-- Панель выбора чатов для binarpok@gmail.com -->
+        <div class="admin-chat-selector" id="adminChatSelector">
+            <label>⚡ Панель Оператора (binarpok)</label>
+            <select id="userChatDropdown" onchange="switchAdminTargetChat(this.value)">
+                <option value="">-- Выберите чат пользователя --</option>
+            </select>
+        </div>
+
         <div class="chat-body">
             <div class="chat-logs" id="chatLogs"></div>
             <div class="chat-controls">
@@ -904,64 +941,123 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget Functions */
-        let sessionId = '';
+        /* Support Chat Widget & Admin Operator Functions */
+        let currentActiveUserSession = '';
+        let isBinarpokAdmin = false;
         let displayedChatCount = 0;
         let selectedImageBase64 = null;
         let isChatOpen = false;
         let originalPageTitle = document.title;
 
-        // НАСТРОЙКА ТЕЛЕГРАМ-БОТА ДЛЯ УВЕДОМЛЕНИЙ АДМИНУ
         const TELEGRAM_BOT_TOKEN = 'ВАШ_BOT_TOKEN'; 
         const TELEGRAM_ADMIN_CHAT_ID = 'ВАШ_CHAT_ID';
 
         function initChatSession() {
             let loggedEmail = localStorage.getItem('apex_logged_user');
-            if (loggedEmail) {
-                sessionId = loggedEmail;
+            
+            if (loggedEmail && loggedEmail.trim().toLowerCase() === ADMIN_EMAIL) {
+                isBinarpokAdmin = true;
+                const selector = document.getElementById('adminChatSelector');
+                if (selector) selector.style.display = 'flex';
+                const titleText = document.getElementById('chatTitleText');
+                if (titleText) titleText.innerText = '👨‍💻 Админ-Поддержка (Apex)';
+                loadAllUserChatsForAdmin();
             } else {
-                sessionId = localStorage.getItem('chat_session_id');
-                if (!sessionId) {
-                    sessionId = 'anon_' + Math.random().toString(36).substr(2, 9);
-                    localStorage.setItem('chat_session_id', sessionId);
+                isBinarpokAdmin = false;
+                const selector = document.getElementById('adminChatSelector');
+                if (selector) selector.style.display = 'none';
+                
+                if (loggedEmail) {
+                    currentActiveUserSession = loggedEmail;
+                } else {
+                    currentActiveUserSession = localStorage.getItem('chat_session_id');
+                    if (!currentActiveUserSession) {
+                        currentActiveUserSession = 'anon_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('chat_session_id', currentActiveUserSession);
+                    }
+                }
+                loadChatHistory(currentActiveUserSession);
+            }
+        }
+
+        function loadAllUserChatsForAdmin() {
+            const dropdown = document.getElementById('userChatDropdown');
+            if (!dropdown) return;
+            dropdown.innerHTML = '<option value="">-- Выберите чат пользователя --</option>';
+
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key && key.startsWith('chat_history_')) {
+                    let userChatId = key.replace('chat_history_', '');
+                    let option = document.createElement('option');
+                    option.value = userChatId;
+                    option.innerText = '💬 Чат: ' + userChatId;
+                    dropdown.appendChild(option);
                 }
             }
-            displayedChatCount = 0;
-            const chatLogs = document.getElementById('chatLogs');
-            if (chatLogs) chatLogs.innerHTML = '';
-            
-            appendInitialGreeting();
         }
 
-        function appendInitialGreeting() {
+        function switchAdminTargetChat(targetUserSession) {
+            if (!targetUserSession) return;
+            currentActiveUserSession = targetUserSession;
+            loadChatHistory(targetUserSession);
+        }
+
+        function loadChatHistory(sessionId) {
             const container = document.getElementById('chatLogs');
-            if (!container || container.children.length > 0) return;
+            if (!container) return;
+            container.innerHTML = '';
 
-            const div = document.createElement('div');
-            div.className = 'chat-msg admin';
-            div.innerHTML = `<div>👨‍💻 Поддержка: 💰 <strong>Как вывести средства:</strong> 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC (верификация) успешно пройден. 3. Нажмите «Request Withdrawal», выберите платежную систему, укажите реквизиты и сумму (от $10).<br><br>Ваша проблема решена?</div>`;
-            
-            const btnBox = document.createElement('div');
-            btnBox.className = 'chat-action-buttons';
+            let rawHistory = localStorage.getItem('chat_history_' + sessionId);
+            let history = rawHistory ? JSON.parse(rawHistory) : [];
 
-            const btnYes = document.createElement('button');
-            btnYes.className = 'chat-action-btn-yes';
-            btnYes.textContent = 'Да';
-            btnYes.onclick = () => handleChatActionClick('solved_yes');
+            if (history.length === 0 && !isBinarpokAdmin) {
+                history.push({
+                    sender: 'admin',
+                    text: '👨‍💻 Поддержка: 💰 **Как вывести средства:** 1. Перейдите в раздел Dashboard. 2. Убедитесь, что ваш KYC (верификация) успешно пройден. 3. Нажмите «Request Withdrawal», выберите платежную систему, укажите реквизиты и сумму (от $10).\n\nВаша проблема решена?',
+                    showButtons: true
+                });
+                localStorage.setItem('chat_history_' + sessionId, JSON.stringify(history));
+            }
 
-            const btnHuman = document.createElement('button');
-            btnHuman.className = 'chat-action-btn-human';
-            btnHuman.textContent = 'Позвать человека';
-            btnHuman.onclick = () => handleChatActionClick('call_human');
-
-            btnBox.appendChild(btnYes);
-            btnBox.appendChild(btnHuman);
-            div.appendChild(btnBox);
-            container.appendChild(div);
-            displayedChatCount = 1;
+            history.forEach(item => {
+                renderChatMessage(item);
+            });
         }
 
-        initChatSession();
+        function renderChatMessage(item) {
+            const container = document.getElementById('chatLogs');
+            if (!container) return;
+            const div = document.createElement('div');
+            const senderType = (item.sender === 'admin' || item.sender === 'support') ? 'admin' : 'user';
+            div.className = 'chat-msg ' + senderType;
+            
+            let contentHtml = '';
+            if (item.text) {
+                contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Поддержка: ' : ''}${formatMarkdownText(item.text.replace(/\n/g, '<br>'))}</div>`;
+            } else if (senderType === 'admin') {
+                contentHtml += `<div>👨‍💻 Поддержка:</div>`;
+            }
+            
+            if (item.image) {
+                contentHtml += `<img src="${item.image}" alt="screenshot" onclick="window.open(this.src)">`;
+            }
+
+            div.innerHTML = contentHtml;
+
+            if (item.showButtons && !isBinarpokAdmin) {
+                const btnBox = document.createElement('div');
+                btnBox.className = 'chat-action-buttons';
+                btnBox.innerHTML = `
+                    <button class="chat-action-btn-yes" onclick="handleChatActionClick('solved_yes')">Да</button>
+                    <button class="chat-action-btn-human" onclick="handleChatActionClick('call_human')">Позвать человека</button>
+                `;
+                div.appendChild(btnBox);
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
 
         function formatMarkdownText(txt) {
             if (!txt) return '';
@@ -977,6 +1073,9 @@
             if (isChatOpen) {
                 document.getElementById('chat-button').classList.remove('unread');
                 document.title = originalPageTitle;
+                if (isBinarpokAdmin) {
+                    loadAllUserChatsForAdmin();
+                }
             }
         }
 
@@ -1008,180 +1107,72 @@
             }
         }
 
-        async function fetchSupportMessages() {
-            if (!sessionId) return;
-            try {
-                let res = await fetch('/api/chat/get?session_id=' + encodeURIComponent(sessionId));
-                if (!res.ok) {
-                    res = await fetch('/get?session_id=' + encodeURIComponent(sessionId));
-                }
-                if (!res.ok) return;
-
-                const data = await res.json();
-                const container = document.getElementById('chatLogs');
-
-                if (data.messages && data.messages.length > displayedChatCount) {
-                    let hasNewAdminMessage = false;
-
-                    for (let i = displayedChatCount; i < data.messages.length; i++) {
-                        const item = data.messages[i];
-                        const div = document.createElement('div');
-                        const senderType = (item.sender === 'admin' || item.sender === 'support') ? 'admin' : 'user';
-                        div.className = 'chat-msg ' + senderType;
-                        
-                        let contentHtml = '';
-                        if (item.text) {
-                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Поддержка: ' : ''}${formatMarkdownText(item.text.replace(/\n/g, '<br>'))}</div>`;
-                        } else if (senderType === 'admin') {
-                            contentHtml += `<div>👨‍💻 Поддержка:</div>`;
-                        }
-                        
-                        if (item.image) {
-                            contentHtml += `<img src="${item.image}" alt="screenshot" onclick="window.open(this.src)">`;
-                        }
-
-                        div.innerHTML = contentHtml;
-                        container.appendChild(div);
-
-                        if (senderType === 'admin') {
-                            hasNewAdminMessage = true;
-                        }
-                    }
-
-                    displayedChatCount = data.messages.length;
-                    container.scrollTop = container.scrollHeight;
-
-                    if (hasNewAdminMessage && !isChatOpen) {
-                        document.getElementById('chat-button').classList.add('unread');
-                        playNotificationSound();
-                        if (navigator.vibrate) {
-                            navigator.vibrate([200, 100, 200]);
-                        }
-                        document.title = "💬 Вам ответила поддержка! | Apex Invest";
-                    }
-                }
-            } catch (e) {}
-        }
-
         async function sendSupportMessage() {
             const input = document.getElementById('chat-message');
-            const sendBtn = document.getElementById('chat-send-btn');
             const text = input.value.trim();
-
             if (!text && !selectedImageBase64) return;
-            if (!sessionId) return;
+            if (!currentActiveUserSession && !isBinarpokAdmin) return;
 
-            input.value = '';
-            sendBtn.disabled = true;
-
-            appendLocalMessage('user', text, selectedImageBase64);
-
-            const payload = {
-                session_id: sessionId,
-                message: text
-            };
-
-            if (selectedImageBase64) {
-                payload.image = selectedImageBase64;
+            if (isBinarpokAdmin && !currentActiveUserSession) {
+                showCustomAlert('Пожалуйста, выберите чат пользователя из выпадающего списка сверху!', 'Внимание');
+                return;
             }
 
-            const lower = text.toLowerCase();
+            input.value = '';
 
-            if (lower === 'нет' || lower === 'нет.') {
-                setTimeout(() => {
-                    appendLocalBotResponse('Сожалеем, что проблема не решена. Как вы хотите продолжить?', true);
-                }, 400);
-            } else if (lower === 'да' || lower === 'да.') {
-                setTimeout(() => {
-                    appendLocalBotResponse('Рады были помочь! Если у вас возникнут еще вопросы, просто напишите их сюда.', false);
-                }, 400);
+            let rawHistory = localStorage.getItem('chat_history_' + currentActiveUserSession);
+            let history = rawHistory ? JSON.parse(rawHistory) : [];
+
+            if (isBinarpokAdmin) {
+                let newMsg = { sender: 'admin', text: text, image: selectedImageBase64 };
+                history.push(newMsg);
+                localStorage.setItem('chat_history_' + currentActiveUserSession, JSON.stringify(history));
+                renderChatMessage(newMsg);
             } else {
-                setTimeout(() => {
-                    appendLocalBotResponse('Я получил ваше сообщение. Чем еще могу помочь по работе Apex Invest?', true);
-                }, 600);
+                let newMsg = { sender: 'user', text: text, image: selectedImageBase64 };
+                history.push(newMsg);
 
-                try {
-                    let response = await fetch('/api/chat/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                const lower = text.toLowerCase();
+                if (lower === 'нет' || lower === 'нет.') {
+                    history.push({
+                        sender: 'admin',
+                        text: 'Сожалеем, что проблема не решена. Как вы хотите продолжить?',
+                        showButtons: true
                     });
-                    if (!response.ok) {
-                        await fetch('/send_message', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                    }
-                } catch (err) {}
+                } else if (lower === 'да' || lower === 'да.') {
+                    history.push({
+                        sender: 'admin',
+                        text: 'Рады были помочь! Если у вас возникнут еще вопросы, просто напишите их сюда.'
+                    });
+                } else {
+                    history.push({
+                        sender: 'admin',
+                        text: 'Я получил ваше сообщение. Чем еще могу помочь по работе Apex Invest?',
+                        showButtons: true
+                    });
+                }
+
+                localStorage.setItem('chat_history_' + currentActiveUserSession, JSON.stringify(history));
+                loadChatHistory(currentActiveUserSession);
             }
 
             selectedImageBase64 = null;
             document.getElementById('chat-file-input').value = '';
             document.querySelector('.file-upload-btn').style.color = '';
-            sendBtn.disabled = false;
-        }
-
-        function appendLocalMessage(sender, text, img) {
-            const container = document.getElementById('chatLogs');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = 'chat-msg ' + sender;
-            let html = '';
-            if (text) html += `<div>${formatMarkdownText(text.replace(/\n/g, '<br>'))}</div>`;
-            if (img) html += `<img src="${img}" alt="screenshot" onclick="window.open(this.src)">`;
-            div.innerHTML = html;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-            displayedChatCount++;
-        }
-
-        function appendLocalBotResponse(text, showButtons = false) {
-            const container = document.getElementById('chatLogs');
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = 'chat-msg admin';
-            let html = `<div>👨‍💻 Поддержка: ${formatMarkdownText(text.replace(/\n/g, '<br>'))}</div>`;
-            div.innerHTML = html;
-
-            if (showButtons) {
-                const btnBox = document.createElement('div');
-                btnBox.className = 'chat-action-buttons';
-
-                const btnYes = document.createElement('button');
-                btnYes.className = 'chat-action-btn-yes';
-                btnYes.textContent = 'Да';
-                btnYes.onclick = () => handleChatActionClick('solved_yes');
-
-                const btnHuman = document.createElement('button');
-                btnHuman.className = 'chat-action-btn-human';
-                btnHuman.textContent = 'Позвать человека';
-                btnHuman.onclick = () => handleChatActionClick('call_human');
-
-                btnBox.appendChild(btnYes);
-                btnBox.appendChild(btnHuman);
-                div.appendChild(btnBox);
-            }
-
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
-            displayedChatCount++;
         }
 
         function handleChatActionClick(actionType) {
             if (actionType === 'solved_yes') {
-                appendLocalMessage('user', 'Да');
-                setTimeout(() => {
-                    appendLocalBotResponse('Рады были помочь! Если у вас возникнут еще вопросы, обращайтесь.', false);
-                }, 400);
+                sendSupportMessageText('Да');
             } else if (actionType === 'call_human') {
-                appendLocalMessage('user', 'Позвать человека');
-                setTimeout(() => {
-                    appendLocalBotResponse('👨‍💻 Запрос успешно отправлен! Администратор подключится к диалогу в ближайшее время. Пожалуйста, опишите ваш вопрос подробнее.', false);
-                }, 500);
-
-                sendNotificationToTelegramAdmin('🚨 **Пользователь на сайте запрашивает администратора!** Сессия: ' + sessionId);
+                sendSupportMessageText('Позвать человека');
+                sendNotificationToTelegramAdmin('🚨 **Пользователь на сайте запрашивает администратора!** Сессия: ' + currentActiveUserSession);
             }
+        }
+
+        function sendSupportMessageText(text) {
+            document.getElementById('chat-message').value = text;
+            sendSupportMessage();
         }
 
         function sendNotificationToTelegramAdmin(msgText) {
@@ -1196,8 +1187,6 @@
                 })
             }).catch(err => console.error('Telegram notification error:', err));
         }
-
-        setInterval(fetchSupportMessages, 3000);
 
         window.addEventListener('focus', () => {
             if (isChatOpen) {
@@ -1273,6 +1262,8 @@
             let savedUser = localStorage.getItem('apex_logged_user');
             if (savedUser) {
                 loginUserSession(savedUser);
+            } else {
+                initChatSession();
             }
         });
 
@@ -1310,7 +1301,6 @@
 
         async function loginUserSession(email) {
             localStorage.setItem('apex_logged_user', email);
-            initChatSession();
             
             authButtonsBlock.style.display = 'none';
             userProfileBlock.style.display = 'flex';
@@ -1321,6 +1311,8 @@
                 adminBtn.style.display = 'none';
                 document.getElementById('adminSection').style.display = 'none';
             }
+
+            initChatSession();
 
             let serverData = await loadFromSupabase(email);
             if (serverData) {
