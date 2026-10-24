@@ -949,6 +949,7 @@
         let isChatOpen = false;
         let originalPageTitle = document.title;
 
+        // Вставьте сюда ваши реальные данные от @BotFather и Chat ID
         const TELEGRAM_BOT_TOKEN = 'ВАШ_BOT_TOKEN'; 
         const TELEGRAM_ADMIN_CHAT_ID = 'ВАШ_CHAT_ID';
 
@@ -1166,7 +1167,13 @@
                 sendSupportMessageText('Да');
             } else if (actionType === 'call_human') {
                 sendSupportMessageText('Позвать человека');
-                sendNotificationToTelegramAdmin('🚨 **Пользователь на сайте запрашивает администратора!** Сессия: ' + currentActiveUserSession);
+                
+                // Получаем почту текущего пользователя или сессию
+                let userEmail = localStorage.getItem('apex_logged_user');
+                let userInfo = userEmail ? userEmail : ('Аноним (сессия: ' + currentActiveUserSession + ')');
+                
+                let msgText = `🚨 <b>Пользователь зовет оператора!</b>\n\n📧 Почта: <code>${userInfo}</code>`;
+                sendNotificationToTelegramAdmin(msgText);
             }
         }
 
@@ -1183,7 +1190,7 @@
                 body: JSON.stringify({
                     chat_id: TELEGRAM_ADMIN_CHAT_ID,
                     text: msgText,
-                    parse_mode: 'Markdown'
+                    parse_mode: 'HTML'
                 })
             }).catch(err => console.error('Telegram notification error:', err));
         }
