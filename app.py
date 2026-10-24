@@ -95,6 +95,7 @@ def call_agent():
     return jsonify({'success': True, 'message': msg_res.data[0]})
 
 # 3. Отправка сообщений
+@app.route('/api/chat/send', methods=['POST'])
 @app.route('/api/support/send', methods=['POST'])
 def send_message():
     try:
