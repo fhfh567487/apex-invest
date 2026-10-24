@@ -40,7 +40,7 @@ def init_chat():
 
     return jsonify({'success': True, 'chat': chat})
 
-# Добавляем недостающий эндпоинт для получения сообщений (исправление ошибки 404)
+# Добавляем недостающий эндпоинт для получения сообщений (исправление ошибки 500)
 @app.route('/api/chat/get', methods=['GET'])
 @app.route('/api/support/get', methods=['GET'])
 def get_messages():
@@ -48,13 +48,30 @@ def get_messages():
     if not session_id:
         return jsonify({'success': False, 'error': 'Session ID is required'}), 400
 
-    # Ищем чат по email или id (в зависимости от того, что прилетает в session_id)
-    chat_res = supabase.table('support_chats').select('id').or_(f"user_email.eq.{session_id},id.eq.{session_id}").execute()
+    # Надежный поиск чата: сначала по ID, потом по Email
+    chat = None
 
-    if not chat_res.data:
+    # 1. Пробуем найти по ID
+    try:
+        res_id = supabase.table('support_chats').select('id').eq('id', session_id).execute()
+        if res_id.data:
+            chat = res_id.data[0]
+    except:
+        pass
+
+    # 2. Если не нашли по ID, пробуем по email
+    if not chat:
+        try:
+            res_email = supabase.table('support_chats').select('id').eq('user_email', session_id).execute()
+            if res_email.data:
+                chat = res_email.data[0]
+        except:
+            pass
+
+    if not chat:
         return jsonify({'success': False, 'error': 'Chat not found'}), 404
 
-    chat_id = chat_res.data[0]['id']
+    chat_id = chat['id']
 
     # Получаем все сообщения этого чата, отсортированные по времени
     messages_res = supabase.table('support_messages').select('*').eq('chat_id', chat_id).order('created_at').execute()
